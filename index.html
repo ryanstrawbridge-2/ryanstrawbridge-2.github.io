@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Ryan Strawbridge — personal portfolio: projects, experience, and contact." />
+  <title>Ryan Strawbridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="nav container" aria-label="Primary">
+      <a href="#top" class="brand">RS<span class="brand-dot">.</span></a>
+      <ul class="nav-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#experience">Experience</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle color theme" type="button">
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section id="top" class="hero container">
+      <p class="eyebrow">Hi, I'm Ryan</p>
+      <h1 class="hero-title">
+        I build thoughtful software<br />
+        for the <span class="accent">modern web</span>.
+      </h1>
+      <p class="hero-sub">
+        Software engineer focused on clean interfaces, reliable systems, and
+        products people actually enjoy using.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#projects">View projects</a>
+        <a class="btn btn-ghost" href="#contact">Get in touch</a>
+      </div>
+    </section>
+
+    <section id="about" class="section container">
+      <h2 class="section-title">About</h2>
+      <div class="about-grid">
+        <div class="about-text">
+          <p>
+            I'm a developer who likes turning fuzzy problems into simple,
+            durable solutions. I care about good fundamentals — readable code,
+            honest abstractions, and interfaces that respect the user's time.
+          </p>
+          <p>
+            Outside of work I tinker with side projects, read more than I
+            probably should, and am always curious about how things are built.
+          </p>
+        </div>
+        <aside class="about-skills" aria-label="Skills">
+          <h3>Toolbox</h3>
+          <ul class="chips">
+            <li>TypeScript</li>
+            <li>React</li>
+            <li>Node.js</li>
+            <li>Python</li>
+            <li>PostgreSQL</li>
+            <li>AWS</li>
+            <li>Docker</li>
+            <li>Git</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <section id="projects" class="section container">
+      <h2 class="section-title">Selected Projects</h2>
+      <div class="projects-grid">
+        <article class="card">
+          <header class="card-head">
+            <h3>Project One</h3>
+            <span class="card-year">2025</span>
+          </header>
+          <p class="card-desc">
+            A short description of what this project is, what problem it
+            solves, and what made it interesting to build.
+          </p>
+          <ul class="tags">
+            <li>TypeScript</li>
+            <li>React</li>
+            <li>Postgres</li>
+          </ul>
+          <div class="card-links">
+            <a href="#" aria-label="View source for Project One">Source</a>
+            <a href="#" aria-label="View live demo for Project One">Live →</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <header class="card-head">
+            <h3>Project Two</h3>
+            <span class="card-year">2024</span>
+          </header>
+          <p class="card-desc">
+            Another brief project blurb. One or two sentences explaining the
+            scope and the result.
+          </p>
+          <ul class="tags">
+            <li>Python</li>
+            <li>FastAPI</li>
+            <li>Docker</li>
+          </ul>
+          <div class="card-links">
+            <a href="#" aria-label="View source for Project Two">Source</a>
+            <a href="#" aria-label="View live demo for Project Two">Live →</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <header class="card-head">
+            <h3>Project Three</h3>
+            <span class="card-year">2024</span>
+          </header>
+          <p class="card-desc">
+            Replace this with something you're proud of. Lead with the impact
+            or the unique twist.
+          </p>
+          <ul class="tags">
+            <li>Next.js</li>
+            <li>Tailwind</li>
+            <li>Vercel</li>
+          </ul>
+          <div class="card-links">
+            <a href="#" aria-label="View source for Project Three">Source</a>
+            <a href="#" aria-label="View live demo for Project Three">Live →</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="experience" class="section container">
+      <h2 class="section-title">Experience</h2>
+      <ol class="timeline">
+        <li class="timeline-item">
+          <div class="timeline-when">2024 — Present</div>
+          <div class="timeline-what">
+            <h3>Software Engineer · Company Name</h3>
+            <p>
+              Short description of your role and one or two concrete wins —
+              metrics, scale, or clear outcomes work best.
+            </p>
+          </div>
+        </li>
+        <li class="timeline-item">
+          <div class="timeline-when">2022 — 2024</div>
+          <div class="timeline-what">
+            <h3>Previous Role · Previous Company</h3>
+            <p>
+              What you owned, what you shipped, what you learned.
+            </p>
+          </div>
+        </li>
+        <li class="timeline-item">
+          <div class="timeline-when">2018 — 2022</div>
+          <div class="timeline-what">
+            <h3>B.S. Computer Science · University</h3>
+            <p>
+              Coursework or extracurriculars worth highlighting.
+            </p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="contact" class="section container">
+      <h2 class="section-title">Contact</h2>
+      <p class="contact-lede">
+        I'm always happy to talk about interesting work. The fastest way to
+        reach me is email.
+      </p>
+      <div class="contact-links">
+        <a class="btn btn-primary" href="mailto:hello@example.com">Email me</a>
+        <a class="btn btn-ghost" href="https://github.com/ryanstraw2" target="_blank" rel="noopener">GitHub ↗</a>
+        <a class="btn btn-ghost" href="https://www.linkedin.com/" target="_blank" rel="noopener">LinkedIn ↗</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer container">
+    <p>© <span id="year"></span> Ryan Strawbridge</p>
+    <p class="footer-meta">Built with HTML, CSS, and a little JS.</p>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>
