@@ -1,0 +1,211 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths = (async () => {
+  const projects = await getCollection('projects', ({ data }) => !data.draft);
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}) satisfies GetStaticPaths;
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const { title, subtitle, organization, date, summary, hero, heroAlt, tools } = project.data;
+
+const dateLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+const all = (await getCollection('projects', ({ data }) => !data.draft)).sort(
+  (a, b) =>
+    a.data.order - b.data.order ||
+    b.data.date.valueOf() - a.data.date.valueOf(),
+);
+const idx = all.findIndex((p) => p.id === project.id);
+const prev = idx > 0 ? all[idx - 1] : null;
+const next = idx < all.length - 1 ? all[idx + 1] : null;
+---
+
+<BaseLayout title={`${title} · Ryan Strawbridge`} description={summary}>
+  <article>
+    <header class="project-hero">
+      <div class="container">
+        <p class="eyebrow">
+          {organization ?? subtitle ?? 'Project'} <span class="dot">·</span> {dateLabel}
+        </p>
+        <h1>{title}</h1>
+        {subtitle && organization && <p class="subtitle muted">{subtitle}</p>}
+        <p class="summary">{summary}</p>
+        {
+          tools.length > 0 && (
+            <ul class="tags">
+              {tools.map((t) => (
+                <li>{t}</li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+    </header>
+
+    <div class="hero-image-wrap container">
+      <Image
+        src={hero}
+        alt={heroAlt}
+        widths={[600, 1200, 1800]}
+        sizes="(min-width: 1100px) 1100px, 100vw"
+        class="hero-image"
+      />
+    </div>
+
+    <div class="container-narrow project-body">
+      <Content />
+    </div>
+
+    <nav class="project-nav container" aria-label="Project navigation">
+      <a href="/projects/" class="all">← All projects</a>
+      <div class="adjacent">
+        {prev && (
+          <a href={`/projects/${prev.id}/`} class="adjacent-link">
+            <span class="muted">Previous</span>
+            <span>{prev.data.title}</span>
+          </a>
+        )}
+        {next && (
+          <a href={`/projects/${next.id}/`} class="adjacent-link adjacent-right">
+            <span class="muted">Next</span>
+            <span>{next.data.title}</span>
+          </a>
+        )}
+      </div>
+    </nav>
+  </article>
+
+  <style>
+    .project-hero {
+      padding-block: 4rem 2.5rem;
+    }
+    .project-hero h1 {
+      margin: 0.5rem 0 0.75rem;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      margin: 0 0 1rem;
+    }
+    .summary {
+      font-size: 1.15rem;
+      max-width: 720px;
+      color: var(--text);
+    }
+    .tags {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .tags li {
+      padding: 0.3rem 0.7rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .hero-image-wrap {
+      margin-bottom: 3rem;
+    }
+    .hero-image-wrap :global(.hero-image) {
+      width: 100%;
+      max-height: 600px;
+      object-fit: cover;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .project-body {
+      padding-block: 1rem 4rem;
+      font-size: 1.05rem;
+    }
+    .project-body :global(h2) {
+      margin-top: 2.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.5rem;
+    }
+    .project-body :global(h2:first-child) {
+      margin-top: 0;
+    }
+    .project-body :global(h3) {
+      margin-top: 1.75rem;
+      font-size: 1.15rem;
+    }
+    .project-body :global(ul),
+    .project-body :global(ol) {
+      padding-left: 1.25rem;
+    }
+    .project-body :global(li) {
+      margin-bottom: 0.4rem;
+    }
+    .project-body :global(img) {
+      margin-block: 1.5rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+    .project-body :global(figure) {
+      margin: 2rem 0;
+    }
+    .project-body :global(figcaption) {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+    .project-body :global(blockquote) {
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+      margin: 1.5rem 0;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .project-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: space-between;
+      align-items: center;
+      padding-block: 2rem 4rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+    .all {
+      color: var(--text);
+      font-weight: 500;
+    }
+    .all:hover {
+      color: var(--accent);
+    }
+    .adjacent {
+      display: flex;
+      gap: 1.5rem;
+    }
+    .adjacent-link {
+      display: flex;
+      flex-direction: column;
+      color: var(--text);
+      text-align: right;
+      font-size: 0.95rem;
+      gap: 0.15rem;
+    }
+    .adjacent-link span:last-child {
+      font-weight: 600;
+    }
+    .adjacent-link:hover span:last-child {
+      color: var(--accent);
+    }
+  </style>
+</BaseLayout>

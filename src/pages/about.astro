@@ -1,0 +1,149 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import portrait from '../assets/images/about/portrait.jpg';
+import running from '../assets/images/about/running.jpg';
+import music from '../assets/images/about/music.jpg';
+import plants from '../assets/images/about/plants.jpeg';
+
+const interests = [
+  {
+    title: 'Running',
+    image: running,
+    alt: 'Ryan running',
+    body: "I love running! I am the Distance Captain of Northeastern's Running Club. I've recently broken into longer distances — my first 50k last fall, and I ran the Newport Marathon.",
+  },
+  {
+    title: 'Music',
+    image: music,
+    alt: 'Music',
+    body: 'I have a great appreciation for music. I played trumpet in high school and picked up guitar my junior year.',
+  },
+  {
+    title: 'Interior Design & Plants',
+    image: plants,
+    alt: 'Plants',
+    body: 'I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants — I have over 30 in my apartment.',
+  },
+];
+---
+
+<BaseLayout title="About · Ryan Strawbridge" description="Mechanical engineer in Boston — clean energy, aerospace, and human-centered design.">
+  <section class="section">
+    <div class="container about-grid">
+      <div class="portrait-wrap">
+        <Image
+          src={portrait}
+          alt="Portrait of Ryan Strawbridge"
+          widths={[400, 800, 1200]}
+          sizes="(min-width: 768px) 400px, 80vw"
+          class="portrait"
+        />
+      </div>
+      <div class="about-copy">
+        <p class="eyebrow">About me</p>
+        <h1>Hi, I'm Ryan.</h1>
+        <p class="lede">
+          I'm a mechanical engineer in Boston, focused on clean energy and aerospace. I love
+          designing equipment that real people use on the floor — and watching it cut hours off a
+          shift.
+        </p>
+        <p>
+          I'm currently a Manufacturing Engineer at Commonwealth Fusion Systems, where I supported
+          the poloidal field magnets for the SPARC tokamak. Previously I was an Operations
+          Engineering Co-op at Raytheon working on circuit card production for missile and radar
+          systems. I'm also Vice President of Northeastern's Aerospace Club, where I'm leading work
+          on a coaxial swirl injector for a kerosene/GOX rocket engine.
+        </p>
+        <p>
+          I gravitate toward designs that improve safety and ergonomics for the people who use
+          them. The best mechanical engineering, to me, is invisible — it makes someone's job
+          easier without them ever having to think about it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section interests-section">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Outside of engineering</p>
+        <h2>What I'm into</h2>
+      </div>
+      <div class="interests-grid">
+        {
+          interests.map((it) => (
+            <article class="interest-card">
+              <div class="interest-image">
+                <Image src={it.image} alt={it.alt} widths={[400, 800]} sizes="(min-width: 768px) 33vw, 100vw" />
+              </div>
+              <h3>{it.title}</h3>
+              <p class="muted">{it.body}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .about-grid {
+      display: grid;
+      gap: 3rem;
+      align-items: start;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 768px) {
+      .about-grid {
+        grid-template-columns: 360px 1fr;
+        gap: 4rem;
+      }
+    }
+    .portrait-wrap :global(.portrait) {
+      width: 100%;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+    }
+    .about-copy h1 {
+      margin: 0.5rem 0 1rem;
+    }
+    .lede {
+      font-size: 1.15rem;
+      color: var(--text);
+    }
+
+    .interests-section {
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--border);
+    }
+    .section-head {
+      margin-bottom: 2.5rem;
+    }
+    .interests-grid {
+      display: grid;
+      gap: 1.75rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) {
+      .interests-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    .interest-card h3 {
+      margin: 1rem 0 0.5rem;
+    }
+    .interest-image {
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      background: var(--bg);
+    }
+    .interest-image :global(img) {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
+</BaseLayout>

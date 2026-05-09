@@ -1,0 +1,171 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface SlideImage {
+  src: ImageMetadata;
+  alt: string;
+}
+
+interface Props {
+  images: SlideImage[];
+  interval?: number;
+  ariaLabel?: string;
+}
+
+const { images, interval = 4500, ariaLabel = 'Image slideshow' } = Astro.props;
+---
+
+<div
+  class="slideshow"
+  data-interval={interval}
+  role="region"
+  aria-roledescription="carousel"
+  aria-label={ariaLabel}
+>
+  <div class="slides">
+    {
+      images.map((img, i) => (
+        <div class="slide" data-active={i === 0 ? 'true' : 'false'} aria-hidden={i === 0 ? 'false' : 'true'}>
+          <Image
+            src={img.src}
+            alt={img.alt}
+            widths={[400, 800, 1200, 1600]}
+            sizes="(min-width: 768px) 50vw, 100vw"
+            loading={i === 0 ? 'eager' : 'lazy'}
+          />
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="indicators" aria-label="Slideshow controls">
+    {
+      images.map((_, i) => (
+        <button
+          class="indicator"
+          type="button"
+          data-index={i}
+          data-active={i === 0 ? 'true' : 'false'}
+          aria-label={`Show image ${i + 1} of ${images.length}`}
+        />
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .slideshow {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: #000;
+    box-shadow: var(--shadow);
+  }
+
+  .slides {
+    position: absolute;
+    inset: 0;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 900ms ease;
+  }
+
+  .slide[data-active='true'] {
+    opacity: 1;
+  }
+
+  .slide :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .indicators {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.45rem;
+    z-index: 2;
+    padding: 0.4rem 0.75rem;
+    background: rgb(0 0 0 / 0.3);
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+  }
+
+  .indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.5);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all var(--transition);
+  }
+
+  .indicator[data-active='true'] {
+    background: white;
+    width: 22px;
+    border-radius: 4px;
+  }
+
+  .indicator:hover {
+    background: rgb(255 255 255 / 0.8);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.slideshow').forEach((slideshow) => {
+    const slides = slideshow.querySelectorAll<HTMLElement>('.slide');
+    const indicators = slideshow.querySelectorAll<HTMLButtonElement>('.indicator');
+    const interval = Number(slideshow.dataset.interval) || 4500;
+    if (slides.length <= 1) return;
+
+    let current = 0;
+    let timer: number | undefined;
+
+    const setActive = (i: number) => {
+      slides.forEach((s, j) => {
+        s.dataset.active = String(i === j);
+        s.setAttribute('aria-hidden', String(i !== j));
+      });
+      indicators.forEach((b, j) => (b.dataset.active = String(i === j)));
+      current = i;
+    };
+
+    const advance = () => setActive((current + 1) % slides.length);
+
+    const start = () => {
+      stop();
+      timer = window.setInterval(advance, interval);
+    };
+    const stop = () => {
+      if (timer !== undefined) window.clearInterval(timer);
+    };
+
+    indicators.forEach((b, i) => {
+      b.addEventListener('click', () => {
+        setActive(i);
+        start();
+      });
+    });
+
+    slideshow.addEventListener('mouseenter', stop);
+    slideshow.addEventListener('mouseleave', start);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => (entry.isIntersecting ? start() : stop()),
+      { threshold: 0.1 },
+    );
+    observer.observe(slideshow);
+  });
+</script>

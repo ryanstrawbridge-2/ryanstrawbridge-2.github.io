@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+
+const projects = (await getCollection('projects', ({ data }) => !data.draft)).sort(
+  (a, b) =>
+    a.data.order - b.data.order ||
+    b.data.date.valueOf() - a.data.date.valueOf(),
+);
+---
+
+<BaseLayout title="Projects · Ryan Strawbridge">
+  <section class="section">
+    <div class="container">
+      <header class="page-head">
+        <p class="eyebrow">Portfolio</p>
+        <h1>Projects</h1>
+        <p class="muted">
+          Mechanical design work spanning fusion energy manufacturing, aerospace propulsion, defense
+          electronics, and small personal builds.
+        </p>
+      </header>
+      <div class="project-grid">
+        {projects.map((project) => <ProjectCard project={project} />)}
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .page-head {
+      max-width: 720px;
+      margin-bottom: 3rem;
+    }
+    .page-head h1 {
+      margin: 0.25rem 0 1rem;
+    }
+    .project-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) {
+      .project-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</BaseLayout>

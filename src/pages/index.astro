@@ -1,0 +1,311 @@
+---
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import Slideshow from '../components/Slideshow.astro';
+import raytheonLogo from '../assets/images/experience/raytheon.png';
+import cfsLogo from '../assets/images/experience/cfs.png';
+import aeronuLogo from '../assets/images/experience/aeronu.png';
+
+import bandsaw from '../assets/images/home/bandsaw.jpeg';
+import weldInAction from '../assets/images/home/weld-in-action.jpeg';
+import magDrill from '../assets/images/home/mag-drill.jpeg';
+import welding from '../assets/images/home/welding.jpeg';
+import liftingTest from '../assets/images/home/lifting-test.jpeg';
+
+const slideshowImages = [
+  { src: weldInAction, alt: 'Welding in action on the manufacturing floor' },
+  { src: bandsaw, alt: 'Working at the bandsaw' },
+  { src: magDrill, alt: 'Operating a magnetic drill press' },
+  { src: welding, alt: 'Welding work at Commonwealth Fusion Systems' },
+  { src: liftingTest, alt: 'Lifting test for a 3-point lifting frame' },
+];
+
+const projects = (await getCollection('projects', ({ data }) => !data.draft)).sort(
+  (a, b) =>
+    a.data.order - b.data.order ||
+    b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+const experience = [
+  {
+    role: 'Manufacturing Engineer',
+    org: 'Commonwealth Fusion Systems',
+    blurb:
+      'Supported the poloidal field magnets for the SPARC tokamak — designed equipment, optimized production processes, and worked alongside operators on the floor.',
+    logo: cfsLogo,
+    alt: 'Commonwealth Fusion Systems',
+  },
+  {
+    role: 'Operations Engineering Co-op',
+    org: 'Raytheon',
+    blurb:
+      'Worked on circuit card production for missile and radar systems — heat-shielding fixtures, solder stencil optimization, and yield improvements on the floor.',
+    logo: raytheonLogo,
+    alt: 'Raytheon',
+  },
+  {
+    role: 'Vice President & Team Lead',
+    org: 'Northeastern Aerospace Club (AeroNU)',
+    blurb:
+      'Designing rocket engine components — currently leading work on a coaxial swirl injector for kerosene/GOX combustion.',
+    logo: aeronuLogo,
+    alt: 'Northeastern Aerospace Club',
+  },
+];
+---
+
+<BaseLayout title="Ryan Strawbridge — Mechanical Engineer">
+  <section class="hero">
+    <div class="container hero-inner">
+      <p class="eyebrow">Mechanical Engineer · Boston, MA</p>
+      <h1>Ryan Strawbridge</h1>
+      <p class="tagline">I bridge gaps by inspiring confidence and engaging people.</p>
+      <p class="lede">
+        Passionate about clean energy, aerospace innovation, and incorporating human-centered design
+        whenever possible.
+      </p>
+      <div class="cta-row">
+        <a class="btn" href="/projects/">View projects</a>
+        <a class="btn btn-secondary" href="/resume.pdf" target="_blank" rel="noopener">Résumé (PDF)</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="showcase">
+    <div class="container">
+      <div class="showcase-grid">
+        <div class="showcase-item showcase-slideshow">
+          <Slideshow images={slideshowImages} ariaLabel="Engineering work in action" />
+        </div>
+        <div class="showcase-item showcase-video-wrap">
+          <video autoplay muted loop playsinline preload="metadata" class="showcase-video">
+            <source src="/videos/home-hero.mp4" type="video/mp4" />
+          </video>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="projects">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Selected work</p>
+        <h2>Projects</h2>
+      </div>
+      <div class="project-grid">
+        {projects.map((project) => <ProjectCard project={project} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section experience-section">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Where I've worked</p>
+        <h2>Experience</h2>
+      </div>
+      <ul class="experience-list">
+        {
+          experience.map((item) => (
+            <li class="experience-card">
+              <div class="experience-logo">
+                <Image src={item.logo} alt={item.alt} widths={[400, 800, 1200]} sizes="(min-width: 768px) 33vw, 90vw" />
+              </div>
+              <div class="experience-body">
+                <p class="experience-role">{item.role}</p>
+                <p class="experience-org">{item.org}</p>
+                <p class="muted">{item.blurb}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section contact-section" id="contact">
+    <div class="container-narrow contact-inner">
+      <p class="eyebrow">Contact</p>
+      <h2>We should talk!</h2>
+      <p class="muted">
+        I'm always up for chatting about clean energy, aerospace, manufacturing, or design. Drop me a
+        line — I read everything.
+      </p>
+      <div class="cta-row">
+        <a class="btn" href="mailto:rjstraw21@gmail.com">rjstraw21@gmail.com</a>
+        <a class="btn btn-secondary" href="tel:5085949661">508-594-9661</a>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .hero {
+      padding-block: 5rem 3rem;
+      position: relative;
+    }
+    @media (min-width: 768px) {
+      .hero {
+        padding-block: 7rem 3.5rem;
+      }
+    }
+    .hero-inner {
+      max-width: 880px;
+    }
+    .tagline {
+      font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+      font-weight: 500;
+      line-height: 1.35;
+      margin: 1rem 0 1.25rem;
+      color: var(--text);
+    }
+    .lede {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 0 2rem;
+    }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .showcase {
+      padding-block: 1rem 2rem;
+    }
+    .showcase-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 768px) {
+      .showcase-grid {
+        grid-template-columns: 2fr 1fr;
+        gap: 1.25rem;
+      }
+    }
+
+    .showcase-item {
+      width: 100%;
+      aspect-ratio: 16 / 11;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    @media (min-width: 768px) {
+      .showcase-slideshow {
+        aspect-ratio: auto;
+        height: 100%;
+      }
+      .showcase-video-wrap {
+        aspect-ratio: 9 / 16;
+        max-height: 560px;
+        margin-inline: auto;
+      }
+    }
+
+    .showcase-video-wrap {
+      background: #000;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .showcase-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .section-head {
+      margin-bottom: 2.5rem;
+    }
+    .section-head h2 {
+      margin: 0;
+    }
+
+    .project-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) {
+      .project-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .experience-section {
+      background: var(--bg-elevated);
+      border-block: 1px solid var(--border);
+    }
+    .experience-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) {
+      .experience-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    .experience-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .experience-logo {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .experience-logo :global(img) {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+    .experience-body {
+      padding: 1.5rem;
+    }
+    .experience-role {
+      margin: 0;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .experience-org {
+      margin: 0 0 0.75rem;
+      color: var(--accent);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+    .muted {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .contact-section {
+      text-align: center;
+    }
+    .contact-inner h2 {
+      margin-bottom: 1rem;
+    }
+    .contact-inner .cta-row {
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+  </style>
+</BaseLayout>
