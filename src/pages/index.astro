@@ -4,6 +4,8 @@ import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import Slideshow from '../components/Slideshow.astro';
+import home from '../data/home.json';
+
 import raytheonLogo from '../assets/images/experience/raytheon.png';
 import cfsLogo from '../assets/images/experience/cfs.png';
 import aeronuLogo from '../assets/images/experience/aeronu.png';
@@ -19,26 +21,19 @@ import running from '../assets/images/about/running.jpg';
 import music from '../assets/images/about/music.jpg';
 import plants from '../assets/images/about/plants.jpeg';
 
-const interests = [
-  {
-    title: 'Running',
-    image: running,
-    alt: 'Ryan running',
-    body: "I love running! I'm the Distance Captain of Northeastern's Running Club. I've recently broken into longer distances — my first 50k last fall, and I ran the Newport Marathon.",
-  },
-  {
-    title: 'Music',
-    image: music,
-    alt: 'Music',
-    body: 'I have a great appreciation for music. I played trumpet in high school and picked up guitar my junior year.',
-  },
-  {
-    title: 'Interior Design & Plants',
-    image: plants,
-    alt: 'Plants',
-    body: 'I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants — over 30 in my apartment.',
-  },
-];
+import type { ImageMetadata } from 'astro';
+
+// Maps from JSON keys to imported image assets so Astro can optimize them.
+const logoMap: Record<string, ImageMetadata> = {
+  cfs: cfsLogo,
+  raytheon: raytheonLogo,
+  aeronu: aeronuLogo,
+};
+const interestImageMap: Record<string, ImageMetadata> = {
+  running,
+  music,
+  plants,
+};
 
 const slideshowImages = [
   { src: weldInAction, alt: 'Welding in action on the manufacturing floor' },
@@ -54,47 +49,24 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).so
     b.data.date.valueOf() - a.data.date.valueOf(),
 );
 
-const experience = [
-  {
-    role: 'Manufacturing Engineer',
-    org: 'Commonwealth Fusion Systems',
-    blurb:
-      'Supported the poloidal field magnets for the SPARC tokamak — designed equipment, optimized production processes, and worked alongside operators on the floor.',
-    logo: cfsLogo,
-    alt: 'Commonwealth Fusion Systems',
-  },
-  {
-    role: 'Operations Engineering Co-op',
-    org: 'Raytheon',
-    blurb:
-      'Worked on circuit card production for missile and radar systems — heat-shielding fixtures, solder stencil optimization, and yield improvements on the floor.',
-    logo: raytheonLogo,
-    alt: 'Raytheon',
-  },
-  {
-    role: 'Vice President & Team Lead',
-    org: 'Northeastern Aerospace Club (AeroNU)',
-    blurb:
-      'Designing rocket engine components — currently leading work on a coaxial swirl injector for kerosene/GOX combustion.',
-    logo: aeronuLogo,
-    alt: 'Northeastern Aerospace Club',
-  },
-];
+const aboutBioParagraphs = home.aboutSection.bio
+  .split(/\n\s*\n+/)
+  .map((p) => p.trim())
+  .filter(Boolean);
 ---
 
 <BaseLayout title="Ryan Strawbridge — Mechanical Engineer">
   <section class="hero">
     <div class="container hero-inner">
-      <p class="eyebrow">Mechanical Engineer · Boston, MA</p>
+      <p class="eyebrow">{home.hero.eyebrow}</p>
       <h1>Ryan Strawbridge</h1>
-      <p class="tagline">I bridge gaps by inspiring confidence and engaging people.</p>
-      <p class="lede">
-        Passionate about clean energy, aerospace innovation, and incorporating human-centered design
-        whenever possible.
-      </p>
+      <p class="tagline">{home.hero.tagline}</p>
+      <p class="lede">{home.hero.lede}</p>
       <div class="cta-row">
-        <a class="btn" href="/projects/">View projects</a>
-        <a class="btn btn-secondary" href="/resume.pdf" target="_blank" rel="noopener">Résumé (PDF)</a>
+        <a class="btn" href={home.hero.primaryCta.href}>{home.hero.primaryCta.label}</a>
+        <a class="btn btn-secondary" href={home.hero.secondaryCta.href} target="_blank" rel="noopener">
+          {home.hero.secondaryCta.label}
+        </a>
       </div>
     </div>
   </section>
@@ -110,8 +82,8 @@ const experience = [
   <section class="section" id="projects">
     <div class="container">
       <div class="section-head">
-        <p class="eyebrow">Selected work</p>
-        <h2>Projects</h2>
+        <p class="eyebrow">{home.projectsSection.eyebrow}</p>
+        <h2>{home.projectsSection.title}</h2>
       </div>
       <div class="project-grid">
         {projects.map((project) => <ProjectCard project={project} />)}
@@ -122,23 +94,28 @@ const experience = [
   <section class="section experience-section">
     <div class="container">
       <div class="section-head">
-        <p class="eyebrow">Where I've worked</p>
-        <h2>Experience</h2>
+        <p class="eyebrow">{home.experienceSection.eyebrow}</p>
+        <h2>{home.experienceSection.title}</h2>
       </div>
       <ul class="experience-list">
         {
-          experience.map((item) => (
-            <li class="experience-card">
-              <div class="experience-logo">
-                <Image src={item.logo} alt={item.alt} widths={[400, 800, 1200]} sizes="(min-width: 768px) 33vw, 90vw" />
-              </div>
-              <div class="experience-body">
-                <p class="experience-role">{item.role}</p>
-                <p class="experience-org">{item.org}</p>
-                <p class="muted">{item.blurb}</p>
-              </div>
-            </li>
-          ))
+          home.experienceSection.items.map((item) => {
+            const logo = logoMap[item.logoKey];
+            return (
+              <li class="experience-card">
+                {logo && (
+                  <div class="experience-logo">
+                    <Image src={logo} alt={item.org} widths={[400, 800, 1200]} sizes="(min-width: 768px) 33vw, 90vw" />
+                  </div>
+                )}
+                <div class="experience-body">
+                  <p class="experience-role">{item.role}</p>
+                  <p class="experience-org">{item.org}</p>
+                  <p class="muted">{item.blurb}</p>
+                </div>
+              </li>
+            );
+          })
         }
       </ul>
     </div>
@@ -157,41 +134,31 @@ const experience = [
           />
         </div>
         <div class="about-copy">
-          <p class="eyebrow">About me</p>
-          <h2>Hi, I'm Ryan.</h2>
-          <p class="lede">
-            I'm a mechanical engineer in Boston, focused on clean energy and aerospace. I love
-            designing equipment that real people use on the floor — and watching it cut hours off a
-            shift.
-          </p>
-          <p>
-            I'm currently a Manufacturing Engineer at Commonwealth Fusion Systems, where I support
-            the poloidal field magnets for the SPARC tokamak. Previously I was an Operations
-            Engineering Co-op at Raytheon working on circuit card production for missile and radar
-            systems. I'm also Vice President of Northeastern's Aerospace Club, where I'm leading
-            work on a coaxial swirl injector for a kerosene/GOX rocket engine.
-          </p>
-          <p>
-            I gravitate toward designs that improve safety and ergonomics for the people who use
-            them. The best mechanical engineering, to me, is invisible — it makes someone's job
-            easier without them ever having to think about it.
-          </p>
+          <p class="eyebrow">{home.aboutSection.eyebrow}</p>
+          <h2>{home.aboutSection.heading}</h2>
+          <p class="lede">{home.aboutSection.lede}</p>
+          {aboutBioParagraphs.map((p) => <p>{p}</p>)}
         </div>
       </div>
 
       <div class="interests">
-        <p class="eyebrow">Outside of engineering</p>
+        <p class="eyebrow">{home.interestsSection.eyebrow}</p>
         <div class="interests-grid">
           {
-            interests.map((it) => (
-              <article class="interest-card">
-                <div class="interest-image">
-                  <Image src={it.image} alt={it.alt} widths={[400, 800]} sizes="(min-width: 768px) 33vw, 100vw" />
-                </div>
-                <h3>{it.title}</h3>
-                <p class="muted">{it.body}</p>
-              </article>
-            ))
+            home.interestsSection.items.map((item) => {
+              const img = interestImageMap[item.imageKey];
+              return (
+                <article class="interest-card">
+                  {img && (
+                    <div class="interest-image">
+                      <Image src={img} alt={item.alt} widths={[400, 800]} sizes="(min-width: 768px) 33vw, 100vw" />
+                    </div>
+                  )}
+                  <h3>{item.title}</h3>
+                  <p class="muted">{item.body}</p>
+                </article>
+              );
+            })
           }
         </div>
       </div>
@@ -200,15 +167,14 @@ const experience = [
 
   <section class="section contact-section" id="contact">
     <div class="container-narrow contact-inner">
-      <p class="eyebrow">Contact</p>
-      <h2>We should talk!</h2>
-      <p class="muted">
-        I'm always up for chatting about clean energy, aerospace, manufacturing, or design. Drop me a
-        line — I read everything.
-      </p>
+      <p class="eyebrow">{home.contactSection.eyebrow}</p>
+      <h2>{home.contactSection.heading}</h2>
+      <p class="muted">{home.contactSection.body}</p>
       <div class="cta-row">
-        <a class="btn" href="mailto:rjstraw21@gmail.com">rjstraw21@gmail.com</a>
-        <a class="btn btn-secondary" href="tel:5085949661">508-594-9661</a>
+        <a class="btn" href={`mailto:${home.contactSection.email}`}>{home.contactSection.email}</a>
+        <a class="btn btn-secondary" href={`tel:${home.contactSection.phone.replace(/\D/g, '')}`}>
+          {home.contactSection.phone}
+        </a>
       </div>
     </div>
   </section>

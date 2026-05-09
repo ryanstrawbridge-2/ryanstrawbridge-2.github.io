@@ -9,6 +9,98 @@ media:
     output: '../../assets/images/{relative}'
 
 content:
+  - name: home
+    label: Home page
+    type: file
+    path: src/data/home.json
+    description: Edit the text on the home page (hero, experience, about, contact).
+    fields:
+      - name: hero
+        label: Hero
+        type: object
+        fields:
+          - { name: eyebrow, label: Eyebrow tag, type: string }
+          - { name: tagline, label: Tagline (big quote under the name), type: string }
+          - { name: lede, label: Lede (paragraph below tagline), type: text }
+          - name: primaryCta
+            label: Primary button
+            type: object
+            fields:
+              - { name: label, label: Label, type: string }
+              - { name: href, label: Link, type: string }
+          - name: secondaryCta
+            label: Secondary button
+            type: object
+            fields:
+              - { name: label, label: Label, type: string }
+              - { name: href, label: Link, type: string }
+      - name: projectsSection
+        label: Projects section heading
+        type: object
+        fields:
+          - { name: eyebrow, label: Eyebrow, type: string }
+          - { name: title, label: Heading, type: string }
+      - name: experienceSection
+        label: Experience section
+        type: object
+        fields:
+          - { name: eyebrow, label: Eyebrow, type: string }
+          - { name: title, label: Heading, type: string }
+          - name: items
+            label: Experience cards
+            type: object
+            list: true
+            fields:
+              - { name: role, label: Role, type: string }
+              - { name: org, label: Organization, type: string }
+              - { name: blurb, label: Blurb, type: text }
+              - name: logoKey
+                label: Logo
+                type: select
+                description: Pick which company logo to show. To add a new logo, ask Claude.
+                options:
+                  values: [cfs, raytheon, aeronu]
+      - name: aboutSection
+        label: About section
+        type: object
+        fields:
+          - { name: eyebrow, label: Eyebrow, type: string }
+          - { name: heading, label: Heading, type: string }
+          - { name: lede, label: Lede (intro sentence), type: text }
+          - name: bio
+            label: Bio
+            type: text
+            description: Use a blank line between paragraphs.
+      - name: interestsSection
+        label: Interests section
+        type: object
+        fields:
+          - { name: eyebrow, label: Eyebrow, type: string }
+          - { name: title, label: Heading, type: string }
+          - name: items
+            label: Interest cards
+            type: object
+            list: true
+            fields:
+              - { name: title, label: Title, type: string }
+              - name: imageKey
+                label: Image
+                type: select
+                description: Pick which image to show. To add a new one, ask Claude.
+                options:
+                  values: [running, music, plants]
+              - { name: alt, label: Alt text, type: string }
+              - { name: body, label: Body, type: text }
+      - name: contactSection
+        label: Contact section
+        type: object
+        fields:
+          - { name: eyebrow, label: Eyebrow, type: string }
+          - { name: heading, label: Heading, type: string }
+          - { name: body, label: Body, type: text }
+          - { name: email, label: Email, type: string }
+          - { name: phone, label: Phone, type: string }
+
   - name: projects
     label: Projects
     type: collection
