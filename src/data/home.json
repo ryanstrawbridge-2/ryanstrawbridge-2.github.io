@@ -53,18 +53,21 @@
       {
         "title": "Running",
         "imageKey": "running",
+        "extraImageKeys": ["running-2", "running-3"],
         "alt": "Ryan running",
         "body": "I love running! I'm the Distance Captain of Northeastern's Running Club. I've recently broken into longer distances — my first 50k last fall, and I ran the Newport Marathon."
       },
       {
         "title": "Music",
         "imageKey": "music",
+        "extraImageKeys": ["music-2", "music-3"],
         "alt": "Music",
         "body": "I have a great appreciation for music. I played trumpet in high school and picked up guitar my junior year."
       },
       {
         "title": "Interior Design & Plants",
         "imageKey": "plants",
+        "extraImageKeys": ["plants-2", "plants-3"],
         "alt": "Plants",
         "body": "I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants — over 30 in my apartment."
       }

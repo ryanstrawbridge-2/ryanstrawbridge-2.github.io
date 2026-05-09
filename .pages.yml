@@ -84,11 +84,26 @@ content:
             fields:
               - { name: title, label: Title, type: string }
               - name: imageKey
-                label: Image
+                label: Main image
                 type: select
-                description: Pick which image to show. To add a new one, ask Claude.
+                description: Larger main photo for this card. To add a new one, ask Claude.
                 options:
                   values: [running, music, plants]
+              - name: extraImageKeys
+                label: Extra thumbnail images
+                type: select
+                list: true
+                description: Optional smaller photos shown below the main one (up to ~4).
+                options:
+                  values:
+                    [
+                      'running-2',
+                      'running-3',
+                      'music-2',
+                      'music-3',
+                      'plants-2',
+                      'plants-3',
+                    ]
               - { name: alt, label: Alt text, type: string }
               - { name: body, label: Body, type: text }
       - name: contactSection
