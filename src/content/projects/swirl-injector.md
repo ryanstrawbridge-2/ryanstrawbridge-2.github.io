@@ -3,17 +3,19 @@ title: Coaxial Swirl Injector
 subtitle: AeroNU Mechanical Design
 organization: Northeastern Aerospace Club
 date: 2025-10-01
-summary: Initial design of a machinable coaxial swirl injector for mixing kerosene and gaseous oxygen for optimal combustion in a small bipropellant rocket engine.
+summary: Initial design of a machinable coaxial swirl injector for mixing
+  kerosene and gaseous oxygen for optimal combustion in a small bipropellant
+  rocket engine.
 hero: ../../assets/images/projects/swirl-injector/hero.jpeg
 heroAlt: Coaxial swirl injector CAD render
 tools:
   - SolidWorks
   - HSMWorks CAM
   - SolidWorks Flow Simulation
-  - Fluid dynamics
+  - Fluid Mechanics
 order: 1
+draft: false
 ---
-
 ## Problem
 
 Tasked with the initial design of a machinable swirl injector for mixing kerosene and gaseous oxygen well — a critical step in achieving optimal combustion for a student-built rocket engine.
@@ -27,9 +29,6 @@ Tasked with the initial design of a machinable swirl injector for mixing kerosen
 ![Full stackup of injector with chamber and nozzle](../../assets/images/projects/swirl-injector/full-stackup.jpeg)
 *Full stackup with chamber and nozzle.*
 
-<video controls muted loop playsinline preload="metadata">
-  <source src="/videos/swirl-injector-test.mp4" type="video/mp4" />
-</video>
 *Flow test — solving for required pressure.*
 
 ## Outcome
@@ -38,3 +37,4 @@ Tasked with the initial design of a machinable swirl injector for mixing kerosen
 - Stacked up cleanly with the chamber and nozzle for downstream integration.
 
 ![Injector detail view](../../assets/images/projects/swirl-injector/detail.jpeg)
+
