@@ -1,0 +1,87 @@
+# Pages CMS configuration
+# Edit this site at https://app.pagescms.org
+# Docs: https://pagescms.org/docs/
+
+media:
+  - name: project-images
+    label: Project images
+    input: src/assets/images
+    output: '../../assets/images/{relative}'
+
+content:
+  - name: projects
+    label: Projects
+    type: collection
+    path: src/content/projects
+    filename: '{primary}.md'
+    view:
+      fields: [title, organization, date, draft]
+      primary: title
+      sort: [order, date]
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: subtitle
+        label: Subtitle
+        type: string
+        description: Optional one-line tagline shown under the title.
+      - name: organization
+        label: Organization
+        type: string
+        description: Company or club where this work happened (shown on cards).
+      - name: date
+        label: Date
+        type: date
+        required: true
+        options:
+          format: yyyy-MM-dd
+      - name: summary
+        label: Summary
+        type: text
+        required: true
+        description: One-sentence summary used on project cards and previews.
+      - name: hero
+        label: Hero image
+        type: image
+        required: true
+        description: Main image shown on the project card and at the top of the page.
+        options:
+          input: src/assets/images/projects/{primary}
+          output: '../../assets/images/projects/{primary}/{name}{extension}'
+      - name: heroAlt
+        label: Hero alt text
+        type: string
+        required: true
+        description: Describe the image for screen readers.
+      - name: tools
+        label: Tools / skills
+        type: string
+        list: true
+        default: []
+        description: Listed as tags on the project page.
+      - name: order
+        label: Display order
+        type: number
+        default: 0
+        description: Lower numbers appear first. Ties broken by date (newer first).
+      - name: draft
+        label: Draft (hide from live site)
+        type: boolean
+        default: false
+        description: Toggle on to hide this project from the published site.
+      - name: body
+        label: Body
+        type: rich-text
+        description: |
+          Use ## headings for sections (Problem, What I did, Outcome, Gallery).
+          Drop in images with the image button — they'll be uploaded next to the hero.
+        options:
+          image:
+            input: src/assets/images/projects/{primary}
+            output: '../../assets/images/projects/{primary}/{name}{extension}'
+
+settings:
+  content:
+    merge: true
