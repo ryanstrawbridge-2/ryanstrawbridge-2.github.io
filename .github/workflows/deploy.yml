@@ -30,18 +30,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build site
+      - name: Build TinaCMS admin (best-effort)
         env:
           TINA_PUBLIC_CLIENT_ID: ${{ secrets.TINA_PUBLIC_CLIENT_ID }}
           TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
+        if: ${{ env.TINA_TOKEN != '' }}
+        # If tinacms build fails (e.g. TinaCloud branch not registered yet),
+        # log it and continue — astro build still ships the rest of the site.
         run: |
-          if [ -n "$TINA_TOKEN" ]; then
-            echo "TINA_TOKEN secret present — building with TinaCMS admin (/admin/)"
-            npm run build:tina
+          set +e
+          npx tinacms build
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::warning::tinacms build failed (rc=$rc); deploy will continue without /admin/. Most likely TinaCloud branch isn't registered yet."
           else
-            echo "TINA_TOKEN secret not set — building Astro only (no /admin/)"
-            npm run build
+            echo "tinacms build succeeded; /admin/ will be in the deploy."
           fi
+          exit 0
+
+      - name: Build Astro site
+        env:
+          TINA_PUBLIC_CLIENT_ID: ${{ secrets.TINA_PUBLIC_CLIENT_ID }}
+          TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
+        run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
