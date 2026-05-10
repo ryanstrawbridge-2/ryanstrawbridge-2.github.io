@@ -8,8 +8,9 @@
   "scripts": {
     "dev": "astro dev",
     "dev:tina": "tinacms dev -c \"astro dev\"",
-    "build": "astro build",
-    "build:tina": "tinacms build && astro build",
+    "build": "node scripts/fix-cms-paths.mjs && astro build",
+    "build:tina": "tinacms build && node scripts/fix-cms-paths.mjs && astro build",
+    "fix:paths": "node scripts/fix-cms-paths.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "tina": "tinacms"
