@@ -6,6 +6,35 @@ const branch =
   process.env.HEAD ||
   'main';
 
+// Parse/format helpers for image fields. Astro's content-collection image()
+// resolver expects paths RELATIVE to the markdown file
+// (../../assets/images/...). TinaCMS's image picker stores paths relative to
+// mediaRoot ("src/assets/images"). These helpers translate between the two so
+// images uploaded/picked in the editor land in the markdown in a form Astro
+// can resolve.
+const ASTRO_IMAGE_PREFIX = '../../assets/images/';
+const TINA_MEDIA_ROOT = '/src/assets/images/';
+
+const imageParse = (value?: string) => {
+  if (!value) return value;
+  // Strip the Tina mediaRoot prefix if it crept in.
+  let v = value;
+  if (v.startsWith(TINA_MEDIA_ROOT)) v = v.slice(TINA_MEDIA_ROOT.length);
+  if (v.startsWith('src/assets/images/')) v = v.slice('src/assets/images/'.length);
+  if (v.startsWith(ASTRO_IMAGE_PREFIX)) return v; // already in Astro form
+  // value is now relative-to-mediaRoot (e.g. "projects/X/Y.jpg")
+  return ASTRO_IMAGE_PREFIX + v.replace(/^\/+/, '');
+};
+
+const imageFormat = (value?: string) => {
+  if (!value) return value;
+  // Convert Astro-style relative path back to Tina's mediaRoot-relative form.
+  if (value.startsWith(ASTRO_IMAGE_PREFIX)) {
+    return '/' + value.slice(ASTRO_IMAGE_PREFIX.length);
+  }
+  return value;
+};
+
 const focalPointOptions = [
   { value: 'top-left', label: 'Top left' },
   { value: 'top', label: 'Top center' },
@@ -85,6 +114,10 @@ export default defineConfig({
             name: 'hero',
             label: 'Hero image',
             required: true,
+            ui: {
+              parse: imageParse as never,
+              format: imageFormat as never,
+            },
           },
           {
             type: 'string',
