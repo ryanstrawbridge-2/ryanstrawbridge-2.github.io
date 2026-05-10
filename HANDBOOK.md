@@ -44,7 +44,11 @@ You sent a big task list near the end of the session. Here's exactly what got bu
 
 ### 1. Register `main` in TinaCloud (~30 sec)
 
-Go to **https://app.tina.io/projects/a5253d2b-6939-4ae7-903b-b1f1e02657fa** and follow the **Project Setup Checklist** on the Overview page. Step 2 ("Set up your site schema") needs the `tina-lock.json` file — which I couldn't auto-generate because TinaCloud has a chicken-and-egg with branch registration. **The dashboard checklist will walk you through what to click.** Most likely it just needs you to confirm the branch.
+Go to **https://app.tina.io/projects/a5253d2b-6939-4ae7-903b-b1f1e02657fa** and follow the **Project Setup Checklist** on the Overview page.
+
+**Update during the night**: I successfully generated and committed `tina/tina-lock.json` (the file step 2 of the checklist needs). When you load the page in the morning, step 2 should already be ✅ green or auto-checking. If it's still pending, just refresh — TinaCloud polls GitHub for new commits.
+
+Steps 3 ("Log in through your site") and 4 ("Create a commit with TinaCloud on your site") are guided in their UI — they happen the first time you visit `/admin/` and edit something.
 
 ### 2. Add GitHub secrets so production builds include the visual editor (~2 min)
 
