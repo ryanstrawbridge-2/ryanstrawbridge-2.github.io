@@ -30,19 +30,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Diagnose TinaCMS env (length only — values stay secret)
-        env:
-          TINA_PUBLIC_CLIENT_ID: ${{ secrets.TINA_PUBLIC_CLIENT_ID }}
-          TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
-        run: |
-          echo "TINA_PUBLIC_CLIENT_ID length: ${#TINA_PUBLIC_CLIENT_ID} (should be 36 — UUID)"
-          echo "TINA_TOKEN length: ${#TINA_TOKEN} (should be 40 — hex)"
-          if [ "${#TINA_TOKEN}" -gt 0 ]; then
-            echo "✓ TINA_TOKEN is set"
-          else
-            echo "✗ TINA_TOKEN is empty — check secret name or scope"
-          fi
-
       - name: Build TinaCMS admin (best-effort)
         env:
           TINA_PUBLIC_CLIENT_ID: ${{ secrets.TINA_PUBLIC_CLIENT_ID }}
