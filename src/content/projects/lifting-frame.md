@@ -6,7 +6,7 @@ date: 2025-02-10
 summary: Designed and FEA-verified a 3-point lifting frame for safe crane
   handling of poloidal field magnet sub-assemblies, certified to ASME BTH-1
   design factors.
-hero: ../../assets/images/{relative}/projects/lifting-frame/frame-05.jpeg
+hero: ../../assets/images/projects/lifting-frame/frame-05.jpeg
 heroAlt: 3-point lifting frame on the manufacturing floor
 tools:
   - NX

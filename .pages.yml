@@ -6,7 +6,8 @@ media:
   - name: project-images
     label: Project images
     input: src/assets/images
-    output: '../../assets/images/{relative}'
+    # The output path is handled per-field (see hero/body image fields below)
+    # so the path stored in the markdown matches what Astro expects.
 
 content:
   - name: home
