@@ -53,6 +53,38 @@ GitHub SSH push from background bash processes intermittently stalls indefinitel
 - Terminal.app needed Documents folder access for Ryan to run git from there. Already granted.
 - The auto-mode classifier blocks "persistence mechanisms" (auto-running services). For new launchd plists, write the file but let Ryan load it manually.
 
+## TinaCMS gotchas (learned the hard way)
+
+1. **Image paths**: Astro's content-collection `image()` resolver expects
+   paths relative to the markdown file (`../../assets/images/...`). TinaCMS
+   stores paths relative to its `mediaRoot` (`/src/assets/images/...`).
+   These don't match. The `imageParse`/`imageFormat` helpers in
+   `tina/config.ts` translate between them. **When adding a new image field
+   to the schema, copy the `ui: { parse, format }` block from the existing
+   `hero` field** — without it, paths get mangled (e.g.
+   `/src/assets/images../../assets/images/...`) and the build fails.
+
+2. **`tina/tina-lock.json` must be in sync with `tina/config.ts`**: any
+   schema change requires regenerating the lock and committing it. To
+   regenerate: `set -a && source .env.local && set +a && npx tinacms dev`
+   for ~10 seconds, then kill it. Commit the updated `tina/tina-lock.json`.
+   If the lock is stale, `tinacms build` fails with "local schema doesn't
+   match remote" or returns 403.
+
+3. **GitHub Actions secrets pasted from chat get newlines**: when pasting
+   the TINA_TOKEN value, use `printf 'value' | pbcopy` to strip the trailing
+   newline. Without it, env vars come through with embedded newlines and
+   `tinacms build` produces a broken JS bundle (URL split across lines).
+
+4. **Step-level `if:` can't see step-level `env:`**: don't write
+   `if: ${{ env.X != '' }}` on a step that defines `env: X: ...`. The if
+   evaluates before env. Use `secrets` directly OR check inside the run
+   script.
+
+5. **`continue-on-error: true` masks failures**: workflow shows green even
+   when tinacms build failed. The verification step in deploy.yml warns
+   loudly when `dist/admin/index.html` is missing — keep that.
+
 ## Build behavior
 
 - `npm run build` — plain Astro build (always works).

@@ -34,17 +34,32 @@ jobs:
         env:
           TINA_PUBLIC_CLIENT_ID: ${{ secrets.TINA_PUBLIC_CLIENT_ID }}
           TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
-        # If TINA_TOKEN isn't set or tinacms build fails (e.g. TinaCloud branch
-        # not registered yet), log a warning and continue — astro build still
-        # ships the rest of the site.
+        # If TINA_TOKEN isn't set or tinacms build fails (e.g. TinaCloud schema
+        # mismatch), log a visible warning and continue — astro build still
+        # ships the rest of the site (just without /admin/).
         continue-on-error: true
         run: |
           if [ -z "$TINA_TOKEN" ]; then
-            echo "TINA_TOKEN not set — skipping tinacms build (no /admin/ in this deploy)"
+            echo "::warning title=TinaCMS::TINA_TOKEN not set — /admin/ will be missing from this deploy"
             exit 0
           fi
           echo "TINA_TOKEN present — running tinacms build"
-          npx tinacms build
+          if npx tinacms build; then
+            echo "✓ tinacms build succeeded"
+          else
+            echo "::warning title=TinaCMS build failed::/admin/ won't be in this deploy. Check the log above for the error. Common causes: schema mismatch (regenerate tina/tina-lock.json), TinaCloud branch out of date, expired token."
+            exit 0
+          fi
+
+      - name: Verify /admin/ was produced
+        # Surface a visible warning if /admin/ ended up missing from dist —
+        # without this, the deploy "succeeds" but the editor goes 404.
+        run: |
+          if [ -f dist/admin/index.html ]; then
+            echo "✓ /admin/ is in the deploy"
+          elif [ -n "${{ secrets.TINA_TOKEN }}" ]; then
+            echo "::warning title=TinaCMS missing::TINA_TOKEN is set but dist/admin/index.html doesn't exist. The TinaCMS build step probably failed silently. /admin/ will return 404 on the live site."
+          fi
 
       - name: Build Astro site
         env:
