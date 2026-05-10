@@ -30,8 +30,10 @@ const {
 
 const dateLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-// Map our friendly enum values to actual CSS values used in inline styles.
-const focalCss: Record<typeof heroFocalPoint, string> = {
+// Map the 9-way friendly keywords to CSS object-position values.
+// If heroFocalPoint isn't one of these keywords, treat it as a raw CSS value
+// (e.g. "37% 22%" from focal-picker.html).
+const focalKeywordCss: Record<string, string> = {
   'top-left': 'top left',
   top: 'top center',
   'top-right': 'top right',
@@ -42,13 +44,14 @@ const focalCss: Record<typeof heroFocalPoint, string> = {
   bottom: 'bottom center',
   'bottom-right': 'bottom right',
 };
+const focalCss = (value: string) => focalKeywordCss[value] ?? value;
 const aspectCss: Record<typeof heroAspect, string> = {
   wide: '21 / 9',
   standard: '3 / 2',
   tall: '4 / 5',
   square: '1 / 1',
 };
-const heroStyle = `--hero-focal: ${focalCss[heroFocalPoint]}; --hero-aspect: ${aspectCss[heroAspect]};`;
+const heroStyle = `--hero-focal: ${focalCss(heroFocalPoint)}; --hero-aspect: ${aspectCss[heroAspect]};`;
 
 const all = (await getCollection('projects', ({ data }) => !data.draft)).sort(
   (a, b) =>

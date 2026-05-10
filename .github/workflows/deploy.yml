@@ -31,10 +31,11 @@ jobs:
         run: npm ci
 
       - name: Build TinaCMS admin (best-effort)
+        # `if:` conditions can't see step-level `env`; use `secrets` directly.
+        if: ${{ secrets.TINA_TOKEN != '' }}
         env:
           TINA_PUBLIC_CLIENT_ID: ${{ secrets.TINA_PUBLIC_CLIENT_ID }}
           TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
-        if: ${{ env.TINA_TOKEN != '' }}
         # If tinacms build fails (e.g. TinaCloud branch not registered yet),
         # log it and continue — astro build still ships the rest of the site.
         run: |

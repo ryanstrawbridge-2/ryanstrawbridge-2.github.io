@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Image Focal Point Picker · Ryan Strawbridge</title>
+  <style>
+    :root {
+      --bg: #f1eee8;
+      --bg-elevated: #ffffff;
+      --text: #1a1a1a;
+      --text-muted: #6b6864;
+      --border: #e0dcd2;
+      --accent: #c2410c;
+      --radius: 6px;
+      --radius-lg: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    main {
+      max-width: 960px;
+      margin-inline: auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.6rem;
+    }
+    .lede {
+      color: var(--text-muted);
+      max-width: 60ch;
+      margin: 0 0 2rem;
+    }
+    .controls {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+      margin-bottom: 1.25rem;
+    }
+    @media (min-width: 720px) {
+      .controls { grid-template-columns: auto 1fr auto; align-items: end; }
+    }
+    label { font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.4rem; }
+    button, select, input[type="file"], input[type="url"] {
+      font: inherit;
+      padding: 0.55rem 0.85rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+    }
+    button { cursor: pointer; font-weight: 600; }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: crosshair;
+      user-select: none;
+      box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.3);
+    }
+    .stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .stage .dot {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 28px;
+      height: 28px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: rgb(255 255 255 / 0.9);
+      border: 3px solid var(--accent);
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.4), 0 0 0 8px rgb(194 65 12 / 0.2);
+      cursor: grab;
+      transition: width 120ms, height 120ms;
+    }
+    .stage .dot:active { cursor: grabbing; width: 32px; height: 32px; }
+    .stage .crosshair-h, .stage .crosshair-v {
+      position: absolute;
+      background: rgb(255 255 255 / 0.3);
+      pointer-events: none;
+    }
+    .stage .crosshair-h { left: 0; right: 0; height: 1px; top: 50%; }
+    .stage .crosshair-v { top: 0; bottom: 0; width: 1px; left: 50%; }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 21 / 9;
+      color: rgb(255 255 255 / 0.5);
+      font-size: 1rem;
+      gap: 0.5rem;
+    }
+
+    .output {
+      margin-top: 1.5rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .output-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.4rem 0;
+      flex-wrap: wrap;
+    }
+    .output-row strong { min-width: 11ch; }
+    .output-row code {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      background: var(--bg);
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    .copy-btn {
+      padding: 0.3rem 0.7rem;
+      font-size: 0.85rem;
+    }
+    .copy-btn.copied { color: var(--accent); border-color: var(--accent); }
+    p.muted { color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Image focal point picker</h1>
+    <p class="lede">
+      Pick the part of an image that should stay visible when it gets cropped.
+      Drag the dot to where the photo's "subject" is. Copy either the
+      <strong>9-way value</strong> (drop into the CMS dropdown) or the
+      <strong>exact percentage</strong> (paste into the CMS as a free-form value
+      for pixel-perfect control).
+    </p>
+
+    <div class="controls">
+      <div>
+        <label for="file">Upload image</label>
+        <input id="file" type="file" accept="image/*" />
+      </div>
+      <div>
+        <label for="url">Or paste a URL</label>
+        <input id="url" type="url" placeholder="https://…" style="width: 100%;" />
+      </div>
+      <div>
+        <label for="aspect">Crop shape</label>
+        <select id="aspect">
+          <option value="21/9">Wide (21:9, project hero default)</option>
+          <option value="3/2">Standard (3:2)</option>
+          <option value="4/5">Tall (4:5)</option>
+          <option value="1/1">Square (1:1)</option>
+          <option value="16/10">Card (16:10)</option>
+          <option value="4/3">About interest cards (4:3)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="stage" id="stage" style="aspect-ratio: 21 / 9;">
+      <div class="empty-state" id="empty">
+        <div>📷</div>
+        <div>Upload an image or paste a URL above</div>
+      </div>
+      <img id="img" alt="" style="display:none;" />
+      <div class="crosshair-h" id="ch-h" style="display:none;"></div>
+      <div class="crosshair-v" id="ch-v" style="display:none;"></div>
+      <div class="dot" id="dot" style="display:none;"></div>
+    </div>
+
+    <div class="output" id="output" style="display:none;">
+      <div class="output-row">
+        <strong>9-way value:</strong>
+        <code id="enum-value">center</code>
+        <button class="copy-btn" data-copy="enum-value">Copy</button>
+        <span class="muted">— for the dropdown in the CMS</span>
+      </div>
+      <div class="output-row">
+        <strong>Exact:</strong>
+        <code id="percent-value">50% 50%</code>
+        <button class="copy-btn" data-copy="percent-value">Copy</button>
+        <span class="muted">— paste this as the focal point value for precise control</span>
+      </div>
+    </div>
+
+    <p class="muted">
+      Tip: in the CMS, the focal point dropdown picks one of the 9 values.
+      For exact percentage placement, you'll need a small tweak —
+      <a href="#instructions">see below</a>.
+    </p>
+
+    <h2 id="instructions" style="margin-top: 3rem;">How exact percentages work</h2>
+    <p>
+      The site already accepts CSS <code>object-position</code> values. The dropdown
+      ships the 9 standard keywords. If you want pixel-precise placement, paste
+      the exact percentage value (e.g., <code>37% 22%</code>) into a project's
+      <code>heroFocalPoint</code> field <em>after</em> editing the markdown directly,
+      or ask Claude to extend the field to accept free-form strings.
+    </p>
+  </main>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const img = document.getElementById('img');
+    const dot = document.getElementById('dot');
+    const empty = document.getElementById('empty');
+    const chH = document.getElementById('ch-h');
+    const chV = document.getElementById('ch-v');
+    const fileInput = document.getElementById('file');
+    const urlInput = document.getElementById('url');
+    const aspectSelect = document.getElementById('aspect');
+    const output = document.getElementById('output');
+    const enumValue = document.getElementById('enum-value');
+    const percentValue = document.getElementById('percent-value');
+
+    let pct = { x: 50, y: 50 };
+
+    aspectSelect.addEventListener('change', () => {
+      stage.style.aspectRatio = aspectSelect.value;
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      loadImage(url);
+    });
+
+    urlInput.addEventListener('change', () => {
+      if (urlInput.value) loadImage(urlInput.value);
+    });
+
+    function loadImage(src) {
+      img.src = src;
+      img.style.display = 'block';
+      empty.style.display = 'none';
+      dot.style.display = 'block';
+      chH.style.display = 'block';
+      chV.style.display = 'block';
+      output.style.display = 'block';
+      img.onload = () => updatePosition(pct.x, pct.y);
+      img.onerror = () => alert('Could not load that image. Check the URL.');
+    }
+
+    function updatePosition(x, y) {
+      pct.x = Math.max(0, Math.min(100, x));
+      pct.y = Math.max(0, Math.min(100, y));
+      img.style.objectPosition = pct.x + '% ' + pct.y + '%';
+      dot.style.left = pct.x + '%';
+      dot.style.top = pct.y + '%';
+      chH.style.top = pct.y + '%';
+      chV.style.left = pct.x + '%';
+
+      const px = pct.x.toFixed(0);
+      const py = pct.y.toFixed(0);
+      percentValue.textContent = px + '% ' + py + '%';
+
+      // Map to nearest 9-way enum
+      const xZone = pct.x < 33 ? 'left' : pct.x > 66 ? 'right' : null;
+      const yZone = pct.y < 33 ? 'top' : pct.y > 66 ? 'bottom' : null;
+      let key = 'center';
+      if (yZone && xZone) key = yZone + '-' + xZone;
+      else if (yZone) key = yZone;
+      else if (xZone) key = xZone;
+      enumValue.textContent = key;
+    }
+
+    function pointerToPercent(ev) {
+      const rect = stage.getBoundingClientRect();
+      const x = ((ev.clientX - rect.left) / rect.width) * 100;
+      const y = ((ev.clientY - rect.top) / rect.height) * 100;
+      updatePosition(x, y);
+    }
+
+    let dragging = false;
+    stage.addEventListener('pointerdown', (e) => {
+      if (img.style.display === 'none') return;
+      dragging = true;
+      stage.setPointerCapture(e.pointerId);
+      pointerToPercent(e);
+    });
+    stage.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      pointerToPercent(e);
+    });
+    stage.addEventListener('pointerup', (e) => {
+      dragging = false;
+      stage.releasePointerCapture(e.pointerId);
+    });
+
+    document.querySelectorAll('.copy-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = document.getElementById(btn.dataset.copy);
+        navigator.clipboard.writeText(target.textContent).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = 'Copied ✓';
+          btn.classList.add('copied');
+          setTimeout(() => {
+            btn.textContent = orig;
+            btn.classList.remove('copied');
+          }, 1500);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

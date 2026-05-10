@@ -17,19 +17,9 @@ const projects = defineCollection({
       draft: z.boolean().default(false),
 
       // Visual layout controls (all optional, sensible defaults).
-      heroFocalPoint: z
-        .enum([
-          'top-left',
-          'top',
-          'top-right',
-          'left',
-          'center',
-          'right',
-          'bottom-left',
-          'bottom',
-          'bottom-right',
-        ])
-        .default('center'),
+      // Accepts the 9-way keywords (top-left, top, ...) OR a CSS
+      // object-position string like "37% 22%" from focal-picker.html.
+      heroFocalPoint: z.string().default('center'),
       heroAspect: z.enum(['wide', 'standard', 'tall', 'square']).default('wide'),
       galleryLayout: z
         .enum(['stacked', 'two-column', 'three-column'])
