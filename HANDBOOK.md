@@ -64,6 +64,31 @@ After step 1+2, your next push triggers a build that includes `/admin/` — a re
 
 ---
 
+## Visual focal-point picker
+
+Drag a dot on any image to pick exactly where it should anchor when cropped.
+
+**Open**: https://ryanstrawbridge-2.github.io/focal-picker.html
+
+How to use:
+1. Upload an image (or paste a URL)
+2. Pick a crop shape that matches where you'll use the photo (Wide for hero, Tall for portraits, etc.)
+3. Click or drag the dot to where the photo's subject is
+4. Copy either:
+   - **9-way value** (e.g. `top-left`) → paste into the CMS dropdown
+   - **Exact percentage** (e.g. `37% 22%`) → paste into the markdown directly for pixel-precise control
+
+The site accepts both formats — the schema is `string`, so any valid CSS `object-position` value works.
+
+## Drag-drop section reorder
+
+Once `/admin/` is live (the visual editor), TinaCMS's list fields support drag-and-drop reordering for free. To reorder:
+- Experience cards: `Home page → Experience section → Experience cards` — grab the handle, drag, save
+- Interest cards: same pattern under `Interests section`
+- Tool tags on a project: `Projects → [pick one] → Tools / skills` — drag
+
+No code changes needed — it's a native TinaCMS feature.
+
 ## Daily editing — three ways
 
 | Tool | URL | What it gives you | When to use |

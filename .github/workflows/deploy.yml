@@ -31,23 +31,20 @@ jobs:
         run: npm ci
 
       - name: Build TinaCMS admin (best-effort)
-        # `if:` conditions can't see step-level `env`; use `secrets` directly.
-        if: ${{ secrets.TINA_TOKEN != '' }}
         env:
           TINA_PUBLIC_CLIENT_ID: ${{ secrets.TINA_PUBLIC_CLIENT_ID }}
           TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
-        # If tinacms build fails (e.g. TinaCloud branch not registered yet),
-        # log it and continue — astro build still ships the rest of the site.
+        # If TINA_TOKEN isn't set or tinacms build fails (e.g. TinaCloud branch
+        # not registered yet), log a warning and continue — astro build still
+        # ships the rest of the site.
+        continue-on-error: true
         run: |
-          set +e
-          npx tinacms build
-          rc=$?
-          if [ $rc -ne 0 ]; then
-            echo "::warning::tinacms build failed (rc=$rc); deploy will continue without /admin/. Most likely TinaCloud branch isn't registered yet."
-          else
-            echo "tinacms build succeeded; /admin/ will be in the deploy."
+          if [ -z "$TINA_TOKEN" ]; then
+            echo "TINA_TOKEN not set — skipping tinacms build (no /admin/ in this deploy)"
+            exit 0
           fi
-          exit 0
+          echo "TINA_TOKEN present — running tinacms build"
+          npx tinacms build
 
       - name: Build Astro site
         env:
