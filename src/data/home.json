@@ -10,15 +10,22 @@
     "secondaryCta": {
       "label": "Résumé (PDF)",
       "href": "/resume.pdf"
-    }
+    },
+    "headshotShape": "circle"
+  },
+  "showcase": {
+    "show": true
   },
   "projectsSection": {
+    "show": true,
     "eyebrow": "Selected work",
     "title": "Projects"
   },
   "experienceSection": {
+    "show": true,
     "eyebrow": "Where I've worked",
     "title": "Experience",
+    "logoSize": "medium",
     "items": [
       {
         "role": "Manufacturing Engineer",
@@ -41,12 +48,16 @@
     ]
   },
   "aboutSection": {
+    "show": true,
+    "photoPosition": "left",
+    "photoFocalPoint": "center",
     "eyebrow": "About me",
     "heading": "Hi, I'm Ryan.",
     "lede": "I'm a mechanical engineer in Boston, focused on clean energy and aerospace. I love designing equipment that real people use on the floor — and watching it cut hours off a shift.",
     "bio": "I'm currently a Manufacturing Engineer at Commonwealth Fusion Systems, where I support the poloidal field magnets for the SPARC tokamak. Previously I was an Operations Engineering Co-op at Raytheon working on circuit card production for missile and radar systems. I'm also Vice President of Northeastern's Aerospace Club, where I'm leading work on a coaxial swirl injector for a kerosene/GOX rocket engine.\n\nI gravitate toward designs that improve safety and ergonomics for the people who use them. The best mechanical engineering, to me, is invisible — it makes someone's job easier without them ever having to think about it."
   },
   "interestsSection": {
+    "show": true,
     "eyebrow": "Outside of engineering",
     "title": "What I'm into",
     "items": [
@@ -74,6 +85,7 @@
     ]
   },
   "contactSection": {
+    "show": true,
     "eyebrow": "Contact",
     "heading": "We should talk!",
     "body": "I'm always up for chatting about clean energy, aerospace, manufacturing, or design. Drop me a line — I read everything.",

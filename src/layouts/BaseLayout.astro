@@ -1,6 +1,7 @@
 ---
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import siteSettings from '../data/site.json';
 import '../styles/global.css';
 
 interface Props {
@@ -17,10 +18,21 @@ const {
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImage = image ? new URL(image, Astro.site).toString() : undefined;
+
+// Container widths editable via Pages CMS (site.json).
+const widthMap: Record<string, string> = {
+  narrow: '960px',
+  standard: '1100px',
+  wide: '1280px',
+};
+const containerWidth = widthMap[siteSettings.containerWidth ?? 'standard'] ?? widthMap.standard;
+const accent = siteSettings.accentColor ?? '#c2410c';
+const accentHover = siteSettings.accentColorHover ?? '#9a3412';
+const rootStyle = `--accent: ${accent}; --accent-hover: ${accentHover}; --container: ${containerWidth};`;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" style={rootStyle}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

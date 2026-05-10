@@ -15,6 +15,25 @@ const projects = defineCollection({
       tools: z.array(z.string()).default([]),
       order: z.number().default(0),
       draft: z.boolean().default(false),
+
+      // Visual layout controls (all optional, sensible defaults).
+      heroFocalPoint: z
+        .enum([
+          'top-left',
+          'top',
+          'top-right',
+          'left',
+          'center',
+          'right',
+          'bottom-left',
+          'bottom',
+          'bottom-right',
+        ])
+        .default('center'),
+      heroAspect: z.enum(['wide', 'standard', 'tall', 'square']).default('wide'),
+      galleryLayout: z
+        .enum(['stacked', 'two-column', 'three-column'])
+        .default('stacked'),
     }),
 });
 

@@ -10,14 +10,41 @@ media:
     # so the path stored in the markdown matches what Astro expects.
 
 content:
+  # =========================================================================
+  # SITE-WIDE SETTINGS — accent color, container width, etc.
+  # =========================================================================
+  - name: site-settings
+    label: Site settings
+    type: file
+    path: src/data/site.json
+    description: Site-wide visual settings (accent color, container width).
+    fields:
+      - name: accentColor
+        label: Accent color
+        type: string
+        description: Used for buttons, links, project hover. Example - #c2410c (orange).
+      - name: accentColorHover
+        label: Accent color (hover)
+        type: string
+        description: Slightly darker shade for hovers. Example - #9a3412.
+      - name: containerWidth
+        label: Container width
+        type: select
+        description: How wide the content area can grow on big screens.
+        options:
+          values: [narrow, standard, wide]
+
+  # =========================================================================
+  # HOME PAGE
+  # =========================================================================
   - name: home
     label: Home page
     type: file
     path: src/data/home.json
-    description: Edit the text on the home page (hero, experience, about, contact).
+    description: Edit text and layout knobs for the home page.
     fields:
       - name: hero
-        label: Hero
+        label: Hero (top of page)
         type: object
         fields:
           - { name: eyebrow, label: Eyebrow tag, type: string }
@@ -35,18 +62,40 @@ content:
             fields:
               - { name: label, label: Label, type: string }
               - { name: href, label: Link, type: string }
-      - name: projectsSection
-        label: Projects section heading
+          - name: headshotShape
+            label: Headshot shape
+            type: select
+            description: Shape of your headshot photo at the top.
+            options:
+              values: [circle, square, rounded]
+
+      - name: showcase
+        label: Engineering photos slideshow
         type: object
         fields:
+          - { name: show, label: Show this section, type: boolean, default: true }
+
+      - name: projectsSection
+        label: Projects section
+        type: object
+        fields:
+          - { name: show, label: Show this section, type: boolean, default: true }
           - { name: eyebrow, label: Eyebrow, type: string }
           - { name: title, label: Heading, type: string }
+
       - name: experienceSection
         label: Experience section
         type: object
         fields:
+          - { name: show, label: Show this section, type: boolean, default: true }
           - { name: eyebrow, label: Eyebrow, type: string }
           - { name: title, label: Heading, type: string }
+          - name: logoSize
+            label: Logo size
+            type: select
+            description: How tall the logo boxes are.
+            options:
+              values: [small, medium, large]
           - name: items
             label: Experience cards
             type: object
@@ -61,10 +110,35 @@ content:
                 description: Pick which company logo to show. To add a new logo, ask Claude.
                 options:
                   values: [cfs, raytheon, aeronu]
+
       - name: aboutSection
         label: About section
         type: object
         fields:
+          - { name: show, label: Show this section, type: boolean, default: true }
+          - name: photoPosition
+            label: Photo position
+            type: select
+            description: Photo on the left or right side of the bio text.
+            options:
+              values: [left, right]
+          - name: photoFocalPoint
+            label: Photo crop position
+            type: select
+            description: Where to anchor the photo when it crops.
+            options:
+              values:
+                [
+                  'top-left',
+                  'top',
+                  'top-right',
+                  'left',
+                  'center',
+                  'right',
+                  'bottom-left',
+                  'bottom',
+                  'bottom-right',
+                ]
           - { name: eyebrow, label: Eyebrow, type: string }
           - { name: heading, label: Heading, type: string }
           - { name: lede, label: Lede (intro sentence), type: text }
@@ -72,10 +146,12 @@ content:
             label: Bio
             type: text
             description: Use a blank line between paragraphs.
+
       - name: interestsSection
         label: Interests section
         type: object
         fields:
+          - { name: show, label: Show this section, type: boolean, default: true }
           - { name: eyebrow, label: Eyebrow, type: string }
           - { name: title, label: Heading, type: string }
           - name: items
@@ -94,7 +170,7 @@ content:
                 label: Extra thumbnail images
                 type: select
                 list: true
-                description: Optional smaller photos shown below the main one (up to ~4).
+                description: Optional smaller photos shown below the main one.
                 options:
                   values:
                     [
@@ -107,16 +183,21 @@ content:
                     ]
               - { name: alt, label: Alt text, type: string }
               - { name: body, label: Body, type: text }
+
       - name: contactSection
         label: Contact section
         type: object
         fields:
+          - { name: show, label: Show this section, type: boolean, default: true }
           - { name: eyebrow, label: Eyebrow, type: string }
           - { name: heading, label: Heading, type: string }
           - { name: body, label: Body, type: text }
           - { name: email, label: Email, type: string }
           - { name: phone, label: Phone, type: string }
 
+  # =========================================================================
+  # PROJECTS — one entry per project file
+  # =========================================================================
   - name: projects
     label: Projects
     type: collection
@@ -127,29 +208,16 @@ content:
       primary: title
       sort: [order, date]
     fields:
-      - name: title
-        label: Title
-        type: string
-        required: true
-      - name: subtitle
-        label: Subtitle
-        type: string
-        description: Optional one-line tagline shown under the title.
-      - name: organization
-        label: Organization
-        type: string
-        description: Company or club where this work happened (shown on cards).
+      - { name: title, label: Title, type: string, required: true }
+      - { name: subtitle, label: Subtitle, type: string, description: "Optional one-line tagline shown under the title." }
+      - { name: organization, label: Organization, type: string, description: "Company or club where this work happened (shown on cards)." }
       - name: date
         label: Date
         type: date
         required: true
         options:
           format: yyyy-MM-dd
-      - name: summary
-        label: Summary
-        type: text
-        required: true
-        description: One-sentence summary used on project cards and previews.
+      - { name: summary, label: Summary, type: text, required: true, description: "One-sentence summary used on project cards and previews." }
       - name: hero
         label: Hero image
         type: image
@@ -158,27 +226,42 @@ content:
         options:
           input: src/assets/images/projects/{primary}
           output: '../../assets/images/projects/{primary}/{name}{extension}'
-      - name: heroAlt
-        label: Hero alt text
-        type: string
-        required: true
-        description: Describe the image for screen readers.
-      - name: tools
-        label: Tools / skills
-        type: string
-        list: true
-        default: []
-        description: Listed as tags on the project page.
-      - name: order
-        label: Display order
-        type: number
-        default: 0
-        description: Lower numbers appear first. Ties broken by date (newer first).
-      - name: draft
-        label: Draft (hide from live site)
-        type: boolean
-        default: false
-        description: Toggle on to hide this project from the published site.
+      - { name: heroAlt, label: Hero alt text, type: string, required: true, description: "Describe the image for screen readers." }
+
+      # Layout knobs (Wix-like control without leaving the form)
+      - name: heroFocalPoint
+        label: Hero crop position
+        type: select
+        description: Where to anchor the hero image when it crops. Useful when faces or details get cut off.
+        options:
+          values:
+            [
+              'top-left',
+              'top',
+              'top-right',
+              'left',
+              'center',
+              'right',
+              'bottom-left',
+              'bottom',
+              'bottom-right',
+            ]
+      - name: heroAspect
+        label: Hero shape
+        type: select
+        description: Shape of the hero image at the top of the page.
+        options:
+          values: [wide, standard, tall, square]
+      - name: galleryLayout
+        label: Gallery layout
+        type: select
+        description: How gallery images stack at the bottom of the project page.
+        options:
+          values: [stacked, two-column, three-column]
+
+      - { name: tools, label: "Tools / skills", type: string, list: true, default: [], description: "Listed as tags on the project page." }
+      - { name: order, label: Display order, type: number, default: 0, description: "Lower numbers appear first. Ties broken by date (newer first)." }
+      - { name: draft, label: "Draft (hide from live site)", type: boolean, default: false, description: "Toggle on to hide this project from the published site." }
       - name: body
         label: Body
         type: rich-text

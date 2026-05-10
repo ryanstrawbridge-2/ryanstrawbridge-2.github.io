@@ -14,9 +14,41 @@ export const getStaticPaths = (async () => {
 
 const { project } = Astro.props;
 const { Content } = await render(project);
-const { title, subtitle, organization, date, summary, hero, heroAlt, tools } = project.data;
+const {
+  title,
+  subtitle,
+  organization,
+  date,
+  summary,
+  hero,
+  heroAlt,
+  tools,
+  heroFocalPoint,
+  heroAspect,
+  galleryLayout,
+} = project.data;
 
 const dateLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+// Map our friendly enum values to actual CSS values used in inline styles.
+const focalCss: Record<typeof heroFocalPoint, string> = {
+  'top-left': 'top left',
+  top: 'top center',
+  'top-right': 'top right',
+  left: 'center left',
+  center: 'center center',
+  right: 'center right',
+  'bottom-left': 'bottom left',
+  bottom: 'bottom center',
+  'bottom-right': 'bottom right',
+};
+const aspectCss: Record<typeof heroAspect, string> = {
+  wide: '21 / 9',
+  standard: '3 / 2',
+  tall: '4 / 5',
+  square: '1 / 1',
+};
+const heroStyle = `--hero-focal: ${focalCss[heroFocalPoint]}; --hero-aspect: ${aspectCss[heroAspect]};`;
 
 const all = (await getCollection('projects', ({ data }) => !data.draft)).sort(
   (a, b) =>
@@ -50,7 +82,7 @@ const next = idx < all.length - 1 ? all[idx + 1] : null;
       </div>
     </header>
 
-    <div class="hero-image-wrap container">
+    <div class="hero-image-wrap container" style={heroStyle}>
       <Image
         src={hero}
         alt={heroAlt}
@@ -60,7 +92,7 @@ const next = idx < all.length - 1 ? all[idx + 1] : null;
       />
     </div>
 
-    <div class="container-narrow project-body">
+    <div class={`container-narrow project-body gallery-${galleryLayout}`}>
       <Content />
     </div>
 
@@ -121,8 +153,10 @@ const next = idx < all.length - 1 ? all[idx + 1] : null;
     }
     .hero-image-wrap :global(.hero-image) {
       width: 100%;
-      max-height: 600px;
+      aspect-ratio: var(--hero-aspect, 21 / 9);
+      max-height: 640px;
       object-fit: cover;
+      object-position: var(--hero-focal, center center);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-lg);
     }
@@ -170,6 +204,54 @@ const next = idx < all.length - 1 ? all[idx + 1] : null;
       margin: 1.5rem 0;
       color: var(--text-muted);
       font-style: italic;
+    }
+
+    /* Gallery layouts: when set, images flow into a multi-column grid while
+       text content spans all columns. */
+    .project-body.gallery-two-column,
+    .project-body.gallery-three-column {
+      display: grid;
+      gap: 1.25rem;
+    }
+    .project-body.gallery-two-column {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .project-body.gallery-three-column {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    @media (max-width: 720px) {
+      .project-body.gallery-two-column,
+      .project-body.gallery-three-column {
+        grid-template-columns: 1fr;
+      }
+    }
+    .project-body.gallery-two-column :global(h1),
+    .project-body.gallery-two-column :global(h2),
+    .project-body.gallery-two-column :global(h3),
+    .project-body.gallery-two-column :global(p:not(:has(img))),
+    .project-body.gallery-two-column :global(ul),
+    .project-body.gallery-two-column :global(ol),
+    .project-body.gallery-two-column :global(blockquote),
+    .project-body.gallery-three-column :global(h1),
+    .project-body.gallery-three-column :global(h2),
+    .project-body.gallery-three-column :global(h3),
+    .project-body.gallery-three-column :global(p:not(:has(img))),
+    .project-body.gallery-three-column :global(ul),
+    .project-body.gallery-three-column :global(ol),
+    .project-body.gallery-three-column :global(blockquote) {
+      grid-column: 1 / -1;
+    }
+    .project-body.gallery-two-column :global(p:has(img)),
+    .project-body.gallery-three-column :global(p:has(img)) {
+      margin: 0;
+    }
+    .project-body.gallery-two-column :global(p:has(img) img),
+    .project-body.gallery-three-column :global(p:has(img) img) {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
     }
 
     .project-nav {
