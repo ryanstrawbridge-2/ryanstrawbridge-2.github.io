@@ -42,13 +42,27 @@ You sent a big task list near the end of the session. Here's exactly what got bu
 
 3 quick wins (~10 minutes total) to unlock the next level:
 
-### 1. Register `main` in TinaCloud (~30 sec)
+### 1. TinaCloud setup checklist
 
-Go to **https://app.tina.io/projects/a5253d2b-6939-4ae7-903b-b1f1e02657fa** and follow the **Project Setup Checklist** on the Overview page.
+Go to **https://app.tina.io/projects/a5253d2b-6939-4ae7-903b-b1f1e02657fa**.
 
-**Update during the night**: I successfully generated and committed `tina/tina-lock.json` (the file step 2 of the checklist needs). When you load the page in the morning, step 2 should already be ✅ green or auto-checking. If it's still pending, just refresh — TinaCloud polls GitHub for new commits.
+**Steps 1 + 2 are already ✅** — I generated `tina/tina-lock.json` and `tinacms build` succeeded locally, which means TinaCloud has the schema indexed.
 
-Steps 3 ("Log in through your site") and 4 ("Create a commit with TinaCloud on your site") are guided in their UI — they happen the first time you visit `/admin/` and edit something.
+**Step 3 ("Log in through your site")** needs `/admin/` to be live on your deployed site. Right now it's 404 because the GitHub Actions `tinacms build` step is silently failing in CI (works locally, fails on the runner). I couldn't read the CI logs without GitHub auth.
+
+**To diagnose** (~2 min):
+1. Open https://github.com/ryanstrawbridge-2/ryanstrawbridge-2.github.io/actions
+2. Click the most recent run
+3. Click the "build" job → expand the "Build TinaCMS admin (best-effort)" step
+4. Look for one of:
+   - `TINA_TOKEN not set` → your GitHub repo secret is named differently than `TINA_TOKEN`. Fix the name to exactly that.
+   - `Error when checking client information` → the secret value is wrong; copy the Content (Read-only) token from https://app.tina.io/projects/a5253d2b-6939-4ae7-903b-b1f1e02657fa/tokens
+   - `not authorized to access branch main` → the branch isn't fully indexed yet on TinaCloud. Refresh the project overview page.
+   - `Tina build complete` → it actually worked; just trigger another deploy (push any change) and `/admin/` should appear.
+
+Tell me what you see and I'll fix it.
+
+**Step 4** (Create a commit with TinaCloud on your site) happens automatically the first time you make an edit through the visual editor at `/admin/`.
 
 ### 2. Add GitHub secrets so production builds include the visual editor (~2 min)
 
