@@ -30,7 +30,7 @@ The poloidal-field magnet sub-assemblies needed to move from the assembly fixtur
 
 ## Outcome
 
-- Saved over [blank] hours of work in magnet stacking process.
+- Saved over [blank] hours of work in the magnet stacking process.
 - Frame proof-tested to **125% of rated load** with no measurable deformation.
 
 ## Gallery
