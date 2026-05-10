@@ -2,9 +2,9 @@
 title: Hydraulic Bender
 subtitle: Mechanical design for fusion magnet manufacturing
 organization: Commonwealth Fusion Systems
-date: 2025-05-01
-summary: Redesigned a hydraulic bending tool used in poloidal field magnet production — cut a full shift down to a quarter, eliminated manual lifting, and achieved consistent bends to spec.
-hero: ../../assets/images/projects/hydraulic-bender/hero.jpg
+date: 2025-05-01T00:00:00.000Z
+summary: 'Redesigned a hydraulic bending tool used in poloidal field magnet production. Cut a full shift down to a quarter, eliminated manual lifting, and achieved consistent bends to spec.'
+hero: /src/assets/images../../assets/images/projects/hydraulic-bender/hero.jpg
 heroAlt: Hydraulic bender tool on the manufacturing floor
 tools:
   - Mechanical design
@@ -21,30 +21,20 @@ The previous bending equipment produced bends shorter than required, formed only
 
 ## What I did
 
-- Derived a generalizable equation relating bend offset, radius, and arc length to compensate for spring-back, and redesigned the bending plates to create both bends at once.
-- Reconfigured the bolting and piston layout, increasing shear capacity to **44 kips**.
-- Added crane-assisted handling to eliminate manual lifting while maintaining ease of operation.
+* Derived a generalizable equation relating bend offset, radius, and arc length to compensate for spring-back, and redesigned the bending plates to create both bends at once.
+* Reconfigured the bolting and piston layout, increasing shear capacity to **44 kips**.
+* Added crane-assisted handling to eliminate manual lifting while maintaining ease of operation.
 
 ## Outcome
 
-- Consistently bending to spec on the first pass.
-- Cut bending operation time from a full shift down to a quarter.
-- Improved ergonomics, reduced injury risk, and increased first-pass accuracy.
+* Consistently bending to spec on the first pass.
+* Cut bending operation time from a full shift down to a quarter.
+* Improved ergonomics, reduced injury risk, and increased first-pass accuracy.
 
 ## Gallery
 
-![Hydraulic bender on the floor](../../assets/images/projects/hydraulic-bender/bender-01.jpeg)
+![Hydraulic bender on the floor](/src/assets/images../../assets/images/projects/hydraulic-bender/bender-01.jpeg)
 
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-02.jpeg)
+![Hydraulic bender](/src/assets/images../../assets/images/projects/hydraulic-bender/bender-02.jpeg)
 
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-03.jpeg)
-
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-04.jpeg)
-
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-05.jpeg)
-
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-06.jpeg)
-
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-07.jpeg)
-
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-08.jpeg)
+![Hydraulic bender](/src/assets/images../../assets/images/projects/hydraulic-bender/bender-03.jpeg)
