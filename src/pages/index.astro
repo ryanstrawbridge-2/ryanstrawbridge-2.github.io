@@ -3,7 +3,6 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import Slideshow from '../components/Slideshow.astro';
 import home from '../data/home.json';
 
 // Lookup tables for the new layout knobs.
@@ -76,14 +75,6 @@ const interestImageMap: Record<string, ImageMetadata> = {
   'plants-3': plants3,
 };
 
-const slideshowImages = [
-  { src: weldInAction, alt: 'Welding in action on the manufacturing floor' },
-  { src: bandsaw, alt: 'Working at the bandsaw' },
-  { src: magDrill, alt: 'Operating a magnetic drill press' },
-  { src: welding, alt: 'Welding work at Commonwealth Fusion Systems' },
-  { src: liftingTest, alt: 'Lifting test for a 3-point lifting frame' },
-];
-
 const projects = (await getCollection('projects', ({ data }) => !data.draft)).sort(
   (a, b) =>
     a.data.order - b.data.order ||
@@ -126,8 +117,27 @@ const aboutBioParagraphs = home.aboutSection.bio
   {home.showcase?.show !== false && (
     <section class="showcase">
       <div class="container">
-        <div class="showcase-item showcase-slideshow">
-          <Slideshow images={slideshowImages} ariaLabel="Engineering work in action" />
+        <div class="collage" aria-label="Engineering work in action">
+          <div class="collage-item collage-large">
+            <Image src={weldInAction} alt="Welding in action on the manufacturing floor" widths={[400, 800, 1200]} sizes="(min-width: 768px) 50vw, 100vw" />
+          </div>
+          <div class="collage-item">
+            <Image src={bandsaw} alt="Working at the bandsaw" widths={[400, 800]} sizes="(min-width: 768px) 25vw, 50vw" />
+          </div>
+          <div class="collage-item">
+            <Image src={magDrill} alt="Operating a magnetic drill press" widths={[400, 800]} sizes="(min-width: 768px) 25vw, 50vw" />
+          </div>
+          <div class="collage-item collage-video">
+            <video autoplay muted loop playsinline preload="metadata" aria-label="Aero testing video">
+              <source src="/videos/aero-testing.mp4" type="video/mp4" />
+            </video>
+          </div>
+          <div class="collage-item">
+            <Image src={welding} alt="Welding work at Commonwealth Fusion Systems" widths={[400, 800]} sizes="(min-width: 768px) 25vw, 50vw" />
+          </div>
+          <div class="collage-item">
+            <Image src={liftingTest} alt="Lifting test for a 3-point lifting frame" widths={[400, 800]} sizes="(min-width: 768px) 25vw, 50vw" />
+          </div>
         </div>
       </div>
     </section>
@@ -321,17 +331,58 @@ const aboutBioParagraphs = home.aboutSection.bio
     .showcase {
       padding-block: 1rem 2rem;
     }
-    .showcase-item {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
+    /* Collage of engineering work — irregular grid: one large hero cell on
+       the left, smaller cells flowing on the right, video stands tall in the
+       middle. Items have varying spans so it reads as a designed collage,
+       not a uniform gallery. */
+    .collage {
+      display: grid;
+      gap: 0.5rem;
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 1fr;
     }
     @media (min-width: 768px) {
-      .showcase-item {
-        aspect-ratio: 21 / 9;
-        max-height: 520px;
+      .collage {
+        gap: 0.75rem;
+        grid-template-columns: 2fr 1fr 1fr;
+        grid-template-rows: repeat(2, minmax(180px, 1fr));
+        aspect-ratio: 16 / 9;
+        max-height: 540px;
       }
+    }
+    .collage-item {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      background: var(--bg-elevated);
+      aspect-ratio: 4 / 3;
+    }
+    @media (min-width: 768px) {
+      .collage-item {
+        aspect-ratio: auto;
+      }
+      /* Big hero photo, top-left, spans both rows */
+      .collage-large {
+        grid-column: 1;
+        grid-row: 1 / 3;
+      }
+      /* Aero-testing video: middle column, both rows (portrait video plays
+         tall and full-bleed) */
+      .collage-video {
+        grid-column: 2;
+        grid-row: 1 / 3;
+      }
+    }
+    .collage-item :global(img),
+    .collage-item :global(video) {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 600ms ease;
+    }
+    .collage-item:hover :global(img) {
+      transform: scale(1.04);
     }
 
     .section-head {
