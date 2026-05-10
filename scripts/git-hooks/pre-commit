@@ -1,0 +1,35 @@
+#!/bin/bash
+# Pre-commit: build the site and bail if it breaks.
+# Activate this hook by running once:
+#     git config core.hooksPath scripts/git-hooks
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# If the only changes are inside `.claude` or `scripts` or docs, skip the build —
+# those don't affect the Astro output.
+NON_TRIVIAL=$(git diff --cached --name-only | \
+  grep -vE '^(\.claude/|scripts/|README\.md$|.*\.md$|MEMORY\.md$)' || true)
+
+if [ -z "$NON_TRIVIAL" ]; then
+  exit 0
+fi
+
+# Skip if node_modules isn't installed (someone hasn't run npm install yet).
+if [ ! -d node_modules ]; then
+  echo "pre-commit: node_modules missing, skipping build check (run 'npm install' to enable)"
+  exit 0
+fi
+
+echo "pre-commit: running 'npm run build' to verify the site still builds…"
+if ! npm run build > /tmp/precommit-build.log 2>&1; then
+  echo "❌ Build failed. Last 30 lines:"
+  tail -30 /tmp/precommit-build.log
+  echo ""
+  echo "Fix the error above, or skip this check with:  git commit --no-verify"
+  exit 1
+fi
+
+echo "✅ Build passed."

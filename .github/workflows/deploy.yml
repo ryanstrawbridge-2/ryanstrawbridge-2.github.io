@@ -31,7 +31,17 @@ jobs:
         run: npm ci
 
       - name: Build site
-        run: npm run build
+        env:
+          TINA_PUBLIC_CLIENT_ID: ${{ secrets.TINA_PUBLIC_CLIENT_ID }}
+          TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
+        run: |
+          if [ -n "$TINA_TOKEN" ]; then
+            echo "TINA_TOKEN secret present — building with TinaCMS admin (/admin/)"
+            npm run build:tina
+          else
+            echo "TINA_TOKEN secret not set — building Astro only (no /admin/)"
+            npm run build
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

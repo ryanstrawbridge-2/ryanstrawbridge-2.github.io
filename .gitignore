@@ -13,9 +13,14 @@ yarn-error.log*
 pnpm-debug.log*
 
 
-# environment variables
+# environment variables — secrets must never be committed
 .env
+.env.local
+.env.*.local
 .env.production
+
+# tina (auto-generated GraphQL client and types)
+tina/__generated__/
 
 # macOS-specific files
 .DS_Store

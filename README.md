@@ -1,5 +1,7 @@
 # Ryan Strawbridge — Portfolio
 
+[![Deploy to GitHub Pages](https://github.com/ryanstrawbridge-2/ryanstrawbridge-2.github.io/actions/workflows/deploy.yml/badge.svg)](https://github.com/ryanstrawbridge-2/ryanstrawbridge-2.github.io/actions/workflows/deploy.yml)
+
 Personal mechanical engineering portfolio. Built with [Astro](https://astro.build), deployed to GitHub Pages.
 
 Live: https://ryanstrawbridge-2.github.io
