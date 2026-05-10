@@ -13,6 +13,7 @@ tools:
   - Spring-back compensation
   - Ergonomic design
 order: 2
+draft: false
 ---
 
 ## Problem
