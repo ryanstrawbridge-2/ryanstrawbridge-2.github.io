@@ -28,9 +28,12 @@ const logoSizeHeight: Record<string, string> = {
   medium: '150px',
   large: '200px',
 };
+// Accepts the 9-way keywords or a CSS object-position string like "37% 22%".
+const focalCssOf = (value: string) => focalCss[value] ?? value;
+
 const photoShape = home.hero.headshotShape ?? 'circle';
 const photoPosition = home.aboutSection.photoPosition ?? 'left';
-const aboutFocal = focalCss[home.aboutSection.photoFocalPoint ?? 'center'];
+const aboutFocal = focalCssOf(home.aboutSection.photoFocalPoint ?? 'center');
 const logoH = logoSizeHeight[home.experienceSection.logoSize ?? 'medium'];
 
 import raytheonLogo from '../assets/images/experience/raytheon.png';
