@@ -26,6 +26,13 @@ log() {
   printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOG_FILE"
 }
 
+# Portable timeout wrapper. macOS doesn't ship GNU `timeout`; use perl's alarm.
+# Usage: timeout_cmd 30 git fetch origin main
+timeout_cmd() {
+  local secs=$1; shift
+  perl -e 'alarm shift; exec @ARGV or die "exec: $!"' "$secs" "$@"
+}
+
 # Trim log if it gets large (keep most recent 2000 lines).
 if [ -f "$LOG_FILE" ] && [ "$(wc -l < "$LOG_FILE" | tr -d ' ')" -gt 2000 ]; then
   tail -2000 "$LOG_FILE" > "$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
@@ -54,7 +61,7 @@ fi
 export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=6"
 
 # Fetch remote (with timeout so DNS or network blips don't hang us).
-if ! /usr/bin/timeout 30 git fetch origin main 2>>"$LOG_FILE"; then
+if ! timeout_cmd 30 git fetch origin main 2>>"$LOG_FILE"; then
   log "ERROR: git fetch timed out or failed"
   exit 1
 fi
@@ -72,7 +79,7 @@ did_change=0
 # Local is behind (remote ahead) → fast-forward / rebase
 if [ "$LOCAL" = "$BASE" ]; then
   log "remote ahead — rebasing local main onto origin/main"
-  if /usr/bin/timeout 60 git pull --rebase --autostash origin main >>"$LOG_FILE" 2>&1; then
+  if timeout_cmd 60 git pull --rebase --autostash origin main >>"$LOG_FILE" 2>&1; then
     log "rebase OK; local is now at $(git rev-parse --short HEAD)"
     did_change=1
   else
@@ -89,7 +96,7 @@ elif [ "$REMOTE" = "$BASE" ]; then
 # Diverged → rebase then push
 else
   log "diverged — rebasing then pushing"
-  if ! /usr/bin/timeout 60 git pull --rebase --autostash origin main >>"$LOG_FILE" 2>&1; then
+  if ! timeout_cmd 60 git pull --rebase --autostash origin main >>"$LOG_FILE" 2>&1; then
     log "ERROR: divergent rebase failed"
     git rebase --abort 2>>"$LOG_FILE" || true
     exit 1
@@ -98,7 +105,7 @@ fi
 
 # If we still have commits to push, push them with a timeout.
 if [ "$(git rev-list --count origin/main..main)" -gt 0 ]; then
-  if /usr/bin/timeout "$PUSH_TIMEOUT" git push origin main >>"$LOG_FILE" 2>&1; then
+  if timeout_cmd "$PUSH_TIMEOUT" git push origin main >>"$LOG_FILE" 2>&1; then
     log "push OK"
     did_change=1
   else
