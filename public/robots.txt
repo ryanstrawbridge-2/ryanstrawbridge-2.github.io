@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Hide the editor from crawlers
+Disallow: /admin/
+
+Sitemap: https://ryanstrawbridge-2.github.io/sitemap-index.xml

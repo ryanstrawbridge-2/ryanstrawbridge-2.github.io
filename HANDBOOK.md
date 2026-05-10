@@ -7,13 +7,44 @@ The 5-minute reference doc for working with this site, plus my honest reflection
 
 ---
 
+## What got built tonight (May 10, 2026)
+
+You sent a big task list near the end of the session. Here's exactly what got built and what got skipped, and why:
+
+### Built ✅
+
+- **Sitemap + robots.txt** — `dist/sitemap-index.xml` is now generated automatically at build time (Astro plugin). `/robots.txt` allows crawlers but blocks `/admin/`.
+- **JSON-LD structured data** — Person + WebSite schemas baked into every page's `<head>`. Helps Google show rich results and link to your social profiles.
+- **Light/dark mode toggle** — restored, top-right of the nav. Respects system preference on first load, stores choice in localStorage. Pre-paint script prevents the "flash of wrong theme" on page load.
+- **Editable navigation** — `src/data/navigation.json` is the source of truth for nav links. Editable in Pages CMS as **"Site navigation"** in the left sidebar. Includes a toggle for whether the theme button appears in the nav.
+- **Skip-to-content link + focus indicators** — keyboard users get a "Skip to content" link as the first focusable element. Every interactive element shows a clear focus ring.
+- **Scroll reveal animations** — project cards, experience cards, and interest cards fade-and-slide in as they enter the viewport. Pure CSS + IntersectionObserver, no Framer Motion / no React. Respects `prefers-reduced-motion`.
+- **TinaCMS visual editor scaffolding** — schema in `tina/config.ts`, build wired into deploy workflow (best-effort so it doesn't block the deploy if TinaCloud isn't ready). `/admin/` lights up automatically once the morning steps are done.
+
+### Skipped (and why)
+
+- **Blog with RSS feed** — there's no blog content yet. Adding one is a real project (collection schema, listing page, individual post template, RSS generation, social share buttons). Worth doing **after** you have a few posts ready to publish.
+- **Framer Motion animations** — Framer Motion is React-only and adds ~50 KB minified to every page load. Astro has zero-runtime CSS animations that look just as good for fade-in patterns. The reveal animation we shipped is one of those.
+- **`next/image` migration** — `next/image` is a Next.js component. Astro has its own `<Image>` (which we already use everywhere). They're equivalent products; no migration needed.
+- **Vercel deploy + `.env.example`** — we deploy to GitHub Pages (which is free, fast, and you already own the URL). Migrating to Vercel would be a step backward unless you specifically want their preview-deploys feature.
+- **Drag-and-drop block editor** — TinaCMS supports this via their `templates` system. It's a nontrivial 3-4 hour build (block components in Astro, schema definitions, renderer). Better as a focused next session once visual editing is proven working.
+- **Dynamic contact form with backend endpoint** — for a personal portfolio, the `mailto:` button on the home page is the right call. A real form requires a backend (Resend/Formspree/etc.), spam mitigation, and ongoing maintenance. Premature.
+- **WCAG AA contrast audit across both themes** — I tightened focus rings and skip links, but a full systematic contrast audit (every text/bg pair against the standard) is its own ~1 hour task. Quick wins are in; a deeper pass is on the future-work list.
+
+### What changed for the daily editing flow
+
+- New entry in Pages CMS sidebar: **"Site navigation"** — change link labels, reorder, add new items, toggle the theme button.
+- Existing CMS workflows unchanged. Nothing you've already learned is invalidated.
+
+---
+
 ## TL;DR — When you wake up tomorrow
 
 3 quick wins (~10 minutes total) to unlock the next level:
 
 ### 1. Register `main` in TinaCloud (~30 sec)
 
-Go to **https://app.tina.io/projects/a5253d2b-6939-4ae7-903b-b1f1e02657fa/configuration**, find the branches section, and add `main`. Done.
+Go to **https://app.tina.io/projects/a5253d2b-6939-4ae7-903b-b1f1e02657fa** and follow the **Project Setup Checklist** on the Overview page. Step 2 ("Set up your site schema") needs the `tina-lock.json` file — which I couldn't auto-generate because TinaCloud has a chicken-and-egg with branch registration. **The dashboard checklist will walk you through what to click.** Most likely it just needs you to confirm the branch.
 
 ### 2. Add GitHub secrets so production builds include the visual editor (~2 min)
 

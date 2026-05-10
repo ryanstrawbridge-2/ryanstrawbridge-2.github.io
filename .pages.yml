@@ -11,6 +11,26 @@ media:
 
 content:
   # =========================================================================
+  # NAVIGATION — top nav links + theme toggle visibility
+  # =========================================================================
+  - name: navigation
+    label: Site navigation
+    type: file
+    path: src/data/navigation.json
+    description: Top navigation links and visibility of the theme toggle.
+    fields:
+      - name: items
+        label: Nav items
+        type: object
+        list: true
+        fields:
+          - { name: label, label: Label, type: string }
+          - { name: href, label: "Link (e.g. /projects/, /#about, https://…)", type: string }
+      - name: showThemeToggle
+        label: Show light/dark toggle in nav
+        type: boolean
+
+  # =========================================================================
   # SITE-WIDE SETTINGS — accent color, container width, etc.
   # =========================================================================
   - name: site-settings

@@ -156,7 +156,7 @@ const aboutBioParagraphs = home.aboutSection.bio
           home.experienceSection.items.map((item) => {
             const logo = logoMap[item.logoKey];
             return (
-              <li class="experience-card">
+              <li class="experience-card reveal">
                 {logo && (
                   <div class="experience-logo">
                     <Image src={logo} alt={item.org} widths={[400, 800, 1200]} sizes="(min-width: 768px) 33vw, 90vw" />
@@ -208,7 +208,7 @@ const aboutBioParagraphs = home.aboutSection.bio
                 .map((k) => interestImageMap[k])
                 .filter(Boolean);
               return (
-                <article class="interest-card">
+                <article class="interest-card reveal">
                   {main && (
                     <div class="interest-image-main">
                       <Image src={main} alt={item.alt} widths={[400, 800]} sizes="(min-width: 768px) 33vw, 100vw" />

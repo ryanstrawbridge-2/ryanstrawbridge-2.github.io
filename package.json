@@ -15,6 +15,7 @@
     "tina": "tinacms"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.2",
     "@tinacms/cli": "^2.2.6",
     "astro": "^6.3.1",
     "tinacms": "^3.7.6"

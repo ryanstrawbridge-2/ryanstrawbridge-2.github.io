@@ -12,7 +12,7 @@ const { title, subtitle, organization, hero, heroAlt, summary, date } = project.
 const dateLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 ---
 
-<a class="card" href={`/projects/${project.id}/`}>
+<a class="card reveal" href={`/projects/${project.id}/`}>
   <div class="card-image">
     <Image src={hero} alt={heroAlt} widths={[400, 800, 1200]} sizes="(min-width: 768px) 50vw, 100vw" />
   </div>

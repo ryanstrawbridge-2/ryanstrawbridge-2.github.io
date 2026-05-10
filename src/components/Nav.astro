@@ -1,10 +1,6 @@
 ---
-const links = [
-  { href: '/', label: 'Home' },
-  { href: '/projects/', label: 'Projects' },
-  { href: '/#about', label: 'About' },
-  { href: '/#contact', label: 'Contact' },
-];
+import ThemeToggle from './ThemeToggle.astro';
+import navData from '../data/navigation.json';
 
 const path = Astro.url.pathname;
 ---
@@ -22,9 +18,9 @@ const path = Astro.url.pathname;
       </button>
       <ul id="nav-menu" class="nav-links">
         {
-          links.map((link) => {
-            const isActive =
-              link.href === '/' ? path === '/' : path.startsWith(link.href.split('#')[0]);
+          navData.items.map((link) => {
+            const target = link.href.split('#')[0] || '/';
+            const isActive = target === '/' ? path === '/' : path.startsWith(target);
             return (
               <li>
                 <a href={link.href} class={isActive ? 'active' : ''}>
@@ -34,6 +30,7 @@ const path = Astro.url.pathname;
             );
           })
         }
+        {navData.showThemeToggle !== false && <li><ThemeToggle /></li>}
       </ul>
     </nav>
   </div>
@@ -49,7 +46,6 @@ const path = Astro.url.pathname;
     -webkit-backdrop-filter: saturate(180%) blur(12px);
     border-bottom: 1px solid var(--border);
   }
-
   .nav-inner {
     display: flex;
     align-items: center;
@@ -57,26 +53,22 @@ const path = Astro.url.pathname;
     padding-block: 1rem;
     gap: 1rem;
   }
-
   .brand {
     color: var(--text);
     display: flex;
     flex-direction: column;
     line-height: 1.1;
   }
-
   .brand-name {
     font-weight: 700;
     font-size: 1.05rem;
     letter-spacing: -0.01em;
   }
-
   .brand-role {
     font-size: 0.78rem;
     color: var(--text-muted);
     font-weight: 500;
   }
-
   .nav-links {
     list-style: none;
     margin: 0;
@@ -85,29 +77,29 @@ const path = Astro.url.pathname;
     gap: 0.25rem;
     align-items: center;
   }
-
   .nav-links a {
     color: var(--text);
     padding: 0.5rem 0.85rem;
     border-radius: var(--radius);
     font-weight: 500;
     font-size: 0.95rem;
-    transition: background var(--transition), color var(--transition);
+    transition: background 180ms ease, color 180ms ease;
   }
-
   .nav-links a:hover {
     background: var(--bg-elevated);
     color: var(--accent);
   }
-
   .nav-links a.active {
     color: var(--accent);
   }
-
+  .nav-links a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
   .nav-toggle {
     display: none;
     background: none;
-    border: 1px solid var(--border-strong);
+    border: 1px solid var(--border-strong, var(--border));
     border-radius: var(--radius);
     width: 40px;
     height: 40px;
@@ -117,15 +109,17 @@ const path = Astro.url.pathname;
     justify-content: center;
     gap: 4px;
   }
-
+  .nav-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
   .nav-toggle span {
     display: block;
     width: 18px;
     height: 2px;
     background: var(--text);
-    transition: transform var(--transition);
+    transition: transform 180ms ease;
   }
-
   @media (max-width: 720px) {
     .nav-toggle {
       display: flex;
@@ -143,10 +137,10 @@ const path = Astro.url.pathname;
       padding: 0.75rem;
       max-height: 0;
       overflow: hidden;
-      transition: max-height var(--transition);
+      transition: max-height 180ms ease;
     }
     .nav-links.open {
-      max-height: 400px;
+      max-height: 600px;
     }
     .nav-links li {
       width: 100%;

@@ -29,6 +29,45 @@ const containerWidth = widthMap[siteSettings.containerWidth ?? 'standard'] ?? wi
 const accent = siteSettings.accentColor ?? '#c2410c';
 const accentHover = siteSettings.accentColorHover ?? '#9a3412';
 const rootStyle = `--accent: ${accent}; --accent-hover: ${accentHover}; --container: ${containerWidth};`;
+
+// JSON-LD structured data — lets search engines and social crawlers
+// understand who/what this site is.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': `${Astro.site}#person`,
+      name: 'Ryan Strawbridge',
+      jobTitle: 'Mechanical Engineer',
+      url: Astro.site?.toString(),
+      email: 'mailto:rjstraw21@gmail.com',
+      address: { '@type': 'PostalAddress', addressLocality: 'Boston', addressRegion: 'MA' },
+      sameAs: [
+        'https://www.linkedin.com/in/ryanstrawbridge',
+        'https://www.instagram.com/rjstraw21/',
+        'https://www.strava.com/athletes/60975771',
+        'https://github.com/ryanstrawbridge-2',
+      ],
+      knowsAbout: [
+        'Mechanical engineering',
+        'Manufacturing engineering',
+        'Clean energy',
+        'Fusion energy',
+        'Aerospace propulsion',
+        'CAD design',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${Astro.site}#website`,
+      url: Astro.site?.toString(),
+      name: 'Ryan Strawbridge — Mechanical Engineer Portfolio',
+      description,
+      publisher: { '@id': `${Astro.site}#person` },
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -54,12 +93,51 @@ const rootStyle = `--accent: ${accent}; --accent-hover: ${accentHover}; --contai
     {ogImage && <meta name="twitter:image" content={ogImage} />}
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
+
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+
+    {/* Pre-paint theme so we never flash the wrong colors. */}
+    <script is:inline>
+      (function () {
+        try {
+          const stored = localStorage.getItem('theme');
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const theme = stored || (prefersDark ? 'dark' : 'light');
+          document.documentElement.dataset.theme = theme;
+        } catch (_) { /* ignore */ }
+      })();
+    </script>
   </head>
   <body>
+    <a href="#main" class="skip-link">Skip to content</a>
     <Nav />
-    <main>
+    <main id="main" tabindex="-1">
       <slot />
     </main>
     <Footer />
+
+    <script>
+      // Reveal-on-scroll. Any element with class="reveal" fades + slides in
+      // when it scrolls into view. Once shown, observation is dropped.
+      const els = document.querySelectorAll<HTMLElement>('.reveal');
+      if ('IntersectionObserver' in window && els.length > 0) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('reveal-shown');
+                io.unobserve(entry.target);
+              }
+            }
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -80px 0px' },
+        );
+        els.forEach((el) => io.observe(el));
+      } else {
+        // Old browsers / no IO: just show everything.
+        els.forEach((el) => el.classList.add('reveal-shown'));
+      }
+    </script>
   </body>
 </html>

@@ -22,6 +22,22 @@
   --transition: 180ms ease;
 }
 
+/* Dark theme — applied when html[data-theme="dark"] is set, either by the
+   user toggle or as the system preference. */
+:root[data-theme="dark"] {
+  --bg: #14110e;
+  --bg-elevated: #1d1a16;
+  --bg-subtle: #1a1714;
+  --text: #f3eee5;
+  --text-muted: #a8a094;
+  --border: #2c2722;
+  --border-strong: #3d3730;
+  --accent-soft: #3a1f10;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.7), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+}
+
 *,
 *::before,
 *::after {
@@ -183,11 +199,59 @@ p {
   background: #000;
 }
 
+/* Skip link — visible only when focused for keyboard users. */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: white;
+  border-radius: var(--radius);
+  font-weight: 600;
+  transition: top 180ms ease;
+}
+.skip-link:focus {
+  top: 0.75rem;
+  color: white;
+}
+
+/* Global focus indicators for keyboard users. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+button:focus-visible,
+a:focus-visible {
+  outline-offset: 3px;
+}
+
+main:focus { outline: none; }
+
+/* Scroll-triggered fade-in. Apply class="reveal" to any element to opt in.
+   The IntersectionObserver in BaseLayout adds class="reveal-shown" when
+   visible. No JS framework required. */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+.reveal.reveal-shown {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
   }
 }
