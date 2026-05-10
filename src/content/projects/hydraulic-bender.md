@@ -4,7 +4,7 @@ subtitle: Mechanical design for fusion magnet manufacturing
 organization: Commonwealth Fusion Systems
 date: 2025-05-01T00:00:00.000Z
 summary: 'Redesigned a hydraulic bending tool used in poloidal field magnet production. Cut a full shift down to a quarter, eliminated manual lifting, and achieved consistent bends to spec.'
-hero: ../../assets/images/projects/hydraulic-bender/hero.jpg
+hero: /src/assets/images../../assets/images/projects/hydraulic-bender/hero.jpg
 heroAlt: Hydraulic bender tool on the manufacturing floor
 tools:
   - Mechanical design
@@ -28,14 +28,14 @@ The previous bending equipment produced bends shorter than required, formed only
 
 ## Outcome
 
-* Consistently bending to spec on the first pass.
+* Consistently bending to spec on the first press.
 * Cut bending operation time from a full shift down to a quarter.
 * Improved ergonomics, reduced injury risk, and increased first-pass accuracy.
 
 ## Gallery
 
-![Hydraulic bender on the floor](../../assets/images/projects/hydraulic-bender/bender-01.jpeg)
+![Hydraulic bender on the floor](/src/assets/images../../assets/images/projects/hydraulic-bender/bender-01.jpeg)
 
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-02.jpeg)
+![Hydraulic bender](/src/assets/images../../assets/images/projects/hydraulic-bender/bender-02.jpeg)
 
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-03.jpeg)
+![Hydraulic bender](/src/assets/images../../assets/images/projects/hydraulic-bender/bender-03.jpeg)
