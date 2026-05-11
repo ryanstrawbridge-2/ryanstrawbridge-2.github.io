@@ -21,6 +21,7 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).so
           electronics, and small personal builds.
         </p>
       </header>
+      <h2 class="sr-only">Project list</h2>
       <div class="project-grid">
         {projects.map((project) => <ProjectCard project={project} />)}
       </div>

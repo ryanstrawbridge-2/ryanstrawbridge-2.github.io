@@ -121,6 +121,8 @@ const aboutBioParagraphs = home.aboutSection.bio
           widths={[300, 600, 900]}
           sizes="(min-width: 768px) 320px, 60vw"
           class="headshot"
+          loading="eager"
+          fetchpriority="high"
         />
       </div>
     </div>
@@ -184,7 +186,7 @@ const aboutBioParagraphs = home.aboutSection.bio
               <li class="experience-card reveal">
                 {logo && (
                   <div class="experience-logo">
-                    <Image src={logo} alt={item.org} widths={[400, 800, 1200]} sizes="(min-width: 768px) 33vw, 90vw" />
+                    <Image src={logo} alt={item.org} widths={[400, 800, 1200]} sizes="(min-width: 768px) 33vw, 90vw" loading="lazy" />
                   </div>
                 )}
                 <div class="experience-body">
@@ -212,6 +214,7 @@ const aboutBioParagraphs = home.aboutSection.bio
             widths={[400, 800, 1200]}
             sizes="(min-width: 768px) 380px, 80vw"
             class="portrait"
+            loading="lazy"
           />
         </div>
         <div class="about-copy">
@@ -256,14 +259,20 @@ const aboutBioParagraphs = home.aboutSection.bio
                 <article class="interest-card reveal">
                   {main && (
                     <div class="interest-image-main">
-                      <Image src={main} alt={item.alt} widths={[400, 800]} sizes="(min-width: 768px) 33vw, 100vw" />
+                      <Image src={main} alt={item.alt} widths={[400, 800]} sizes="(min-width: 768px) 33vw, 100vw" loading="lazy" />
                     </div>
                   )}
                   {extras.length > 0 && (
                     <div class="interest-thumbs">
-                      {extras.map((img) => (
+                      {extras.map((img, i) => (
                         <div class="interest-thumb">
-                          <Image src={img} alt="" widths={[200, 400]} sizes="(min-width: 768px) 16vw, 33vw" />
+                          <Image
+                            src={img}
+                            alt={`${item.title} — photo ${i + 2}`}
+                            widths={[200, 400]}
+                            sizes="(min-width: 768px) 16vw, 33vw"
+                            loading="lazy"
+                          />
                         </div>
                       ))}
                     </div>
