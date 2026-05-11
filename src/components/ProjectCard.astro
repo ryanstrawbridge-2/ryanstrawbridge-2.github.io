@@ -20,8 +20,10 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'nume
     <p class="eyebrow">
       {organization ?? subtitle ?? 'Project'} <span class="dot">·</span> {dateLabel}
     </p>
-    <h3>{title}</h3>
-    <p class="summary muted">{summary}</p>
+    <div class="card-text">
+      <h3>{title}</h3>
+      <p class="summary muted">{summary}</p>
+    </div>
     <span class="link">View project →</span>
   </div>
 </a>
@@ -33,12 +35,16 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'nume
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow: hidden; /* keep the image zoom from spilling */
     color: var(--text);
-    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    transition:
+      transform 280ms cubic-bezier(0.2, 0, 0.2, 1),
+      box-shadow 280ms cubic-bezier(0.2, 0, 0.2, 1),
+      border-color 280ms cubic-bezier(0.2, 0, 0.2, 1);
   }
 
-  .card:hover {
+  .card:hover,
+  .card:focus-visible {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
     border-color: var(--accent);
@@ -49,16 +55,15 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'nume
     overflow: hidden;
     background: var(--bg);
   }
-
   .card-image :global(img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 400ms ease;
+    transition: transform 400ms cubic-bezier(0.2, 0, 0.2, 1);
   }
-
-  .card:hover .card-image :global(img) {
-    transform: scale(1.03);
+  .card:hover .card-image :global(img),
+  .card:focus-visible .card-image :global(img) {
+    transform: scale(1.05);
   }
 
   .card-body {
@@ -69,22 +74,44 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'nume
     flex: 1;
   }
 
-  .eyebrow {
-    margin: 0;
-  }
+  .eyebrow { margin: 0; }
+  .dot { margin-inline: 0.35rem; }
 
-  .dot {
-    margin-inline: 0.35rem;
+  /* Title + summary share a stacking context. Title shifts up on hover
+     and summary fades in beneath. Height is reserved by the summary's
+     own min-height so the card doesn't jump. */
+  .card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
   }
-
   h3 {
     margin: 0;
     font-size: 1.4rem;
+    transform: translateY(0);
+    transition: transform 280ms cubic-bezier(0.2, 0, 0.2, 1);
   }
-
+  .card:hover h3,
+  .card:focus-visible h3 {
+    transform: translateY(-2px);
+  }
   .summary {
     font-size: 0.95rem;
     margin: 0;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 280ms ease, transform 280ms cubic-bezier(0.2, 0, 0.2, 1);
+    /* Show only the first line until hovered, so even when fading in it
+       doesn't push the card layout around. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card:hover .summary,
+  .card:focus-visible .summary {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .link {
@@ -93,5 +120,23 @@ const dateLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'nume
     color: var(--accent);
     font-weight: 600;
     font-size: 0.95rem;
+  }
+
+  /* Honor user preference: kill the lift, zoom, and fades. */
+  @media (prefers-reduced-motion: reduce) {
+    .card,
+    .card-image :global(img),
+    .card h3,
+    .card .summary {
+      transition: none !important;
+      transform: none !important;
+    }
+    .card:hover,
+    .card:focus-visible {
+      transform: none !important;
+    }
+    .summary {
+      opacity: 1;
+    }
   }
 </style>
