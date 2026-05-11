@@ -5,7 +5,7 @@ import navData from '../data/navigation.json';
 const path = Astro.url.pathname;
 ---
 
-<header class="nav">
+<header class="nav" id="site-nav">
   <div class="container nav-inner">
     <a href="/" class="brand" aria-label="Home">
       <span class="brand-name">Ryan Strawbridge</span>
@@ -13,8 +13,15 @@ const path = Astro.url.pathname;
     </a>
 
     <nav aria-label="Primary">
-      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Toggle navigation">
-        <span></span><span></span><span></span>
+      <button
+        class="nav-toggle"
+        aria-expanded="false"
+        aria-controls="nav-menu"
+        aria-label="Toggle navigation menu"
+      >
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
       </button>
       <ul id="nav-menu" class="nav-links">
         {
@@ -44,7 +51,12 @@ const path = Astro.url.pathname;
     background: color-mix(in srgb, var(--bg) 88%, transparent);
     backdrop-filter: saturate(180%) blur(12px);
     -webkit-backdrop-filter: saturate(180%) blur(12px);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid transparent;
+    transition: border-color 220ms ease, box-shadow 220ms ease;
+  }
+  .nav.scrolled {
+    border-bottom-color: var(--border);
+    box-shadow: 0 4px 18px -8px rgb(0 0 0 / 0.08);
   }
   .nav-inner {
     display: flex;
@@ -89,41 +101,52 @@ const path = Astro.url.pathname;
     background: var(--bg-elevated);
     color: var(--accent);
   }
-  .nav-links a.active {
-    color: var(--accent);
-  }
+  .nav-links a.active { color: var(--accent); }
   .nav-links a:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+
+  /* Hamburger: three bars that animate to an X on toggle. */
   .nav-toggle {
     display: none;
+    position: relative;
     background: none;
     border: 1px solid var(--border-strong, var(--border));
     border-radius: var(--radius);
     width: 40px;
     height: 40px;
     cursor: pointer;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
+    padding: 0;
   }
   .nav-toggle:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
-  .nav-toggle span {
-    display: block;
+  .nav-toggle-bar {
+    position: absolute;
+    left: 50%;
     width: 18px;
     height: 2px;
     background: var(--text);
-    transition: transform 180ms ease;
+    transform-origin: center;
+    transition: transform 280ms cubic-bezier(0.2, 0, 0.2, 1), opacity 200ms ease;
   }
+  .nav-toggle-bar:nth-child(1) { top: 14px; transform: translateX(-50%); }
+  .nav-toggle-bar:nth-child(2) { top: 19px; transform: translateX(-50%); }
+  .nav-toggle-bar:nth-child(3) { top: 24px; transform: translateX(-50%); }
+  .nav-toggle[aria-expanded='true'] .nav-toggle-bar:nth-child(1) {
+    transform: translateX(-50%) translateY(5px) rotate(45deg);
+  }
+  .nav-toggle[aria-expanded='true'] .nav-toggle-bar:nth-child(2) {
+    opacity: 0;
+  }
+  .nav-toggle[aria-expanded='true'] .nav-toggle-bar:nth-child(3) {
+    transform: translateX(-50%) translateY(-5px) rotate(-45deg);
+  }
+
   @media (max-width: 720px) {
-    .nav-toggle {
-      display: flex;
-    }
+    .nav-toggle { display: block; }
     .nav-links {
       position: absolute;
       top: 100%;
@@ -137,27 +160,94 @@ const path = Astro.url.pathname;
       padding: 0.75rem;
       max-height: 0;
       overflow: hidden;
-      transition: max-height 180ms ease;
+      transition: max-height 280ms cubic-bezier(0.2, 0, 0.2, 1);
     }
-    .nav-links.open {
-      max-height: 600px;
-    }
-    .nav-links li {
-      width: 100%;
-    }
+    .nav-links.open { max-height: 600px; }
+    .nav-links li { width: 100%; }
     .nav-links a {
       display: block;
       width: 100%;
       padding: 0.75rem 1rem;
     }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav,
+    .nav-toggle-bar,
+    .nav-links {
+      transition: none !important;
+    }
+  }
 </style>
 
 <script>
-  const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
-  const menu = document.querySelector<HTMLUListElement>('#nav-menu');
-  toggle?.addEventListener('click', () => {
-    const open = menu?.classList.toggle('open');
-    toggle.setAttribute('aria-expanded', String(Boolean(open)));
+  const nav = document.getElementById('site-nav');
+  const toggle = nav?.querySelector<HTMLButtonElement>('.nav-toggle');
+  const menu = nav?.querySelector<HTMLUListElement>('#nav-menu');
+
+  const setOpen = (open: boolean) => {
+    if (!toggle || !menu) return;
+    menu.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+  };
+
+  toggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setOpen(toggle.getAttribute('aria-expanded') !== 'true');
   });
+
+  // Close when any nav link is tapped.
+  menu?.querySelectorAll('a').forEach((a) => {
+    a.addEventListener('click', () => setOpen(false));
+  });
+
+  // Close when tapping outside the menu.
+  document.addEventListener('click', (e) => {
+    if (!menu?.classList.contains('open')) return;
+    const target = e.target as Node;
+    if (nav && !nav.contains(target)) setOpen(false);
+  });
+
+  // Close on Escape.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setOpen(false);
+  });
+
+  // Smooth-scroll for in-page anchor links, accounting for the sticky nav.
+  // Skips when prefers-reduced-motion is set.
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLAnchorElement>('a[href^="/#"], a[href^="#"]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      const href = a.getAttribute('href') || '';
+      const hashIdx = href.indexOf('#');
+      if (hashIdx < 0) return;
+      const id = href.slice(hashIdx + 1);
+      const target = id && document.getElementById(id);
+      const onHome = location.pathname === '/' || href.startsWith('#');
+      if (!target || !onHome) return;
+      e.preventDefault();
+      const navHeight = nav?.offsetHeight ?? 0;
+      const y = target.getBoundingClientRect().top + window.scrollY - navHeight - 8;
+      window.scrollTo({ top: y, behavior: prefersReduced ? 'auto' : 'smooth' });
+      history.replaceState(null, '', '#' + id);
+    });
+  });
+
+  // Add .scrolled class when the hero leaves the viewport (gives the nav a
+  // visible bottom border once the user starts scrolling content).
+  const hero = document.querySelector('.hero');
+  if (hero && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        nav?.classList.toggle('scrolled', !entry.isIntersecting);
+      },
+      { rootMargin: '-40px 0px 0px 0px', threshold: 0 },
+    );
+    io.observe(hero);
+  } else {
+    // Pages without a hero: always show the border once scrolled at all.
+    const onScroll = () => nav?.classList.toggle('scrolled', window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
 </script>
