@@ -306,6 +306,65 @@ const aboutBioParagraphs = home.aboutSection.bio
       });
     });
 
+    // Subtle parallax for the collage. Each .collage-item gets a small
+    // translateY based on how far the collage section has scrolled through
+    // the viewport. Different items use different multipliers so they move
+    // at slightly different speeds, giving a depth illusion.
+    //
+    // Disabled on mobile (<= 720px) for perf and on reduced-motion.
+    {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isMobile = window.matchMedia('(max-width: 720px)').matches;
+      const collage = document.querySelector<HTMLElement>('.collage');
+      if (collage && !prefersReduced && !isMobile && 'IntersectionObserver' in window) {
+        const items = Array.from(collage.querySelectorAll<HTMLElement>('.collage-item'));
+        // Per-item drift multiplier (px per unit of scroll progress).
+        // Subtle — max ~12 px drift on the most-moving cells.
+        const speeds = items.map((_, i) => {
+          // Alternate pattern so neighbors move opposite directions slightly.
+          const base = (i % 2 === 0 ? -1 : 1) * (6 + (i % 3) * 3);
+          return base;
+        });
+
+        let rafId = 0;
+        let inView = false;
+
+        const update = () => {
+          rafId = 0;
+          const rect = collage.getBoundingClientRect();
+          const vh = window.innerHeight;
+          // progress: 0 when collage just entered from bottom, 1 when fully past top
+          const progress = 1 - (rect.top + rect.height / 2) / vh;
+          const clamped = Math.max(-1, Math.min(1, progress));
+          items.forEach((el, i) => {
+            el.style.transform = `translateY(${(clamped * speeds[i]).toFixed(1)}px)`;
+          });
+        };
+
+        const schedule = () => {
+          if (!inView || rafId) return;
+          rafId = requestAnimationFrame(update);
+        };
+
+        const io = new IntersectionObserver(
+          ([entry]) => {
+            inView = entry.isIntersecting;
+            if (inView) schedule();
+            else {
+              if (rafId) cancelAnimationFrame(rafId);
+              rafId = 0;
+            }
+          },
+          { threshold: 0, rootMargin: '50px 0px' },
+        );
+        io.observe(collage);
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', schedule, { passive: true });
+        // Initial paint.
+        schedule();
+      }
+    }
+
     // About bio expand/collapse.
     document.querySelectorAll<HTMLButtonElement>('[data-bio-toggle]').forEach((btn) => {
       const wrap = btn.closest('.bio-collapse');
@@ -455,12 +514,24 @@ const aboutBioParagraphs = home.aboutSection.bio
     }
 
     .showcase {
-      padding-block: 1rem 2rem;
+      /* Pull the collage up slightly so it overlaps the hero — softens the
+         transition between the two sections. */
+      padding-block: 0 3rem;
+      margin-top: -1.5rem;
+      position: relative;
     }
-    /* Collage of engineering work — irregular grid: one large hero cell on
-       the left, smaller cells flowing on the right, video stands tall in the
-       middle. Items have varying spans so it reads as a designed collage,
-       not a uniform gallery. */
+    /* Gradient fade from hero background down into the collage. */
+    .showcase::before {
+      content: '';
+      position: absolute;
+      inset: -3rem 0 auto 0;
+      height: 3rem;
+      background: linear-gradient(to bottom, transparent, var(--bg));
+      pointer-events: none;
+    }
+    /* Collage of engineering work — irregular grid: the welding action shot
+       and the aero-testing video are the dominant cells (~1.5x area). Other
+       five photos flow around them. */
     .collage {
       display: grid;
       gap: 0.5rem;
@@ -470,10 +541,13 @@ const aboutBioParagraphs = home.aboutSection.bio
     @media (min-width: 768px) {
       .collage {
         gap: 0.75rem;
-        grid-template-columns: 2fr 1fr 1fr;
-        grid-template-rows: repeat(2, minmax(180px, 1fr));
-        aspect-ratio: 16 / 9;
-        max-height: 540px;
+        /* 4 columns: feature column (2.4fr) + video column (1.6fr) +
+           two side columns. Two rows. Dominant cells: 2.4×2 grid units
+           each, supporting cells 1×1. */
+        grid-template-columns: 2.4fr 1.6fr 1fr 1fr;
+        grid-template-rows: repeat(2, minmax(220px, 1fr));
+        aspect-ratio: 21 / 9;
+        max-height: 620px;
       }
     }
     .collage-item {
@@ -482,18 +556,18 @@ const aboutBioParagraphs = home.aboutSection.bio
       border-radius: var(--radius-lg);
       background: var(--bg-elevated);
       aspect-ratio: 4 / 3;
+      will-change: transform;
     }
     @media (min-width: 768px) {
       .collage-item {
         aspect-ratio: auto;
       }
-      /* Big hero photo, top-left, spans both rows */
+      /* Welding-in-action — dominant left cell, spans both rows */
       .collage-large {
         grid-column: 1;
         grid-row: 1 / 3;
       }
-      /* Aero-testing video: middle column, both rows (portrait video plays
-         tall and full-bleed) */
+      /* Aero-testing video — dominant middle cell, portrait, spans both rows */
       .collage-video {
         grid-column: 2;
         grid-row: 1 / 3;
