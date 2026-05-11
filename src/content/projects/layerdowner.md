@@ -4,7 +4,7 @@ subtitle: Conductor layup tool for SPARC magnet winding
 organization: Commonwealth Fusion Systems
 date: 2025-04-20T00:00:00.000Z
 summary: 'A passive carriage-driven fixturing tool that lays down the first turn during the insulation process. Replaces a manual operation using straps and ensures proper fixturing for precise wrapping process. '
-hero: /src/assets/images/projects/layerdowner/layerdowner-03.jpeg
+hero: ../../assets/images/projects/layerdowner/layerdowner-03.jpeg
 heroAlt: Layerdowner tool on the magnet winding floor
 tools:
   - NX
@@ -30,10 +30,10 @@ During cable insulation wrapping, the first turn of the cable had to be placed b
 
 ## Gallery
 
-![Layerdowner on the floor](/src/assets/images../../assets/images/projects/layerdowner/layerdowner-01.jpeg)
+![Layerdowner on the floor](../../assets/images/projects/layerdowner/layerdowner-01.jpeg)
 
-![Layerdowner detail](/src/assets/images../../assets/images/projects/layerdowner/layerdowner-02.jpeg)
+![Layerdowner detail](../../assets/images/projects/layerdowner/layerdowner-02.jpeg)
 
-![Layerdowner](/src/assets/images../../assets/images/projects/layerdowner/layerdowner-03.jpeg)
+![Layerdowner](../../assets/images/projects/layerdowner/layerdowner-03.jpeg)
 
-![Layerdowner](/src/assets/images../../assets/images/projects/layerdowner/layerdowner-04.jpeg)
+![Layerdowner](../../assets/images/projects/layerdowner/layerdowner-04.jpeg)
