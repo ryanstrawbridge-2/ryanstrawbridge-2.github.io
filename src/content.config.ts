@@ -23,7 +23,7 @@ const projects = defineCollection({
       heroAspect: z.enum(['wide', 'standard', 'tall', 'square']).default('wide'),
       galleryLayout: z
         .enum(['stacked', 'two-column', 'three-column'])
-        .default('stacked'),
+        .default('two-column'),
     }),
 });
 
