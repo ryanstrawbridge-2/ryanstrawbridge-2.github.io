@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Lightbox from '../../components/Lightbox.astro';
 import type { GetStaticPaths } from 'astro';
 
 export const getStaticPaths = (async () => {
@@ -95,9 +96,11 @@ const next = idx < all.length - 1 ? all[idx + 1] : null;
       />
     </div>
 
-    <div class={`container-narrow project-body gallery-${galleryLayout}`}>
+    <div class={`container-narrow project-body gallery-${galleryLayout}`} data-lightbox-root>
       <Content />
     </div>
+
+    <Lightbox />
 
     <nav class="project-nav container" aria-label="Project navigation">
       <a href="/projects/" class="all">← All projects</a>

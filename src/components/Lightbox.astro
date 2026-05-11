@@ -1,0 +1,260 @@
+---
+// Vanilla-JS lightbox. Auto-attaches to any <img> inside an element with
+// data-lightbox-root on the page. Include this component once per page that
+// has galleries; it adds the overlay markup + the script that wires it up.
+---
+
+<dialog class="lightbox" id="lightbox" aria-label="Image gallery">
+  <button type="button" class="lightbox-close" aria-label="Close gallery">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </button>
+
+  <button type="button" class="lightbox-nav lightbox-prev" aria-label="Previous image">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  </button>
+
+  <figure class="lightbox-figure">
+    <img class="lightbox-img" alt="" />
+    <figcaption class="lightbox-caption"></figcaption>
+  </figure>
+
+  <button type="button" class="lightbox-nav lightbox-next" aria-label="Next image">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </button>
+
+  <div class="lightbox-counter" aria-live="polite"></div>
+</dialog>
+
+<style>
+  .lightbox[open] {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 1fr auto;
+    align-items: center;
+    justify-items: center;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    padding: 1.5rem;
+    border: none;
+    background: rgb(0 0 0 / 0.92);
+    color: white;
+    z-index: 1000;
+  }
+  .lightbox::backdrop {
+    background: rgb(0 0 0 / 0.85);
+  }
+
+  .lightbox-figure {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    margin: 0;
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  .lightbox-img {
+    max-width: min(96vw, 1400px);
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 24px 80px -16px rgb(0 0 0 / 0.6);
+  }
+  .lightbox-caption {
+    color: rgb(255 255 255 / 0.75);
+    font-size: 0.9rem;
+    text-align: center;
+    max-width: 60ch;
+  }
+  .lightbox-caption:empty { display: none; }
+
+  .lightbox-close,
+  .lightbox-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(255 255 255 / 0.08);
+    color: white;
+    border: 1px solid rgb(255 255 255 / 0.15);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    padding: 0;
+    transition: background 180ms ease, transform 180ms ease;
+  }
+  .lightbox-close { position: absolute; top: 1rem; right: 1rem; z-index: 2; }
+  .lightbox-prev { grid-column: 1; grid-row: 1; align-self: center; justify-self: start; margin-left: 0.5rem; }
+  .lightbox-next { grid-column: 3; grid-row: 1; align-self: center; justify-self: end; margin-right: 0.5rem; }
+  .lightbox-close:hover,
+  .lightbox-nav:hover {
+    background: rgb(255 255 255 / 0.18);
+    transform: scale(1.05);
+  }
+  .lightbox-close:focus-visible,
+  .lightbox-nav:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 3px;
+  }
+  .lightbox-nav[disabled] {
+    opacity: 0.25;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .lightbox-counter {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    color: rgb(255 255 255 / 0.6);
+    font-size: 0.85rem;
+    padding-top: 0.5rem;
+  }
+
+  /* Make ANY img inside a data-lightbox-root pointer-cursor + tap target. */
+  :global([data-lightbox-root] img) {
+    cursor: zoom-in;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lightbox-close,
+    .lightbox-nav {
+      transition: none;
+    }
+  }
+
+  /* Mobile: keep arrows visible, but smaller, and let the image fill more. */
+  @media (max-width: 600px) {
+    .lightbox-prev { margin-left: 0; }
+    .lightbox-next { margin-right: 0; }
+    .lightbox-close { top: 0.5rem; right: 0.5rem; }
+    .lightbox-img { max-height: 80vh; }
+  }
+</style>
+
+<script>
+  const dialog = document.getElementById('lightbox') as HTMLDialogElement | null;
+  if (!dialog) {
+    // nothing to do
+  } else {
+    const imgEl = dialog.querySelector<HTMLImageElement>('.lightbox-img');
+    const captionEl = dialog.querySelector<HTMLElement>('.lightbox-caption');
+    const counterEl = dialog.querySelector<HTMLElement>('.lightbox-counter');
+    const prevBtn = dialog.querySelector<HTMLButtonElement>('.lightbox-prev');
+    const nextBtn = dialog.querySelector<HTMLButtonElement>('.lightbox-next');
+    const closeBtn = dialog.querySelector<HTMLButtonElement>('.lightbox-close');
+
+    let images: HTMLImageElement[] = [];
+    let index = 0;
+
+    const collect = () => {
+      const root = document.querySelector('[data-lightbox-root]');
+      if (!root) return [] as HTMLImageElement[];
+      return Array.from(root.querySelectorAll<HTMLImageElement>('img'));
+    };
+
+    const render = () => {
+      const img = images[index];
+      if (!img || !imgEl || !captionEl || !counterEl || !prevBtn || !nextBtn) return;
+      // Prefer the largest src from srcset, else current src.
+      const srcset = img.getAttribute('srcset');
+      let best = img.currentSrc || img.src;
+      if (srcset) {
+        const candidates = srcset.split(',').map((s) => s.trim().split(/\s+/));
+        const last = candidates[candidates.length - 1];
+        if (last && last[0]) best = last[0];
+      }
+      imgEl.src = best;
+      imgEl.alt = img.alt || '';
+      captionEl.textContent = img.alt || '';
+      counterEl.textContent = images.length > 1 ? `${index + 1} / ${images.length}` : '';
+      prevBtn.toggleAttribute('disabled', index === 0);
+      nextBtn.toggleAttribute('disabled', index === images.length - 1);
+    };
+
+    const open = (startIndex: number) => {
+      images = collect();
+      if (images.length === 0) return;
+      index = Math.max(0, Math.min(startIndex, images.length - 1));
+      render();
+      dialog.showModal();
+      document.body.style.overflow = 'hidden';
+    };
+
+    const close = () => {
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = '';
+    };
+
+    const next = () => {
+      if (index < images.length - 1) {
+        index++;
+        render();
+      }
+    };
+    const prev = () => {
+      if (index > 0) {
+        index--;
+        render();
+      }
+    };
+
+    // Wire any image inside a data-lightbox-root to open the lightbox.
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const img = target.closest?.('[data-lightbox-root] img') as HTMLImageElement | null;
+      if (!img) return;
+      e.preventDefault();
+      const all = collect();
+      open(all.indexOf(img));
+    });
+
+    closeBtn?.addEventListener('click', close);
+    prevBtn?.addEventListener('click', prev);
+    nextBtn?.addEventListener('click', next);
+
+    // Click outside the image to close (clicks on the dialog itself, not on
+    // the image or controls).
+    dialog.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      if (t === dialog || t === dialog.querySelector('.lightbox-figure')) close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!dialog.open) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+      else if (e.key === 'Escape') { close(); }
+    });
+
+    // Touch swipe on the dialog (left = next, right = prev).
+    let touchStartX = 0;
+    let touchStartY = 0;
+    dialog.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+    }, { passive: true });
+    dialog.addEventListener('touchend', (e) => {
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) next();
+        else prev();
+      }
+    });
+  }
+</script>
