@@ -42,4 +42,4 @@ The poloidal-field magnet sub-assemblies needed to move from the assembly fixtur
 
 ![Lifting frame](/src/assets/images../../assets/images/projects/lifting-frame/frame-07.jpeg)
 
-![Lifting frame](/src/assets/images../../assets/images/projects/lifting-frame/frame-08.jpeg)
+![Lifting frame](/src/assets/images../../assets/images/projects/lifting-frame/frame-08.jpeg)![Lifting Test](/src/assets/images/home/lifting-test.jpeg)
