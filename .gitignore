@@ -22,6 +22,9 @@ pnpm-debug.log*
 # tina (auto-generated GraphQL client and types)
 tina/__generated__/
 
+# local photo staging — full-resolution originals, resized into src/assets before use
+portfolio-photos/
+
 # macOS-specific files
 .DS_Store
 

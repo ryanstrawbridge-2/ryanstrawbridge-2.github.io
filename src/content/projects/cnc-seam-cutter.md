@@ -4,7 +4,7 @@ subtitle: Automated seam-prep tool for fusion magnet assembly
 organization: Commonwealth Fusion Systems
 date: 2026-05-12T00:00:00.000Z
 summary: 'A CNC-driven cutting fixture that automates seam preparation for poloidal field magnet sub-assemblies, replacing a manual operation that bottlenecked the production line.'
-hero: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg
+hero: ../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg
 heroAlt: CNC seam cutter on the manufacturing floor
 tools:
   - NX
@@ -33,10 +33,10 @@ The previous seam-prep operation was performed by hand. This operation took an e
 
 ## Gallery
 
-![CNC seam cutter](/src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg)
+![CNC seam cutter](../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg)
 
-![CNC seam cutter](/src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-02.jpeg)
+![CNC seam cutter](../../assets/images/projects/cnc-seam-cutter/cutter-02.jpeg)
 
-![CNC seam cutter](/src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-03.jpeg)
+![CNC seam cutter](../../assets/images/projects/cnc-seam-cutter/cutter-03.jpeg)
 
-![CNC seam cutter](/src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-04.jpeg)
+![CNC seam cutter](../../assets/images/projects/cnc-seam-cutter/cutter-04.jpeg)
