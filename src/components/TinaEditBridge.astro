@@ -1,0 +1,84 @@
+---
+// Registers this page with the TinaCMS visual editor and turns on click-to-edit.
+// Inert outside the admin iframe, so it costs a no-op listener on the live site.
+interface Props {
+  query: string;
+  variables: Record<string, unknown>;
+  data: unknown;
+  id: string;
+}
+const { query, variables, data, id } = Astro.props;
+const payload = JSON.stringify({ query, variables, data, id });
+---
+
+<script type="application/json" id="tina-edit-payload" set:html={payload} />
+
+<script>
+  const el = document.getElementById('tina-edit-payload');
+  // Only meaningful inside the admin's iframe.
+  if (el && window.parent !== window) {
+    const { query, variables, data, id } = JSON.parse(el.textContent || '{}');
+    const origin = window.location.origin;
+
+    let isInTinaIframe = false;
+    let teardown: (() => void) | null = null;
+
+    const enableQuickEdit = () => {
+      if (teardown) return;
+
+      const style = document.createElement('style');
+      style.textContent = `
+        [data-tina-field] {
+          outline: 2px dashed rgba(34,150,254,0.5);
+          transition: box-shadow ease-out 150ms;
+        }
+        [data-tina-field]:hover {
+          box-shadow: inset 100vi 100vh rgba(34,150,254,0.3);
+          outline: 2px solid rgba(34,150,254,1);
+          cursor: pointer;
+        }
+      `;
+      document.head.appendChild(style);
+      document.body.classList.add('__tina-quick-editing-enabled');
+
+      const onClick = (e: MouseEvent) => {
+        const target = e.target as Element | null;
+        const match = target?.closest('[data-tina-field]');
+        const fieldName = match?.getAttribute('data-tina-field');
+        if (!fieldName || !isInTinaIframe) return;
+        e.preventDefault();
+        e.stopPropagation();
+        parent.postMessage({ type: 'field:selected', fieldName }, origin);
+      };
+
+      document.addEventListener('click', onClick, true);
+      teardown = () => {
+        document.removeEventListener('click', onClick, true);
+        document.body.classList.remove('__tina-quick-editing-enabled');
+        style.remove();
+        teardown = null;
+      };
+    };
+
+    window.addEventListener('message', (event: MessageEvent) => {
+      if (event.data?.type === 'quickEditEnabled') {
+        if (event.data.value) enableQuickEdit();
+        else teardown?.();
+      }
+      if (event.data?.id === id && event.data?.type === 'updateData') {
+        isInTinaIframe = true;
+        parent.postMessage(
+          { type: 'quick-edit', value: !!document.querySelector('[data-tina-field]') },
+          origin,
+        );
+      }
+    });
+
+    parent.postMessage({ type: 'open', query, variables, data, id }, origin);
+    parent.postMessage({ type: 'url-changed' }, origin);
+
+    window.addEventListener('beforeunload', () => {
+      parent.postMessage({ type: 'close', id }, origin);
+    });
+  }
+</script>

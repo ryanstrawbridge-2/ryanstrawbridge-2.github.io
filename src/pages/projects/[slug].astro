@@ -3,6 +3,13 @@ import { getCollection, render } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Lightbox from '../../components/Lightbox.astro';
+import TinaEditBridge from '../../components/TinaEditBridge.astro';
+import {
+  PROJECT_QUERY,
+  asTinaDocument,
+  projectField,
+  queryId,
+} from '../../lib/tina-visual-editing';
 import type { GetStaticPaths } from 'astro';
 
 export const getStaticPaths = (async () => {
@@ -62,18 +69,28 @@ const all = (await getCollection('projects', ({ data }) => !data.draft)).sort(
 const idx = all.findIndex((p) => p.id === project.id);
 const prev = idx > 0 ? all[idx - 1] : null;
 const next = idx < all.length - 1 ? all[idx + 1] : null;
+
+const tinaVariables = { relativePath: `${project.id}.md` };
+const tinaId = queryId(PROJECT_QUERY, tinaVariables);
+const tinaData = {
+  project: asTinaDocument('Project', `${project.id}.md`, 'src/content/projects', {
+    ...project.data,
+    date: date.toISOString(),
+  }),
+};
+const f = (...path: (string | number)[]) => projectField(project.id, ...path);
 ---
 
 <BaseLayout title={`${title} · Ryan Strawbridge`} description={summary}>
   <article>
     <header class="project-hero">
       <div class="container">
-        <p class="eyebrow">
+        <p class="eyebrow" data-tina-field={f(organization ? 'organization' : 'date')}>
           {organization ?? subtitle ?? 'Project'} <span class="dot">·</span> {dateLabel}
         </p>
-        <h1>{title}</h1>
-        {subtitle && organization && <p class="subtitle muted">{subtitle}</p>}
-        <p class="summary">{summary}</p>
+        <h1 data-tina-field={f('title')}>{title}</h1>
+        {subtitle && organization && <p class="subtitle muted" data-tina-field={f('subtitle')}>{subtitle}</p>}
+        <p class="summary" data-tina-field={f('summary')}>{summary}</p>
         {
           tools.length > 0 && (
             <ul class="tags">
@@ -86,7 +103,7 @@ const next = idx < all.length - 1 ? all[idx + 1] : null;
       </div>
     </header>
 
-    <div class="hero-image-wrap container" style={heroStyle}>
+    <div class="hero-image-wrap container" style={heroStyle} data-tina-field={f('hero')}>
       <Image
         src={hero}
         alt={heroAlt}
@@ -96,9 +113,11 @@ const next = idx < all.length - 1 ? all[idx + 1] : null;
       />
     </div>
 
-    <div class={`container-narrow project-body gallery-${galleryLayout}`} data-lightbox-root>
+    <div class={`container-narrow project-body gallery-${galleryLayout}`} data-lightbox-root data-tina-field={f('body')}>
       <Content />
     </div>
+
+    <TinaEditBridge query={PROJECT_QUERY} variables={tinaVariables} data={tinaData} id={tinaId} />
 
     <Lightbox />
 
