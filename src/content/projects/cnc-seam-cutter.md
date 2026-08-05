@@ -4,8 +4,17 @@ subtitle: Automated seam-prep tool for fusion magnet assembly
 organization: Commonwealth Fusion Systems
 date: 2026-05-12T00:00:00.000Z
 summary: 'A CNC-driven cutting fixture that automates seam preparation for poloidal field magnet sub-assemblies, replacing a manual operation that bottlenecked the production line.'
-hero: ../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg
+hero: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg
 heroAlt: CNC seam cutter on the manufacturing floor
+gallery:
+  - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg
+    alt: CNC seam cutter
+  - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-02.jpeg
+    alt: CNC seam cutter
+  - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-03.jpeg
+    alt: CNC seam cutter
+  - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-04.jpeg
+    alt: CNC seam cutter
 tools:
   - NX
   - Linear motion design
@@ -14,15 +23,6 @@ tools:
   - Fixture design
 order: 3
 draft: false
-gallery:
-  - image: '../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg'
-    alt: CNC seam cutter
-  - image: '../../assets/images/projects/cnc-seam-cutter/cutter-02.jpeg'
-    alt: CNC seam cutter
-  - image: '../../assets/images/projects/cnc-seam-cutter/cutter-03.jpeg'
-    alt: CNC seam cutter
-  - image: '../../assets/images/projects/cnc-seam-cutter/cutter-04.jpeg'
-    alt: CNC seam cutter
 ---
 
 ## Problem
@@ -31,7 +31,6 @@ The previous seam-prep operation was performed by hand. This operation took an e
 
 ## What I did
 
-* Specified and integrated a servo motion system with closed-loop position feedback to hold cut depth at 0.090" into the cable jacket
 * Added quick-change cutter mounts and operator-facing safety interlocks (limit switches, e-stop, light curtain) so operators could swap consumables without leaving the safe envelope.
 * Worked alongside the production team to refine the work-holding fixture so loading/unloading took under 30 seconds.
 
