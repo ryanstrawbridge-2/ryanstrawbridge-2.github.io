@@ -4,7 +4,7 @@ subtitle: Conductor layup tool for SPARC magnet winding
 organization: Commonwealth Fusion Systems
 date: 2025-04-20T00:00:00.000Z
 summary: 'A passive carriage-driven fixturing tool that lays down the first turn during the insulation process. Replaces a manual operation using straps and ensures proper fixturing for precise wrapping process. '
-hero: /src/assets/images/projects/layerdowner/layerdowner-04.jpeg
+hero: ../../assets/images/projects/layerdowner/layerdowner-04.jpeg
 heroAlt: Layerdowner tool on the magnet winding floor
 tools:
   - NX

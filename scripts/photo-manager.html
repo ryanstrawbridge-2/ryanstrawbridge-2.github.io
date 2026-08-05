@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Photo manager</title>
+<style>
+  :root {
+    --bg: #f4f2ee; --card: #fff; --ink: #1b1b1b; --muted: #6b6b6b;
+    --line: #e2ded7; --accent: #c2410c; --warn: #b91c1c; --ok: #15803d;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  header { position: sticky; top: 0; z-index: 10; background: var(--bg);
+    border-bottom: 1px solid var(--line); padding: 14px 20px; }
+  h1 { font-size: 17px; margin: 0 0 10px; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button { font: inherit; padding: 7px 13px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--card); cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--muted); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.danger { background: var(--warn); border-color: var(--warn); color: #fff; }
+  .chip { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--card); cursor: pointer; font-size: 13px; }
+  .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .count { color: var(--muted); font-size: 13px; margin-left: auto; }
+  main { padding: 18px 20px 80px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; position: relative; }
+  .card.sel { outline: 3px solid var(--accent); outline-offset: -3px; }
+  .thumb { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
+    background: #e8e4dd; cursor: pointer; }
+  .meta { padding: 9px 11px; font-size: 12px; }
+  .name { font-weight: 600; word-break: break-all; margin-bottom: 3px; }
+  .sub { color: var(--muted); }
+  .tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+  .tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em;
+    padding: 2px 7px; border-radius: 4px; background: #efece6; color: var(--muted); }
+  .tag.cfs { background: #fde7e7; color: var(--warn); }
+  .tag.orphan { background: #fff3d6; color: #92620a; }
+  .tag.exif { background: #e7effd; color: #1e40af; }
+  .acts { display: flex; gap: 6px; padding: 0 11px 11px; }
+  .acts button { padding: 4px 9px; font-size: 12px; flex: 1; }
+  dialog { border: none; border-radius: 12px; padding: 0; max-width: 92vw; }
+  dialog::backdrop { background: rgba(0,0,0,.55); }
+  .dlg-head { padding: 13px 16px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px; }
+  .dlg-body { padding: 16px; }
+  .stage { position: relative; display: inline-block; line-height: 0; cursor: crosshair; }
+  .stage img { max-width: 74vw; max-height: 62vh; }
+  .rect { position: absolute; border: 2px solid var(--accent);
+    background: rgba(194,65,12,.28); }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  input[type=text] { width: 100%; padding: 7px 9px; border: 1px solid var(--line);
+    border-radius: 6px; font: inherit; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 8px;
+    font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; }
+  .toast.show { opacity: 1; }
+  .empty { color: var(--muted); padding: 40px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Photo manager</h1>
+  <div class="bar">
+    <span class="chip" data-f="all">All</span>
+    <span class="chip" data-f="cfs">Customer work</span>
+    <span class="chip" data-f="orphan">Unused</span>
+    <span class="chip" data-f="exif">Has timestamp</span>
+    <span class="chip" data-f="trash">Trash</span>
+    <button id="selAll">Select all shown</button>
+    <button id="clear">Clear</button>
+    <button id="strip" disabled>Strip metadata</button>
+    <button id="remove" class="danger" disabled>Remove</button>
+    <button id="restore" class="primary" style="display:none">Restore</button>
+    <span class="count" id="count"></span>
+  </div>
+</header>
+
+<main><div class="grid" id="grid"></div><div class="empty" id="empty" hidden></div></main>
+
+<dialog id="editor">
+  <div class="dlg-head">
+    <strong id="edName"></strong>
+    <span class="sub" id="edHint" style="color:var(--muted);font-size:12px">
+      Drag on the image to blur a region</span>
+    <button id="edUndo" style="margin-left:auto">Clear boxes</button>
+    <button id="edApply" class="primary">Apply blur</button>
+    <button id="edClose">Close</button>
+  </div>
+  <div class="dlg-body">
+    <div class="stage" id="stage"><img id="edImg" alt="" /></div>
+    <label>Alt text (also used as the caption)</label>
+    <input type="text" id="edAlt" />
+    <label>Caption override (optional)</label>
+    <input type="text" id="edCap" />
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button id="edSaveText" class="primary">Save text</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+const $ = (s) => document.querySelector(s);
+let items = [], trash = [], filter = 'all', sel = new Set(), current = null, regions = [];
+
+const toast = (msg) => {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+};
+
+const api = async (path, body) => {
+  const r = await fetch(path, body ? {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  } : undefined);
+  return r.json();
+};
+
+const load = async () => {
+  const inv = await api('/api/inventory');
+  items = inv.items;
+  trash = (await api('/api/trash')).items;
+  render();
+};
+
+const shown = () => {
+  if (filter === 'trash') return trash.map((p) => ({ path: p, trashed: true }));
+  return items.filter((i) =>
+    filter === 'all' ? true :
+    filter === 'cfs' ? i.sensitive :
+    filter === 'orphan' ? i.orphan :
+    filter === 'exif' ? !!i.exif?.captured : true);
+};
+
+const render = () => {
+  const list = shown();
+  $('#grid').innerHTML = list.map((i) => {
+    if (i.trashed) return `
+      <div class="card ${sel.has(i.path) ? 'sel' : ''}" data-p="${i.path}">
+        <img class="thumb" src="/img/${encodeURIComponent(i.path)}?w=420&trash=1" loading="lazy" alt="" />
+        <div class="meta"><div class="name">${i.path}</div>
+          <div class="sub">in trash</div></div>
+      </div>`;
+    const used = i.usedBy.map((u) => u.title).join(', ');
+    return `
+      <div class="card ${sel.has(i.path) ? 'sel' : ''}" data-p="${i.path}">
+        <img class="thumb" src="/img/${encodeURIComponent(i.path)}?w=420" loading="lazy" alt="" />
+        <div class="meta">
+          <div class="name">${i.path.split('/').pop()}</div>
+          <div class="sub">${used || 'not used on any project'}</div>
+          <div class="sub">${i.width}×${i.height} · ${(i.bytes / 1024 / 1024).toFixed(1)} MB</div>
+          ${i.exif?.captured ? `<div class="sub">shot ${i.exif.captured}${i.exif.device ? ' · ' + i.exif.device : ''}</div>` : ''}
+          <div class="tags">
+            ${i.sensitive ? '<span class="tag cfs">customer work</span>' : ''}
+            ${i.orphan ? '<span class="tag orphan">unused</span>' : ''}
+            ${i.exif?.captured ? '<span class="tag exif">timestamp</span>' : ''}
+            ${i.exif?.hasGps ? '<span class="tag cfs">GPS</span>' : ''}
+          </div>
+        </div>
+        <div class="acts"><button data-edit="${i.path}">Edit / blur</button></div>
+      </div>`;
+  }).join('') || '';
+  $('#empty').hidden = list.length > 0;
+  $('#empty').textContent = 'Nothing here.';
+  $('#count').textContent = `${list.length} shown · ${sel.size} selected · ${items.length} total`;
+  $('#remove').disabled = sel.size === 0 || filter === 'trash';
+  $('#strip').disabled = sel.size === 0 || filter === 'trash';
+  $('#restore').style.display = filter === 'trash' ? '' : 'none';
+  $('#restore').disabled = sel.size === 0;
+  document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c.dataset.f === filter));
+};
+
+document.addEventListener('click', async (e) => {
+  const chip = e.target.closest('.chip');
+  if (chip) { filter = chip.dataset.f; sel.clear(); return render(); }
+
+  const edit = e.target.closest('[data-edit]');
+  if (edit) return openEditor(edit.dataset.edit);
+
+  const card = e.target.closest('.card');
+  if (card && !e.target.closest('button')) {
+    const p = card.dataset.p;
+    sel.has(p) ? sel.delete(p) : sel.add(p);
+    return render();
+  }
+});
+
+$('#selAll').onclick = () => { shown().forEach((i) => sel.add(i.path)); render(); };
+$('#clear').onclick = () => { sel.clear(); render(); };
+
+$('#remove').onclick = async () => {
+  const n = sel.size;
+  if (!confirm(`Move ${n} photo(s) to .photo-trash/ and remove them from their project pages?\n\nReversible from the Trash tab.`)) return;
+  const r = await api('/api/remove', { paths: [...sel] });
+  sel.clear();
+  toast(`Moved ${r.moved.length} photo(s) to trash`);
+  await load();
+};
+
+$('#strip').onclick = async () => {
+  const r = await api('/api/strip-exif', { paths: [...sel] });
+  toast(`Stripped metadata from ${r.stripped.length} photo(s)`);
+  sel.clear(); await load();
+};
+
+$('#restore').onclick = async () => {
+  const r = await api('/api/restore', { paths: [...sel] });
+  sel.clear();
+  toast(`Restored ${r.restored.length}. Re-add them to a project in the CMS.`);
+  await load();
+};
+
+// ---- editor: blur regions + caption ----
+const openEditor = (path) => {
+  current = items.find((i) => i.path === path);
+  regions = [];
+  $('#edName').textContent = path;
+  $('#edImg').src = `/img/${encodeURIComponent(path)}?w=1100`;
+  const first = current.usedBy[0];
+  $('#edAlt').value = current.alt || '';
+  $('#edCap').value = current.caption || '';
+  drawRects();
+  $('#editor').showModal();
+};
+
+const drawRects = () => {
+  document.querySelectorAll('.rect').forEach((r) => r.remove());
+  const img = $('#edImg');
+  for (const r of regions) {
+    const d = document.createElement('div');
+    d.className = 'rect';
+    d.style.left = r.x * img.clientWidth + 'px';
+    d.style.top = r.y * img.clientHeight + 'px';
+    d.style.width = r.w * img.clientWidth + 'px';
+    d.style.height = r.h * img.clientHeight + 'px';
+    $('#stage').appendChild(d);
+  }
+};
+
+let dragStart = null;
+$('#stage').addEventListener('mousedown', (e) => {
+  const img = $('#edImg'); const b = img.getBoundingClientRect();
+  dragStart = { x: (e.clientX - b.left) / b.width, y: (e.clientY - b.top) / b.height };
+});
+$('#stage').addEventListener('mousemove', (e) => {
+  if (!dragStart) return;
+  const img = $('#edImg'); const b = img.getBoundingClientRect();
+  const x = (e.clientX - b.left) / b.width, y = (e.clientY - b.top) / b.height;
+  regions = regions.filter((r) => !r.live);
+  regions.push({ x: Math.min(dragStart.x, x), y: Math.min(dragStart.y, y),
+    w: Math.abs(x - dragStart.x), h: Math.abs(y - dragStart.y), live: true });
+  drawRects();
+});
+window.addEventListener('mouseup', () => {
+  if (!dragStart) return;
+  dragStart = null;
+  regions = regions.map((r) => ({ ...r, live: false })).filter((r) => r.w > .01 && r.h > .01);
+  drawRects();
+});
+
+$('#edUndo').onclick = () => { regions = []; drawRects(); };
+$('#edClose').onclick = () => $('#editor').close();
+
+$('#edApply').onclick = async () => {
+  if (!regions.length) return toast('Drag a box over the image first');
+  const r = await api('/api/redact', { path: current.path, regions });
+  if (r.error) return toast(r.error);
+  toast(`Blurred ${r.regions} region(s) — original saved in trash`);
+  regions = [];
+  $('#edImg').src = `/img/${encodeURIComponent(current.path)}?w=1100&t=${Date.now()}`;
+  drawRects();
+  await load();
+};
+
+$('#edSaveText').onclick = async () => {
+  const r = await api('/api/caption', {
+    basename: current.path.split('/').pop(),
+    alt: $('#edAlt').value, caption: $('#edCap').value,
+  });
+  toast(r.touched.length ? `Updated ${r.touched.join(', ')}` : 'Photo is not in any gallery list');
+  await load();
+};
+
+load();
+</script>
+</body>
+</html>
