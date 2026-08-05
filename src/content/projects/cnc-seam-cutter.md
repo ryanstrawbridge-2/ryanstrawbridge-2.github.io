@@ -7,8 +7,6 @@ summary: 'A CNC-driven cutting fixture that automates seam preparation for poloi
 hero: /src/assets/images../../assets/images/IMG_1834.JPEG
 heroAlt: CNC seam cutter on the manufacturing floor
 gallery:
-  - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg
-    alt: CNC seam cutter
   - image: /src/assets/images/Screenshot 2026-08-05 at 1.37.52 PM.png
     alt: CNC seam cutter
   - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-03.jpeg
@@ -17,7 +15,6 @@ gallery:
     alt: CNC seam cutter
 tools:
   - NX
-  - Linear motion design
   - GD&T
   - CNC programming
   - Fixture design
