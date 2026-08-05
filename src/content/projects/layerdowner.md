@@ -13,17 +13,17 @@ tools:
 order: 6
 ---
 
-Problem
+## Problem
 
 During cable insulation wrapping, the first turn of the cable had to be placed by hand at the correct radial position. Due to internal forces, fixing the cantilevering cable mid-air proved difficult, especially as the cable lowered. This produced occasional swaying and misalignment, which required unwinding and re-laying.
 
 ## What I did
 
-* A passive carriage-driven fixturing tool that lays down the first turn during the insulation process.
-* Replaced a manual operation using straps and ensured proper fixturing for the precise wrapping process.
-* Designed out of lightweight aluminum sheet metal for ease of assembly and installation
+* Built a passive, carriage-driven fixture that lays down the first turn during insulation wrapping, replacing a manual strap operation.
+* Used off-the-shelf carriages and linear rails on a lightweight aluminium sheet-metal frame, keeping it easy to assemble and install.
+* Made it adjustable so technicians set the radial position directly, instead of holding a cantilevered cable in place by hand.
 
 ## Outcome
 
-* ~~Layup speed roughly **3× faster** than the manual baseline.~~
-* Saved more that \[blank] hours of initial processing time.
+* Cut initial processing time per magnet layer.
+* Removed the unwind-and-re-lay rework caused by cable sway and misalignment.
