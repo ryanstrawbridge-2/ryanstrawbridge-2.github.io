@@ -3,6 +3,13 @@
   --bg: #f1eee8;
   --bg-elevated: #ffffff;
   --bg-subtle: #faf8f4;
+  /* Backdrop for third-party brand marks. Deliberately does NOT flip with the
+     theme: the logo files are drawn for a light background — cfs.png has a
+     white plate baked into the artwork, while raytheon.png and aeronu.png are
+     dark line art on transparency. On a dark card the first shows as a white
+     box and the other two nearly vanish. Recolouring someone's logo to suit
+     the theme would misrepresent their brand, so the plate stays light. */
+  --logo-plate: #ffffff;
   --text: #1a1a1a;
   --text-muted: #6b6864;
   --border: #e0dcd2;
@@ -35,6 +42,9 @@
   --border: #2c2722;
   --border-strong: #3d3730;
   --accent-soft: #3a1f10;
+  /* Intentionally still light — see the note on --logo-plate above. Flipping
+     this to a dark value is what made the CFS mark render as a white box. */
+  --logo-plate: #ffffff;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.4);
   --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.7), 0 8px 10px -6px rgb(0 0 0 / 0.5);

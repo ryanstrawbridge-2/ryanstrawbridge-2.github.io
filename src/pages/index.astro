@@ -669,7 +669,9 @@ const aboutBioParagraphs = home.aboutSection.bio
     .experience-logo {
       width: 100%;
       height: calc(var(--logo-height, 150px) * 0.85);
-      background: var(--bg-elevated);
+      /* Fixed light plate in both themes — the logo files assume a light
+         backdrop. See --logo-plate in global.css. */
+      background: var(--logo-plate);
       display: flex;
       align-items: center;
       justify-content: center;

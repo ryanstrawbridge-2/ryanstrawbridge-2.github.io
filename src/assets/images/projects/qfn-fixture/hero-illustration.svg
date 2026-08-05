@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 686" width="1600" height="686" role="img" aria-label="Technical illustration: segmented stencil apertures over a QFN thermal pad, and a reflow cross-section showing an off-gas escape path">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c2128"/>
+      <stop offset="1" stop-color="#12161b"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#2b323b" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="paste" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b9c2cc"/>
+      <stop offset="1" stop-color="#7d8792"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="686" fill="url(#bg)"/>
+  <rect width="1600" height="686" fill="url(#grid)" opacity="0.55"/>
+
+  <!-- ===================== LEFT: aperture plan view ===================== -->
+  <g transform="translate(120 96)">
+    <text x="0" y="0" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="19" letter-spacing="2.5">STENCIL APERTURES — PLAN</text>
+
+    <!-- component outline -->
+    <rect x="0" y="40" width="440" height="440" fill="none" stroke="#3d4650" stroke-width="2" stroke-dasharray="8 7"/>
+    <text x="446" y="56" fill="#5b646e" font-family="ui-monospace,monospace" font-size="15">QFN body</text>
+
+    <!-- perimeter I/O pads -->
+    <g fill="#39424c">
+      <rect x="34"  y="74" width="46" height="22" rx="3"/><rect x="106" y="74" width="46" height="22" rx="3"/>
+      <rect x="178" y="74" width="46" height="22" rx="3"/><rect x="250" y="74" width="46" height="22" rx="3"/>
+      <rect x="322" y="74" width="46" height="22" rx="3"/>
+      <rect x="34"  y="424" width="46" height="22" rx="3"/><rect x="106" y="424" width="46" height="22" rx="3"/>
+      <rect x="178" y="424" width="46" height="22" rx="3"/><rect x="250" y="424" width="46" height="22" rx="3"/>
+      <rect x="322" y="424" width="46" height="22" rx="3"/>
+      <rect x="34"  y="120" width="22" height="46" rx="3"/><rect x="34" y="192" width="22" height="46" rx="3"/>
+      <rect x="34"  y="264" width="22" height="46" rx="3"/><rect x="34" y="336" width="22" height="46" rx="3"/>
+      <rect x="362" y="120" width="22" height="46" rx="3"/><rect x="362" y="192" width="22" height="46" rx="3"/>
+      <rect x="362" y="264" width="22" height="46" rx="3"/><rect x="362" y="336" width="22" height="46" rx="3"/>
+    </g>
+
+    <!-- thermal pad footprint -->
+    <rect x="104" y="144" width="216" height="216" fill="#20262d" stroke="#454f5a" stroke-width="1.5"/>
+
+    <!-- segmented apertures: four windows, gaps form the escape channels -->
+    <g fill="url(#paste)">
+      <rect x="116" y="156" width="90" height="90" rx="5"/>
+      <rect x="218" y="156" width="90" height="90" rx="5"/>
+      <rect x="116" y="258" width="90" height="90" rx="5"/>
+      <rect x="218" y="258" width="90" height="90" rx="5"/>
+    </g>
+
+    <!-- escape channels called out -->
+    <g stroke="#e8703a" stroke-width="2.5" stroke-linecap="round">
+      <path d="M212 150 v212"/>
+      <path d="M110 252 h204"/>
+    </g>
+    <g stroke="#e8703a" stroke-width="1.6" fill="none" marker-end="url(#ah)">
+      <path d="M212 252 L392 300"/>
+    </g>
+    <circle cx="212" cy="252" r="5" fill="#e8703a"/>
+    <text x="400" y="296" fill="#e8703a" font-family="ui-monospace,monospace" font-size="16">off-gas escape</text>
+    <text x="400" y="318" fill="#e8703a" font-family="ui-monospace,monospace" font-size="16">channels</text>
+
+    <!-- coverage annotation -->
+    <text x="0" y="524" fill="#6e7781" font-family="ui-monospace,monospace" font-size="15">segmented deposit — reduced paste volume over the thermal pad</text>
+  </g>
+
+  <!-- divider -->
+  <path d="M760 120 V566" stroke="#2b323b" stroke-width="1.5" stroke-dasharray="5 8"/>
+
+  <!-- ===================== RIGHT: reflow cross-section ===================== -->
+  <g transform="translate(850 96)">
+    <text x="0" y="0" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="19" letter-spacing="2.5">REFLOW — SECTION</text>
+
+    <!-- circuit board -->
+    <rect x="0" y="330" width="600" height="66" fill="#1e232a" stroke="#3d4650" stroke-width="1.5"/>
+    <text x="0" y="418" fill="#5b646e" font-family="ui-monospace,monospace" font-size="15">circuit card</text>
+
+    <!-- copper pad -->
+    <rect x="150" y="316" width="300" height="14" fill="#8a6a3d"/>
+
+    <!-- solder joints with a void path between segments -->
+    <g fill="url(#paste)">
+      <rect x="156" y="286" width="126" height="30" rx="4"/>
+      <rect x="318" y="286" width="126" height="30" rx="4"/>
+    </g>
+
+    <!-- component body -->
+    <rect x="140" y="228" width="320" height="58" fill="#262c34" stroke="#454f5a" stroke-width="1.5"/>
+    <text x="470" y="262" fill="#5b646e" font-family="ui-monospace,monospace" font-size="15">QFN</text>
+
+    <!-- escaping gas -->
+    <g stroke="#e8703a" stroke-width="2" fill="none" stroke-linecap="round">
+      <path d="M300 286 q-10 -26 4 -44 q12 -16 2 -34"/>
+      <path d="M300 174 l-7 12 M300 174 l7 12"/>
+    </g>
+    <text x="316" y="176" fill="#e8703a" font-family="ui-monospace,monospace" font-size="16">volatiles vent</text>
+
+    <!-- heat-sensitive neighbour + shield -->
+    <rect x="486" y="296" width="86" height="34" fill="#262c34" stroke="#454f5a" stroke-width="1.5"/>
+    <text x="486" y="352" fill="#5b646e" font-family="ui-monospace,monospace" font-size="15">filter</text>
+    <path d="M478 296 v-52 h104" fill="none" stroke="#e8703a" stroke-width="2.5" stroke-linejoin="round"/>
+    <text x="470" y="228" fill="#e8703a" font-family="ui-monospace,monospace" font-size="16" text-anchor="end">heat shield</text>
+
+    <!-- thermal arrows onto the shield -->
+    <g stroke="#c9713f" stroke-width="1.6" stroke-linecap="round" opacity="0.85">
+      <path d="M500 196 v28"/><path d="M530 196 v28"/><path d="M560 196 v28"/>
+    </g>
+
+    <text x="0" y="470" fill="#6e7781" font-family="ui-monospace,monospace" font-size="15">shielded reflow — adjacent components stay below their thermal limit</text>
+  </g>
+
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#e8703a"/>
+    </marker>
+  </defs>
+</svg>
