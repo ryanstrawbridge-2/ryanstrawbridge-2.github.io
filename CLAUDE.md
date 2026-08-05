@@ -49,6 +49,7 @@ npm run preview          # serve the built site
 | Visual-editing bridge | `src/components/TinaEditBridge.astro` |
 | Pages CMS schema | `.pages.yml` |
 | Auto-sync script | `scripts/auto-sync.sh` |
+| CMS thumbnail previews | `scripts/generate-cms-thumbnails.mjs` |
 | SSH key for git | `~/.ssh/id_ed25519_portfolio` |
 | Auto-sync log | `~/Library/Logs/portfolio-sync/sync.log` |
 
@@ -72,6 +73,8 @@ GitHub SSH push from background processes stalls on large payloads.
 6. **Visual editing is a hand-rolled port, not Tina's React hooks.** This site is static Astro with no React, so `useTina`/`tinaField` can't be used. `TinaEditBridge.astro` reimplements the same postMessage protocol in vanilla JS. If a Tina upgrade breaks click-to-edit, diff `node_modules/tinacms/dist/react.js` against that component — the message types (`open`, `updateData`, `quickEditEnabled`, `field:selected`) are the contract.
 7. **Adding a new editable field = two edits.** Add it to `tina/config.ts`, then add `data-tina-field={f(...)}` in the template. The path must mirror the GraphQL result shape (`home.aboutSection.bio`, `experienceSection.items.2.role`). If the fragment in `src/lib/tina-visual-editing.ts` doesn't select the field, the sidebar won't focus it.
 8. **List roots can't be focused.** Tina focuses one field, so `tools` / `extraImageKeys` get no `data-tina-field` — an outline with a dead click is worse than no outline. List *items* are fine.
+9. **CMS thumbnails need `dist/src/assets/images/`.** `mediaRoot` is `src/assets/images`, so every image field requests `/src/assets/images/<path>` — a path Astro never serves (it compiles originals into hashed `/_astro/` files). `scripts/generate-cms-thumbnails.mjs` writes 400px previews there at build time (~0.9 MB). Drop that step and every thumbnail in the editor goes back to a broken-image icon.
+10. **`image()` fields emit their full-size original.** Astro ships the untouched source for every content-collection `image()` field even when only resized variants are used — that's ~18 MB across the gallery, and why `dist` is ~63 MB rather than ~36 MB. Not a leak, and not worth chasing unless deploy time becomes a problem; the escape hatch is storing paths as `z.string()` and resolving them with `import.meta.glob`.
 
 ## macOS gotchas
 

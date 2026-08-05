@@ -73,6 +73,27 @@ export const projectField = (slug: string, ...path: (string | number)[]): string
 };
 
 /**
+ * Astro resolves `image()` schema fields into ImageMetadata objects. Embedding
+ * one in the bridge payload counts as a reference to the *original* file, so
+ * Astro emits the full-size source into the build — 17 MB of images nothing
+ * ever loads. The admin re-queries the real values anyway, so reduce these to
+ * their filename.
+ */
+const stripImageMetadata = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(stripImageMetadata);
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    if (typeof obj.src === 'string' && 'width' in obj && 'height' in obj) {
+      return obj.src.split('/').pop() ?? '';
+    }
+    return Object.fromEntries(
+      Object.entries(obj).map(([k, v]) => [k, stripImageMetadata(v)]),
+    );
+  }
+  return value;
+};
+
+/**
  * Wraps raw JSON in the shape Tina's GraphQL layer would return, so the admin
  * can render an initial form before its own query resolves.
  */
@@ -96,6 +117,6 @@ export const asTinaDocument = <T extends object>(
       relativePath,
       extension,
     },
-    ...data,
+    ...(stripImageMetadata(data) as T),
   };
 };

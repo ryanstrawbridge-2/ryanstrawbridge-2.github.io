@@ -129,7 +129,9 @@ const f = (...path: (string | number)[]) => projectField(project.id, ...path);
                 <Image
                   src={item.image}
                   alt={item.alt}
-                  widths={[400, 800, 1200]}
+                  /* Cells cap out around 350px in the two-column grid and 760px
+                     stacked, so 800w covers stacked 1x and two-column 2x. */
+                  widths={[400, 800]}
                   sizes="(min-width: 720px) 50vw, 100vw"
                   loading="lazy"
                 />

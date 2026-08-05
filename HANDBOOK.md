@@ -32,6 +32,19 @@ All three commit to the same git repo. Use whichever fits the task.
 
 ---
 
+## Reordering gallery photos
+
+Project gallery photos live in a **Gallery photos** list on each project's form.
+Each row is labelled with its filename and alt text (`frame-04.jpeg — Lifting frame`),
+so you can tell photos apart at a glance. Grab the handle at the left of a row and
+drag to reorder — the order in that list is the order on the page. Save when done.
+
+Only photos under the old `## Gallery` heading moved into this list. Images that sit
+inside the write-up itself (swirl-injector, faucet-leak-ring) are still part of the
+body text, where they belong.
+
+---
+
 ## Click-to-edit (TinaCMS visual editing)
 
 Open `/admin/`, click **Enter Edit Mode**, and the real site loads in a pane next to the form.
