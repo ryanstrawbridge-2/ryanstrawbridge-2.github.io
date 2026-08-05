@@ -5,6 +5,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import TinaEditBridge from '../components/TinaEditBridge.astro';
 import home from '../data/home.json';
+import { inlineEmphasis } from '../lib/inline-emphasis';
 import {
   HOME_QUERY,
   HOME_VARIABLES,
@@ -104,8 +105,8 @@ const aboutBioParagraphs = home.aboutSection.bio
       <div class="hero-text">
         <p class="eyebrow" data-tina-field={f('hero', 'eyebrow')}>{home.hero.eyebrow}</p>
         <h1>Ryan Strawbridge</h1>
-        <p class="tagline" data-tina-field={f('hero', 'tagline')}>{home.hero.tagline}</p>
-        <p class="lede" data-tina-field={f('hero', 'lede')}>{home.hero.lede}</p>
+        <p class="tagline" data-tina-field={f('hero', 'tagline')} set:html={inlineEmphasis(home.hero.tagline)} />
+        <p class="lede" data-tina-field={f('hero', 'lede')} set:html={inlineEmphasis(home.hero.lede)} />
         <div class="cta-row">
           <a class="btn" href={home.hero.primaryCta.href} data-tina-field={f('hero', 'primaryCta', 'label')}>{home.hero.primaryCta.label}</a>
           <a
@@ -451,6 +452,20 @@ const aboutBioParagraphs = home.aboutSection.bio
       line-height: 1.35;
       margin: 1rem 0 1.25rem;
       color: var(--text);
+    }
+    /* Wrap a phrase in *asterisks* in the CMS to emphasise it. A serif italic
+       against the sans headline reads as a deliberate choice rather than a
+       browser's default slant. */
+    .tagline :global(em) {
+      font-family: var(--font-serif, Georgia, 'Times New Roman', serif);
+      font-style: italic;
+      font-weight: 400;
+      /* Serif x-heights run small next to the sans, so nudge the size up. */
+      font-size: 1.06em;
+      letter-spacing: -0.01em;
+    }
+    .lede :global(em) {
+      font-style: italic;
     }
     .lede {
       font-size: 1.1rem;
