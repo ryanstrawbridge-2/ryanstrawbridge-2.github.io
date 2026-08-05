@@ -4,7 +4,7 @@ subtitle: Automated seam-prep tool for fusion magnet assembly
 organization: Commonwealth Fusion Systems
 date: 2026-05-12T00:00:00.000Z
 summary: 'A CNC-driven cutting fixture that automates seam preparation for poloidal field magnet sub-assemblies, replacing a manual operation that bottlenecked the production line.'
-hero: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg
+hero: /src/assets/images/IMG_1834.JPEG
 heroAlt: CNC seam cutter on the manufacturing floor
 gallery:
   - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg
