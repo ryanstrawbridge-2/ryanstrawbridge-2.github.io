@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 686" width="1600" height="686" role="img" aria-label="Technical illustration: cam-and-pin rotary latch shown locked and released, and a section through the pressure-sealed rotating shaft with O-ring seals">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c2128"/>
+      <stop offset="1" stop-color="#12161b"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#2b323b" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c3ccd6"/>
+      <stop offset="1" stop-color="#828c97"/>
+    </linearGradient>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#e8703a"/>
+    </marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6b757f"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="686" fill="url(#bg)"/>
+  <rect width="1600" height="686" fill="url(#grid)" opacity="0.55"/>
+
+  <!-- ===================== LEFT: latch states ===================== -->
+  <g transform="translate(104 96)">
+    <text x="0" y="0" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="19" letter-spacing="2.5">CAM-AND-PIN LATCH</text>
+
+    <!-- LOCKED -->
+    <g transform="translate(20 112)">
+
+      <!-- housing bore with an exit slot at the top -->
+      <path d="M118 12 A106 106 0 1 1 117 12 M96 12 h44"
+            fill="#171d24" stroke="#4d5761" stroke-width="2"/>
+      <!-- exit slot walls -->
+      <path d="M96 12 V-38 M140 12 V-38" stroke="#4d5761" stroke-width="2" fill="none"/>
+
+      <!-- cam disc; the wedge is the pocket cut into it -->
+      <circle cx="118" cy="118" r="80" fill="#2d343d" stroke="#5b646e" stroke-width="2"/>
+      <!-- pocket rotated AWAY from the slot, so the disc body blocks the pin -->
+      <path d="M118 118 L48 78 A80 80 0 0 1 74 50 Z" fill="#101418" stroke="#6e7781" stroke-width="1.5"/>
+
+      <!-- pin sits in the slot, trapped by solid cam material beneath it -->
+      <circle cx="118" cy="6" r="20" fill="url(#metal)" stroke="#6e7781" stroke-width="1.5"/>
+      <!-- contact highlight where the cam blocks it -->
+      <path d="M100 30 A80 80 0 0 1 136 30" stroke="#e8703a" stroke-width="3" fill="none"/>
+
+      <path d="M118 -66 V-24" stroke="#e8703a" stroke-width="2.5" marker-end="url(#a)" fill="none"/>
+      <text x="134" y="-58" fill="#e8703a" font-family="ui-monospace,monospace" font-size="15">mooring load</text>
+
+      <circle cx="118" cy="118" r="8" fill="#4d5761"/>
+      <text x="118" y="238" fill="#8b949e" font-family="ui-monospace,monospace" font-size="15" text-anchor="middle">LOCKED — cam blocks slot</text>
+    </g>
+
+    <!-- RELEASED -->
+    <g transform="translate(320 112)">
+
+      <path d="M118 12 A106 106 0 1 1 117 12 M96 12 h44"
+            fill="#171d24" stroke="#4d5761" stroke-width="2"/>
+      <path d="M96 12 V-38 M140 12 V-38" stroke="#4d5761" stroke-width="2" fill="none"/>
+
+      <circle cx="118" cy="118" r="80" fill="#2d343d" stroke="#5b646e" stroke-width="2"/>
+      <!-- pocket now aligned under the slot — a clear path out -->
+      <path d="M118 118 L96 40 A80 80 0 0 1 140 40 Z" fill="#101418" stroke="#6e7781" stroke-width="1.5"/>
+
+      <!-- pin travelling out through the slot -->
+      <circle cx="118" cy="70" r="20" fill="url(#metal)" stroke="#6e7781" stroke-width="1.5" opacity="0.4"/>
+      <circle cx="118" cy="-30" r="20" fill="url(#metal)" stroke="#6e7781" stroke-width="1.5"/>
+      <path d="M118 44 V-4" stroke="#e8703a" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#a)" fill="none"/>
+
+      <!-- rotation callout, clear of the slot -->
+      <path d="M40 168 A80 80 0 0 1 46 84" stroke="#e8703a" stroke-width="2.5" fill="none" marker-end="url(#a)"/>
+      <text x="0" y="196" fill="#e8703a" font-family="ui-monospace,monospace" font-size="15">cam rotates</text>
+
+      <circle cx="118" cy="118" r="8" fill="#4d5761"/>
+      <text x="118" y="238" fill="#8b949e" font-family="ui-monospace,monospace" font-size="15" text-anchor="middle">RELEASED — pin exits</text>
+    </g>
+
+    <text x="0" y="404" fill="#6e7781" font-family="ui-monospace,monospace" font-size="15">the cam carries the load, so the actuator only has to turn it</text>
+  </g>
+
+  <!-- divider -->
+  <path d="M760 120 V566" stroke="#2b323b" stroke-width="1.5" stroke-dasharray="5 8"/>
+
+  <!-- ===================== RIGHT: sealed shaft section ===================== -->
+  <g transform="translate(846 96)">
+    <text x="0" y="0" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="19" letter-spacing="2.5">SEALED SHAFT — SECTION</text>
+
+    <!-- bands, painted first; every label comes after its band -->
+    <rect x="0" y="52" width="620" height="150" fill="#171d24"/>
+    <rect x="0" y="202" width="620" height="74" fill="#2d343d" stroke="#4d5761" stroke-width="1.5"/>
+    <rect x="0" y="276" width="620" height="176" fill="#1a2027"/>
+
+    <!-- external pressure -->
+    <g stroke="#6b757f" stroke-width="1.6" marker-end="url(#ad)" fill="none" opacity="0.9">
+      <path d="M70 104 v58"/><path d="M170 104 v58"/><path d="M450 104 v58"/><path d="M550 104 v58"/>
+    </g>
+    <text x="12" y="80" fill="#7d8792" font-family="ui-monospace,monospace" font-size="15">seawater — external pressure</text>
+
+    <!-- rotating shaft through the wall -->
+    <rect x="248" y="150" width="118" height="196" fill="url(#metal)" stroke="#6e7781" stroke-width="1.5"/>
+    <text x="307" y="138" fill="#8b949e" font-family="ui-monospace,monospace" font-size="15" text-anchor="middle">shaft</text>
+
+    <!-- band labels, clear of the shaft -->
+    <text x="12" y="246" fill="#9aa4ae" font-family="ui-monospace,monospace" font-size="15">housing</text>
+    <text x="12" y="304" fill="#7d8792" font-family="ui-monospace,monospace" font-size="15">dry interior</text>
+
+    <!-- two O-rings per side, in the bore -->
+    <g fill="#e8703a">
+      <circle cx="248" cy="224" r="11"/><circle cx="366" cy="224" r="11"/>
+      <circle cx="248" cy="256" r="11"/><circle cx="366" cy="256" r="11"/>
+    </g>
+    <path d="M400 224 H466" stroke="#e8703a" stroke-width="1.6" fill="none"/>
+    <text x="474" y="230" fill="#e8703a" font-family="ui-monospace,monospace" font-size="16">O-ring seals</text>
+
+    <!-- loads on the shaft, both below it with labels to the right -->
+    <path d="M307 432 V370" stroke="#e8703a" stroke-width="2.5" fill="none" marker-end="url(#a)"/>
+    <path d="M240 400 A72 34 0 0 0 374 400" stroke="#e8703a" stroke-width="2.5" fill="none" marker-end="url(#a)"/>
+    <text x="392" y="382" fill="#e8703a" font-family="ui-monospace,monospace" font-size="15">torsion</text>
+    <text x="392" y="404" fill="#e8703a" font-family="ui-monospace,monospace" font-size="15">+ axial compression</text>
+
+    <text x="0" y="502" fill="#6e7781" font-family="ui-monospace,monospace" font-size="15">shaft sized for combined loading at depth; seals chosen for a rotating interface</text>
+  </g>
+</svg>

@@ -37,7 +37,14 @@ const {
   gallery,
 } = project.data;
 
-const dateLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+// Format in UTC. Frontmatter dates are UTC midnight and stand for a calendar
+// month, not an instant — formatting them in a negative-offset timezone rolls
+// any date on the 1st back into the previous month.
+const dateLabel = date.toLocaleDateString('en-US', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 
 // Map the 9-way friendly keywords to CSS object-position values.
 // If heroFocalPoint isn't one of these keywords, treat it as a raw CSS value
