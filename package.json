@@ -8,8 +8,8 @@
   "scripts": {
     "dev": "astro dev",
     "dev:tina": "tinacms dev -c \"astro dev\"",
-    "build": "node scripts/fix-cms-paths.mjs && astro build && node scripts/generate-cms-thumbnails.mjs",
-    "build:tina": "tinacms build && node scripts/fix-cms-paths.mjs && astro build && node scripts/generate-cms-thumbnails.mjs",
+    "build": "node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs && node scripts/generate-cms-thumbnails.mjs",
+    "build:tina": "tinacms build && node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs && node scripts/generate-cms-thumbnails.mjs",
     "fix:paths": "node scripts/fix-cms-paths.mjs",
     "preview": "astro preview",
     "astro": "astro",
