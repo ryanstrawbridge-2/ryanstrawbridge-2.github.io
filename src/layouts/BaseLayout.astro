@@ -108,8 +108,12 @@ const jsonLd = {
         try {
           const stored = localStorage.getItem('theme');
           const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const theme = stored || (prefersDark ? 'dark' : 'light');
-          document.documentElement.dataset.theme = theme;
+          /* Only light/dark count as an override — anything else means follow
+             the device, so a stale value can't strand someone off-system. */
+          const explicit = stored === 'light' || stored === 'dark';
+          const root = document.documentElement;
+          root.dataset.theme = explicit ? stored : (prefersDark ? 'dark' : 'light');
+          root.dataset.themeSource = explicit ? 'explicit' : 'system';
         } catch (_) { /* ignore */ }
       })();
     </script>

@@ -1,7 +1,20 @@
 ---
+// Three-state theme control: system → light → dark → system.
+//
+// "System" is the default and means no stored preference — the page follows the
+// device, including when the device flips mid-visit. Picking light or dark
+// stores an override; cycling back to system clears it. A two-state toggle
+// can't express that, which is why this is a cycle rather than a switch.
+//
+// The icon shows the *current* state rather than what the next click does —
+// with three states, "what's next" isn't guessable from one glyph.
 ---
 
-<button class="theme-toggle" type="button" aria-label="Toggle light/dark theme" title="Toggle theme">
+<button class="theme-toggle" type="button" aria-live="polite">
+  <svg class="icon-system" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+    <path d="M8 21h8M12 17v4"></path>
+  </svg>
   <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <circle cx="12" cy="12" r="4"></circle>
     <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
@@ -33,18 +46,68 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
-  .icon-sun { display: none; }
-  .icon-moon { display: block; }
-  :global(:root[data-theme='dark']) .icon-sun { display: block; }
-  :global(:root[data-theme='dark']) .icon-moon { display: none; }
+
+  /* Exactly one icon shows, driven by data attributes the pre-paint script in
+     BaseLayout sets before first paint. Defaults assume system + light so
+     there's no flash if the script hasn't run yet. */
+  .icon-sun,
+  .icon-moon,
+  .icon-system { display: none; }
+  :global(:root[data-theme-source='system']) .icon-system { display: block; }
+  :global(:root[data-theme-source='explicit'][data-theme='light']) .icon-sun { display: block; }
+  :global(:root[data-theme-source='explicit'][data-theme='dark']) .icon-moon { display: block; }
+  /* Pre-script fallback. */
+  :global(:root:not([data-theme-source])) .icon-system { display: block; }
 </style>
 
 <script>
+  const root = document.documentElement;
   const button = document.querySelector<HTMLButtonElement>('.theme-toggle');
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+
+  type Mode = 'system' | 'light' | 'dark';
+  const ORDER: Mode[] = ['system', 'light', 'dark'];
+
+  const currentMode = (): Mode =>
+    root.dataset.themeSource === 'explicit' && root.dataset.theme === 'dark'
+      ? 'dark'
+      : root.dataset.themeSource === 'explicit'
+        ? 'light'
+        : 'system';
+
+  const describe = (mode: Mode) => {
+    const next = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
+    const label =
+      mode === 'system'
+        ? `Theme: following your device (${media.matches ? 'dark' : 'light'})`
+        : `Theme: ${mode}`;
+    return { label, hint: `${label}. Click to switch to ${next}.`, next };
+  };
+
+  const apply = (mode: Mode) => {
+    if (mode === 'system') {
+      try { localStorage.removeItem('theme'); } catch (_) { /* ignore */ }
+      root.dataset.themeSource = 'system';
+      root.dataset.theme = media.matches ? 'dark' : 'light';
+    } else {
+      try { localStorage.setItem('theme', mode); } catch (_) { /* ignore */ }
+      root.dataset.themeSource = 'explicit';
+      root.dataset.theme = mode;
+    }
+    const { hint } = describe(mode);
+    button?.setAttribute('aria-label', hint);
+    button?.setAttribute('title', hint);
+  };
+
+  apply(currentMode());
+
   button?.addEventListener('click', () => {
-    const root = document.documentElement;
-    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
-    root.dataset.theme = next;
-    try { localStorage.setItem('theme', next); } catch (_) { /* ignore */ }
+    apply(describe(currentMode()).next);
+  });
+
+  // Follow the device if the visitor hasn't overridden it. Without this, a
+  // laptop switching to dark at sunset leaves the page in light mode.
+  media.addEventListener('change', () => {
+    if (root.dataset.themeSource !== 'explicit') apply('system');
   });
 </script>
