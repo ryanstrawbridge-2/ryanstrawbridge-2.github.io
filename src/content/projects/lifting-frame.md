@@ -14,6 +14,17 @@ tools:
   - Welded steel fabrication
 order: 1
 draft: false
+gallery:
+  - image: '../../assets/images/projects/lifting-frame/frame-04.jpeg'
+    alt: Lifting frame
+  - image: '../../assets/images/projects/lifting-frame/frame-05.jpeg'
+    alt: Lifting frame
+  - image: '../../assets/images/projects/lifting-frame/frame-06.jpeg'
+    alt: Lifting frame
+  - image: '../../assets/images/projects/lifting-frame/frame-07.jpeg'
+    alt: Lifting frame
+  - image: '../../assets/images/home/lifting-test.jpeg'
+    alt: Lifting Test
 ---
 
 ## Problem
@@ -31,15 +42,3 @@ The poloidal-field magnet sub-assemblies needed to move from the assembly fixtur
 
 * Saved over \[blank] hours of work in the magnet stacking process.
 * Frame proof-tested to **125% of rated load** with no measurable deformation.
-
-## Gallery
-
-![Lifting frame](../../assets/images/projects/lifting-frame/frame-04.jpeg)
-
-![Lifting frame](../../assets/images/projects/lifting-frame/frame-05.jpeg)
-
-![Lifting frame](../../assets/images/projects/lifting-frame/frame-06.jpeg)
-
-![Lifting frame](../../assets/images/projects/lifting-frame/frame-07.jpeg)
-
-![Lifting Test](../../assets/images/home/lifting-test.jpeg)

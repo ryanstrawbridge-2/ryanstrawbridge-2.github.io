@@ -125,6 +125,36 @@ export default defineConfig({
             ],
           },
           {
+            type: 'object',
+            name: 'gallery',
+            label: 'Gallery photos',
+            list: true,
+            description: 'Drag the handle on a row to reorder. Order here is the order on the page.',
+            ui: {
+              // Label each row by filename so photos are identifiable even
+              // when the thumbnail preview fails to load.
+              itemProps: (item: { image?: string; alt?: string }) => {
+                const file = item?.image?.split('/').pop() ?? 'No photo chosen';
+                return { label: item?.alt ? `${file} — ${item.alt}` : file };
+              },
+            },
+            fields: [
+              { type: 'image', name: 'image', label: 'Photo' },
+              {
+                type: 'string',
+                name: 'alt',
+                label: 'Alt text',
+                description: 'Describes the photo for screen readers. Used as the caption unless you set one below.',
+              },
+              {
+                type: 'string',
+                name: 'caption',
+                label: 'Caption (optional)',
+                description: 'Shown under the photo. Leave blank to use the alt text.',
+              },
+            ],
+          },
+          {
             type: 'string',
             name: 'tools',
             label: 'Tools / skills',

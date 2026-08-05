@@ -11,6 +11,15 @@ tools:
   - Fixture precision
   - Operator UI
 order: 6
+gallery:
+  - image: '../../assets/images/projects/layerdowner/layerdowner-01.jpeg'
+    alt: Layerdowner on the floor
+  - image: '../../assets/images/projects/layerdowner/layerdowner-02.jpeg'
+    alt: Layerdowner detail
+  - image: '../../assets/images/projects/layerdowner/layerdowner-03.jpeg'
+    alt: Layerdowner
+  - image: '../../assets/images/projects/layerdowner/layerdowner-04.jpeg'
+    alt: Layerdowner
 ---
 
 Problem
@@ -27,13 +36,3 @@ During cable insulation wrapping, the first turn of the cable had to be placed b
 
 * ~~Layup speed roughly **3× faster** than the manual baseline.~~
 * Saved more that \[blank] hours of initial processing time.
-
-## Gallery
-
-![Layerdowner on the floor](../../assets/images/projects/layerdowner/layerdowner-01.jpeg)
-
-![Layerdowner detail](../../assets/images/projects/layerdowner/layerdowner-02.jpeg)
-
-![Layerdowner](../../assets/images/projects/layerdowner/layerdowner-03.jpeg)
-
-![Layerdowner](../../assets/images/projects/layerdowner/layerdowner-04.jpeg)

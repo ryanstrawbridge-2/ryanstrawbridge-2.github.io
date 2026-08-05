@@ -24,6 +24,19 @@ const projects = defineCollection({
       galleryLayout: z
         .enum(['stacked', 'two-column', 'three-column'])
         .default('two-column'),
+
+      // Gallery photos. Lives in frontmatter rather than the body so the CMS
+      // can reorder it by dragging. Caption falls back to alt when omitted,
+      // matching what rehype-image-captions does for body images.
+      gallery: z
+        .array(
+          z.object({
+            image: image(),
+            alt: z.string(),
+            caption: z.string().optional(),
+          }),
+        )
+        .default([]),
     }),
 });
 

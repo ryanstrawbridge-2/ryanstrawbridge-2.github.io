@@ -14,6 +14,13 @@ tools:
   - Ergonomic design
 order: 2
 draft: false
+gallery:
+  - image: '../../assets/images/projects/hydraulic-bender/bender-01.jpeg'
+    alt: Hydraulic bender on the floor
+  - image: '../../assets/images/projects/hydraulic-bender/bender-02.jpeg'
+    alt: Hydraulic bender
+  - image: '../../assets/images/projects/hydraulic-bender/bender-03.jpeg'
+    alt: Hydraulic bender
 ---
 
 ## Problem
@@ -31,11 +38,3 @@ The previous bending equipment produced bends shorter than required, formed only
 * Consistently bending to spec on the first press.
 * Cut bending operation time from a full shift down to a quarter.
 * Improved ergonomics, reduced injury risk, and increased first-pass accuracy.
-
-## Gallery
-
-![Hydraulic bender on the floor](../../assets/images/projects/hydraulic-bender/bender-01.jpeg)
-
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-02.jpeg)
-
-![Hydraulic bender](../../assets/images/projects/hydraulic-bender/bender-03.jpeg)

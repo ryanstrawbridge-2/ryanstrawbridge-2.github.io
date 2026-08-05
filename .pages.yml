@@ -279,6 +279,22 @@ content:
         options:
           values: [stacked, two-column, three-column]
 
+      - name: gallery
+        label: Gallery photos
+        type: object
+        list: true
+        default: []
+        description: Photos shown at the bottom of the project page. Drag rows to reorder.
+        fields:
+          - name: image
+            label: Photo
+            type: image
+            options:
+              input: src/assets/images/projects/{primary}
+              output: '../../assets/images/projects/{primary}/{name}{extension}'
+          - { name: alt, label: Alt text, type: string, description: "Describes the photo for screen readers. Used as the caption unless you set one." }
+          - { name: caption, label: "Caption (optional)", type: string, description: "Shown under the photo. Leave blank to use the alt text." }
+
       - { name: tools, label: "Tools / skills", type: string, list: true, default: [], description: "Listed as tags on the project page." }
       - { name: order, label: Display order, type: number, default: 0, description: "Lower numbers appear first. Ties broken by date (newer first)." }
       - { name: draft, label: "Draft (hide from live site)", type: boolean, default: false, description: "Toggle on to hide this project from the published site." }

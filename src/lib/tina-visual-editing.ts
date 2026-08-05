@@ -32,6 +32,7 @@ const HOME_PARTS = `fragment HomeParts on Home {
 const PROJECT_PARTS = `fragment ProjectParts on Project {
   __typename
   title subtitle organization date summary hero heroAlt heroFocalPoint heroAspect galleryLayout tools order draft body
+  gallery { __typename image alt caption }
 }`;
 
 const DOCUMENT_SYS = `... on Document {

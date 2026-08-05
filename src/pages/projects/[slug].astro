@@ -34,6 +34,7 @@ const {
   heroFocalPoint,
   heroAspect,
   galleryLayout,
+  gallery,
 } = project.data;
 
 const dateLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -113,8 +114,31 @@ const f = (...path: (string | number)[]) => projectField(project.id, ...path);
       />
     </div>
 
-    <div class={`container-narrow project-body gallery-${galleryLayout}`} data-lightbox-root data-tina-field={f('body')}>
-      <Content />
+    {/* One lightbox root wraps both — the lightbox binds to the first root it
+        finds, so body and gallery images have to share it to navigate as one set. */}
+    <div data-lightbox-root>
+      <div class={`container-narrow project-body gallery-${galleryLayout}`} data-tina-field={f('body')}>
+        <Content />
+      </div>
+
+      {
+        gallery.length > 0 && (
+          <div class={`container-narrow project-gallery gallery-${galleryLayout}`}>
+            {gallery.map((item, i) => (
+              <figure class="gallery-figure" data-tina-field={f('gallery', i, 'image')}>
+                <Image
+                  src={item.image}
+                  alt={item.alt}
+                  widths={[400, 800, 1200]}
+                  sizes="(min-width: 720px) 50vw, 100vw"
+                  loading="lazy"
+                />
+                <figcaption>{item.caption ?? item.alt}</figcaption>
+              </figure>
+            ))}
+          </div>
+        )
+      }
     </div>
 
     <TinaEditBridge query={PROJECT_QUERY} variables={tinaVariables} data={tinaData} id={tinaId} />
@@ -251,22 +275,54 @@ const f = (...path: (string | number)[]) => projectField(project.id, ...path);
       font-style: italic;
     }
 
+    /* The gallery frontmatter list renders here. Mirrors the figure styling
+       body images get from rehype-image-captions, so moving a photo between
+       the body and the gallery list looks the same either way. */
+    .project-gallery :global(figure.gallery-figure) {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .project-gallery :global(figure.gallery-figure) :global(img) {
+      margin: 0;
+      width: 100%;
+      cursor: zoom-in;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+    .project-gallery :global(figure.gallery-figure) :global(figcaption) {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 0.5rem;
+      padding-inline: 0.25rem;
+    }
+    .project-gallery.gallery-stacked :global(figure.gallery-figure) {
+      margin-block: 1.5rem;
+    }
+
     /* Gallery layouts: text content spans full width; gallery figures flow
        into a multi-column grid. */
     .project-body.gallery-two-column,
-    .project-body.gallery-three-column {
+    .project-body.gallery-three-column,
+    .project-gallery.gallery-two-column,
+    .project-gallery.gallery-three-column {
       display: grid;
       gap: 1.5rem 1.25rem;
     }
-    .project-body.gallery-two-column {
+    .project-body.gallery-two-column,
+    .project-gallery.gallery-two-column {
       grid-template-columns: repeat(2, 1fr);
     }
-    .project-body.gallery-three-column {
+    .project-body.gallery-three-column,
+    .project-gallery.gallery-three-column {
       grid-template-columns: repeat(3, 1fr);
     }
     @media (max-width: 720px) {
       .project-body.gallery-two-column,
-      .project-body.gallery-three-column {
+      .project-body.gallery-three-column,
+      .project-gallery.gallery-two-column,
+      .project-gallery.gallery-three-column {
         grid-template-columns: 1fr;
       }
     }
@@ -278,7 +334,9 @@ const f = (...path: (string | number)[]) => projectField(project.id, ...path);
     /* Constrain figure images to a uniform 4:3 cell — keeps the grid clean
        even when source photos have different aspect ratios. */
     .project-body.gallery-two-column :global(figure.gallery-figure) :global(img),
-    .project-body.gallery-three-column :global(figure.gallery-figure) :global(img) {
+    .project-body.gallery-three-column :global(figure.gallery-figure) :global(img),
+    .project-gallery.gallery-two-column :global(figure.gallery-figure) :global(img),
+    .project-gallery.gallery-three-column :global(figure.gallery-figure) :global(img) {
       aspect-ratio: 4 / 3;
       object-fit: cover;
       border-radius: var(--radius-lg);

@@ -14,6 +14,15 @@ tools:
   - Fixture design
 order: 3
 draft: false
+gallery:
+  - image: '../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg'
+    alt: CNC seam cutter
+  - image: '../../assets/images/projects/cnc-seam-cutter/cutter-02.jpeg'
+    alt: CNC seam cutter
+  - image: '../../assets/images/projects/cnc-seam-cutter/cutter-03.jpeg'
+    alt: CNC seam cutter
+  - image: '../../assets/images/projects/cnc-seam-cutter/cutter-04.jpeg'
+    alt: CNC seam cutter
 ---
 
 ## Problem
@@ -30,13 +39,3 @@ The previous seam-prep operation was performed by hand. This operation took an e
 
 * Cut prep time per assembly reduced from 6 hours to 6 minutes.
 * Cut-to-cut variation dropped, reducing non-conformances
-
-## Gallery
-
-![CNC seam cutter](../../assets/images/projects/cnc-seam-cutter/cutter-01.jpeg)
-
-![CNC seam cutter](../../assets/images/projects/cnc-seam-cutter/cutter-02.jpeg)
-
-![CNC seam cutter](../../assets/images/projects/cnc-seam-cutter/cutter-03.jpeg)
-
-![CNC seam cutter](../../assets/images/projects/cnc-seam-cutter/cutter-04.jpeg)
