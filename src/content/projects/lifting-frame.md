@@ -11,8 +11,7 @@ gallery:
     alt: Lifting frame
   - image: /src/assets/images../../assets/images/projects/lifting-frame/frame-07.jpeg
     alt: Lifting frame
-  - image: /src/assets/images../../assets/images/home/lifting-test.jpeg
-    alt: Lifting Test
+  - image: /src/assets/images/lifttestblurred.png
 tools:
   - NX
   - Lifting Documentation (ASME BTH-1 | ASME B30.20)
