@@ -4,7 +4,7 @@ subtitle: Heat shielding fixture and stencil optimization for circuit card reflo
 organization: Raytheon
 date: 2024-08-01T00:00:00.000Z
 summary: Designed a Durastone heat-shielding fixture and optimized solder stencil patterns to eliminate QFN bridging and prevent filter overheating during reflow on missile and radar circuit cards.
-hero: /src/assets/images/sample.webp
+hero: ../../assets/images/sample.webp
 heroAlt: 'Diagram of segmented stencil apertures forming off-gas escape channels, and a reflow section showing a heat shield over an adjacent filter'
 tools:
   - Mechanical design

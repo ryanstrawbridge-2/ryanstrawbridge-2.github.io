@@ -11,10 +11,44 @@
       "label": "Résumé (PDF)",
       "href": "/resume.pdf"
     },
-    "headshotShape": "circle"
+    "headshotShape": "circle",
+    "headshot": "/src/assets/images/about/headshot.jpg",
+    "headshotAlt": "Headshot of Ryan Strawbridge"
   },
   "showcase": {
-    "show": true
+    "show": true,
+    "items": [
+      {
+        "image": "/src/assets/images/home/weld-in-action.jpeg",
+        "alt": "Welding in action on the manufacturing floor",
+        "size": "large"
+      },
+      {
+        "image": "/src/assets/images/home/bandsaw.jpeg",
+        "alt": "Working at the bandsaw",
+        "size": "regular"
+      },
+      {
+        "image": "/src/assets/images/home/mag-drill.jpeg",
+        "alt": "Operating a magnetic drill press",
+        "size": "regular"
+      },
+      {
+        "video": "/videos/aero-testing.mp4",
+        "alt": "Aero testing video",
+        "size": "video"
+      },
+      {
+        "image": "/src/assets/images/home/welding.jpeg",
+        "alt": "Welding work at Commonwealth Fusion Systems",
+        "size": "regular"
+      },
+      {
+        "image": "/src/assets/images/home/lifting-test.jpeg",
+        "alt": "Lifting test for a 3-point lifting frame",
+        "size": "regular"
+      }
+    ]
   },
   "projectsSection": {
     "show": true,
@@ -31,19 +65,19 @@
         "role": "Manufacturing Engineering Co-op",
         "org": "Commonwealth Fusion Systems",
         "blurb": "Supported the poloidal field magnets for the SPARC tokamak. Designed equipment, optimized production processes, and worked alongside operators on the floor.",
-        "logoKey": "cfs"
+        "logo": "/src/assets/images/experience/cfs.png"
       },
       {
         "role": "Operations Engineering Co-op",
         "org": "Raytheon Missiles & Defense",
         "blurb": "Worked on circuit card production for missile and radar systems. Designed heat-shielding fixtures, solder stencils, and led yield improvements on the floor.",
-        "logoKey": "raytheon"
+        "logo": "/src/assets/images/experience/raytheon.png"
       },
       {
         "role": "Propulsion Sub-Team Lead",
         "org": "Northeastern Aerospace Club (AeroNU)",
         "blurb": "Liquid rocket engine team since 2023. Currently designing the servo-to-valve torque coupling for a full-port ball valve regulating nitrogen from a 2,500 psi supply to a 650 psi run tank.",
-        "logoKey": "aeronu"
+        "logo": "/src/assets/images/experience/aeronu.png"
       }
     ]
   },
@@ -54,7 +88,9 @@
     "eyebrow": "About me",
     "heading": "Hi, I'm Ryan.",
     "lede": "I'm a mechanical engineer in Boston, focused on clean energy and aerospace. I love designing equipment that real people use on the floor — and watching it cut hours off a shift.",
-    "bio": "I'm currently a Manufacturing Engineering Co-op at Commonwealth Fusion Systems, where I support the poloidal field magnets for the SPARC tokamak. Previously I was an Operations Engineering Co-op at Raytheon Missiles & Defense in Andover, working on circuit card production for missile and radar systems. I also lead the propulsion sub-team at Northeastern's Aerospace Club, and I'm the mechanical design lead on my senior capstone — a low-cost underwater acoustic release for ropeless fishing gear.\n\nI gravitate toward designs that improve safety and ergonomics for the people who use them. The best mechanical engineering, to me, is invisible — it makes someone's job easier without them ever having to think about it."
+    "bio": "I'm currently a Manufacturing Engineering Co-op at Commonwealth Fusion Systems, where I support the poloidal field magnets for the SPARC tokamak. Previously I was an Operations Engineering Co-op at Raytheon Missiles & Defense in Andover, working on circuit card production for missile and radar systems. I also lead the propulsion sub-team at Northeastern's Aerospace Club, and I'm the mechanical design lead on my senior capstone — a low-cost underwater acoustic release for ropeless fishing gear.\n\nI gravitate toward designs that improve safety and ergonomics for the people who use them. The best mechanical engineering, to me, is invisible — it makes someone's job easier without them ever having to think about it.",
+    "photo": "/src/assets/images/home/lifting-test.jpeg",
+    "photoAlt": "Ryan during a lift test of a 3-point lifting frame"
   },
   "interestsSection": {
     "show": true,
@@ -63,33 +99,33 @@
     "items": [
       {
         "title": "Running",
-        "imageKey": "running",
-        "extraImageKeys": [
-          "running-2",
-          "running-3"
-        ],
         "alt": "Ryan running",
-        "body": "I love running! I'm President of Northeastern's Running Club. I've recently broken into longer distances. I've run a trail 50k and placed 800th overall at the Boston Marathon in 2026."
+        "body": "I love running! I'm President of Northeastern's Running Club. I've recently broken into longer distances. I've run a trail 50k and placed 800th overall at the Boston Marathon in 2026.",
+        "image": "/src/assets/images/about/running.jpg",
+        "extraImages": [
+          "/src/assets/images/about/extras/running-2.jpg",
+          "/src/assets/images/about/extras/running-3.jpg"
+        ]
       },
       {
         "title": "Music",
-        "imageKey": "music",
-        "extraImageKeys": [
-          "music-2",
-          "music-3"
-        ],
         "alt": "Music",
-        "body": "I have a great appreciation for music. I played trumpet in high school, picked up guitar my junior year, and now play rhythm guitar in an alt-rock band."
+        "body": "I have a great appreciation for music. I played trumpet in high school, picked up guitar my junior year, and now play rhythm guitar in an alt-rock band.",
+        "image": "/src/assets/images/about/music.jpg",
+        "extraImages": [
+          "/src/assets/images/about/extras/music-2.jpg",
+          "/src/assets/images/about/extras/music-3.jpeg"
+        ]
       },
       {
         "title": "Interior Design & Plants",
-        "imageKey": "plants",
-        "extraImageKeys": [
-          "plants-2",
-          "plants-3"
-        ],
         "alt": "Plants",
-        "body": "I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants!"
+        "body": "I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants!",
+        "image": "/src/assets/images/about/plants.jpeg",
+        "extraImages": [
+          "/src/assets/images/about/extras/plants-2.jpeg",
+          "/src/assets/images/about/extras/plants-3.jpeg"
+        ]
       }
     ]
   },

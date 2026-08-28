@@ -224,6 +224,8 @@ export default defineConfig({
                   { type: 'string', name: 'href', label: 'Link' },
                 ],
               },
+              { type: 'image', name: 'headshot', label: 'Headshot' },
+              { type: 'string', name: 'headshotAlt', label: 'Headshot alt text' },
               {
                 type: 'string',
                 name: 'headshotShape',
@@ -235,8 +237,40 @@ export default defineConfig({
           {
             type: 'object',
             name: 'showcase',
-            label: 'Engineering photos slideshow',
-            fields: [{ type: 'boolean', name: 'show', label: 'Show this section' }],
+            label: 'Engineering photo collage',
+            fields: [
+              { type: 'boolean', name: 'show', label: 'Show this section' },
+              {
+                type: 'object',
+                name: 'items',
+                label: 'Collage photos',
+                list: true,
+                description:
+                  'Drag to reorder. The grid reserves one Large cell and one Video cell; everything else fills the smaller cells.',
+                ui: {
+                  itemProps: (item: { image?: string; video?: string; alt?: string; size?: string }) => {
+                    const file = (item?.video ?? item?.image ?? '').split('/').pop() || 'Empty';
+                    return { label: `${item?.size ?? 'regular'} — ${file}` };
+                  },
+                },
+                fields: [
+                  { type: 'image', name: 'image', label: 'Photo' },
+                  {
+                    type: 'string',
+                    name: 'video',
+                    label: 'Video path (optional)',
+                    description: 'e.g. /videos/aero-testing.mp4. Set this instead of a photo for a video cell.',
+                  },
+                  { type: 'string', name: 'alt', label: 'Alt text' },
+                  {
+                    type: 'string',
+                    name: 'size',
+                    label: 'Cell size',
+                    options: ['large', 'regular', 'video'],
+                  },
+                ],
+              },
+            ],
           },
           {
             type: 'object',
@@ -276,13 +310,7 @@ export default defineConfig({
                   { type: 'string', name: 'role', label: 'Role' },
                   { type: 'string', name: 'org', label: 'Organization' },
                   { type: 'string', name: 'blurb', label: 'Blurb', ui: { component: 'textarea' } },
-                  {
-                    type: 'string',
-                    name: 'logoKey',
-                    label: 'Logo',
-                    options: ['cfs', 'raytheon', 'aeronu'],
-                    description: 'To add a new logo, ask Claude.',
-                  },
+                  { type: 'image', name: 'logo', label: 'Logo' },
                 ],
               },
             ],
@@ -293,6 +321,8 @@ export default defineConfig({
             label: 'About section',
             fields: [
               { type: 'boolean', name: 'show', label: 'Show this section' },
+              { type: 'image', name: 'photo', label: 'Portrait photo' },
+              { type: 'string', name: 'photoAlt', label: 'Portrait alt text' },
               {
                 type: 'string',
                 name: 'photoPosition',
@@ -335,25 +365,12 @@ export default defineConfig({
                 },
                 fields: [
                   { type: 'string', name: 'title', label: 'Title' },
+                  { type: 'image', name: 'image', label: 'Main photo' },
                   {
-                    type: 'string',
-                    name: 'imageKey',
-                    label: 'Main image',
-                    options: ['running', 'music', 'plants'],
-                  },
-                  {
-                    type: 'string',
-                    name: 'extraImageKeys',
+                    type: 'image',
+                    name: 'extraImages',
                     label: 'Extra thumbnails',
                     list: true,
-                    options: [
-                      'running-2',
-                      'running-3',
-                      'music-2',
-                      'music-3',
-                      'plants-2',
-                      'plants-3',
-                    ],
                   },
                   { type: 'string', name: 'alt', label: 'Alt text' },
                   { type: 'string', name: 'body', label: 'Body', ui: { component: 'textarea' } },

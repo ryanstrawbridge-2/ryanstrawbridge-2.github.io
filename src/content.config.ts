@@ -32,7 +32,12 @@ const projects = defineCollection({
         .array(
           z.object({
             image: image(),
-            alt: z.string(),
+            // Optional on purpose. A required alt meant that adding a photo in
+            // the CMS without typing one produced a schema error, and since CMS
+            // commits skip the pre-commit hook that surfaced as a failed deploy
+            // and a silently stale site. The template falls back to the caption
+            // and then the project title.
+            alt: z.string().optional(),
             caption: z.string().optional(),
           }),
         )

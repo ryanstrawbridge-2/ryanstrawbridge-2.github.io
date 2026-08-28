@@ -82,6 +82,13 @@ content:
             fields:
               - { name: label, label: Label, type: string }
               - { name: href, label: Link, type: string }
+          - name: headshot
+            label: Headshot
+            type: image
+            options:
+              input: src/assets/images
+              output: /src/assets/images/{name}{extension}
+          - { name: headshotAlt, label: Headshot alt text, type: string }
           - name: headshotShape
             label: Headshot shape
             type: select
@@ -90,10 +97,29 @@ content:
               values: [circle, square, rounded]
 
       - name: showcase
-        label: Engineering photos slideshow
+        label: Engineering photo collage
         type: object
         fields:
           - { name: show, label: Show this section, type: boolean, default: true }
+          - name: items
+            label: Collage photos
+            type: object
+            list: true
+            description: Drag to reorder. The grid reserves one Large cell and one Video cell.
+            fields:
+              - name: image
+                label: Photo
+                type: image
+                options:
+                  input: src/assets/images
+                  output: /src/assets/images/{name}{extension}
+              - { name: video, label: Video path (optional), type: string, description: "e.g. /videos/aero-testing.mp4 — set instead of a photo for a video cell." }
+              - { name: alt, label: Alt text, type: string }
+              - name: size
+                label: Cell size
+                type: select
+                options:
+                  values: [large, regular, video]
 
       - name: projectsSection
         label: Projects section
@@ -124,18 +150,25 @@ content:
               - { name: role, label: Role, type: string }
               - { name: org, label: Organization, type: string }
               - { name: blurb, label: Blurb, type: text }
-              - name: logoKey
+              - name: logo
                 label: Logo
-                type: select
-                description: Pick which company logo to show. To add a new logo, ask Claude.
+                type: image
                 options:
-                  values: [cfs, raytheon, aeronu]
+                  input: src/assets/images
+                  output: /src/assets/images/{name}{extension}
 
       - name: aboutSection
         label: About section
         type: object
         fields:
           - { name: show, label: Show this section, type: boolean, default: true }
+          - name: photo
+            label: Portrait photo
+            type: image
+            options:
+              input: src/assets/images
+              output: /src/assets/images/{name}{extension}
+          - { name: photoAlt, label: Portrait alt text, type: string }
           - name: photoPosition
             label: Photo position
             type: select
@@ -180,27 +213,20 @@ content:
             list: true
             fields:
               - { name: title, label: Title, type: string }
-              - name: imageKey
-                label: Main image
-                type: select
-                description: Larger main photo for this card. To add a new one, ask Claude.
+              - name: image
+                label: Main photo
+                type: image
                 options:
-                  values: [running, music, plants]
-              - name: extraImageKeys
+                  input: src/assets/images
+                  output: /src/assets/images/{name}{extension}
+              - name: extraImages
                 label: Extra thumbnail images
-                type: select
+                type: image
                 list: true
                 description: Optional smaller photos shown below the main one.
                 options:
-                  values:
-                    [
-                      'running-2',
-                      'running-3',
-                      'music-2',
-                      'music-3',
-                      'plants-2',
-                      'plants-3',
-                    ]
+                  input: src/assets/images
+                  output: /src/assets/images/{name}{extension}
               - { name: alt, label: Alt text, type: string }
               - { name: body, label: Body, type: text }
 
