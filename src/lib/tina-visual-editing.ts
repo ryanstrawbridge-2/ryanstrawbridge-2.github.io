@@ -20,12 +20,12 @@ export const queryId = (query: string, variables: Record<string, unknown>): stri
 
 const HOME_PARTS = `fragment HomeParts on Home {
   __typename
-  hero { __typename eyebrow tagline lede primaryCta { __typename label href } secondaryCta { __typename label href } headshotShape }
-  showcase { __typename show }
+  hero { __typename eyebrow tagline lede primaryCta { __typename label href } secondaryCta { __typename label href } headshot headshotAlt headshotShape }
+  showcase { __typename show items { __typename image video alt size } }
   projectsSection { __typename show eyebrow title }
-  experienceSection { __typename show eyebrow title logoSize items { __typename role org blurb logoKey } }
-  aboutSection { __typename show photoPosition photoFocalPoint eyebrow heading lede bio }
-  interestsSection { __typename show eyebrow title items { __typename title imageKey extraImageKeys alt body } }
+  experienceSection { __typename show eyebrow title logoSize items { __typename role org blurb logo } }
+  aboutSection { __typename show photo photoAlt photoPosition photoFocalPoint eyebrow heading lede bio }
+  interestsSection { __typename show eyebrow title items { __typename title image extraImages alt body } }
   contactSection { __typename show eyebrow heading body email phone }
 }`;
 
