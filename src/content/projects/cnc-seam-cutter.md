@@ -10,7 +10,7 @@ gallery:
   - image: /src/assets/images../../assets/images/projects/cc119be8-5ba7-4655-806b-5dd4b14320ad.jpg
     alt: Straight cut test
   - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-03.jpeg
-    alt: CNC seam cutter
+    alt: 'Initial Testing '
   - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-04.jpeg
     alt: Edge Finder Testing
 tools:
