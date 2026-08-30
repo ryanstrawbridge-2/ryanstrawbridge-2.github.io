@@ -11,9 +11,9 @@
       "label": "Résumé (PDF)",
       "href": "/resume.pdf"
     },
-    "headshotShape": "circle",
     "headshot": "/src/assets/images/about/headshot.jpg",
-    "headshotAlt": "Headshot of Ryan Strawbridge"
+    "headshotAlt": "Headshot of Ryan Strawbridge",
+    "headshotShape": "circle"
   },
   "showcase": {
     "show": true,
@@ -44,7 +44,7 @@
         "size": "regular"
       },
       {
-        "image": "/src/assets/images/home/lifting-test.jpeg",
+        "image": "/src/assets/images/projects/lifting-frame/lifttestblurred.png",
         "alt": "Lifting test for a 3-point lifting frame",
         "size": "regular"
       }
@@ -83,14 +83,14 @@
   },
   "aboutSection": {
     "show": true,
+    "photo": "/src/assets/images/home/lifting-test.jpeg",
+    "photoAlt": "Ryan during a lift test of a 3-point lifting frame",
     "photoPosition": "left",
     "photoFocalPoint": "center",
     "eyebrow": "About me",
     "heading": "Hi, I'm Ryan.",
     "lede": "I'm a mechanical engineer in Boston, focused on clean energy and aerospace. I love designing equipment that real people use on the floor — and watching it cut hours off a shift.",
-    "bio": "I'm currently a Manufacturing Engineering Co-op at Commonwealth Fusion Systems, where I support the poloidal field magnets for the SPARC tokamak. Previously I was an Operations Engineering Co-op at Raytheon Missiles & Defense in Andover, working on circuit card production for missile and radar systems. I also lead the propulsion sub-team at Northeastern's Aerospace Club, and I'm the mechanical design lead on my senior capstone — a low-cost underwater acoustic release for ropeless fishing gear.\n\nI gravitate toward designs that improve safety and ergonomics for the people who use them. The best mechanical engineering, to me, is invisible — it makes someone's job easier without them ever having to think about it.",
-    "photo": "/src/assets/images/home/lifting-test.jpeg",
-    "photoAlt": "Ryan during a lift test of a 3-point lifting frame"
+    "bio": "I'm currently a Manufacturing Engineering Co-op at Commonwealth Fusion Systems, where I support the poloidal field magnets for the SPARC tokamak. Previously I was an Operations Engineering Co-op at Raytheon Missiles & Defense in Andover, working on circuit card production for missile and radar systems. I also lead the propulsion sub-team at Northeastern's Aerospace Club, and I'm the mechanical design lead on my senior capstone — a low-cost underwater acoustic release for ropeless fishing gear.\n\nI gravitate toward designs that improve safety and ergonomics for the people who use them. The best mechanical engineering, to me, is invisible — it makes someone's job easier without them ever having to think about it."
   },
   "interestsSection": {
     "show": true,
@@ -99,33 +99,33 @@
     "items": [
       {
         "title": "Running",
-        "alt": "Ryan running",
-        "body": "I love running! I'm President of Northeastern's Running Club. I've recently broken into longer distances. I've run a trail 50k and placed 800th overall at the Boston Marathon in 2026.",
         "image": "/src/assets/images/about/running.jpg",
         "extraImages": [
           "/src/assets/images/about/extras/running-2.jpg",
           "/src/assets/images/about/extras/running-3.jpg"
-        ]
+        ],
+        "alt": "Ryan running",
+        "body": "I love running! I'm President of Northeastern's Running Club. I've recently broken into longer distances. I've run a trail 50k and placed 800th overall at the Boston Marathon in 2026."
       },
       {
         "title": "Music",
-        "alt": "Music",
-        "body": "I have a great appreciation for music. I played trumpet in high school, picked up guitar my junior year, and now play rhythm guitar in an alt-rock band.",
         "image": "/src/assets/images/about/music.jpg",
         "extraImages": [
           "/src/assets/images/about/extras/music-2.jpg",
           "/src/assets/images/about/extras/music-3.jpeg"
-        ]
+        ],
+        "alt": "Music",
+        "body": "I have a great appreciation for music. I played trumpet in high school, picked up guitar my junior year, and now play rhythm guitar in an alt-rock band."
       },
       {
         "title": "Interior Design & Plants",
-        "alt": "Plants",
-        "body": "I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants!",
         "image": "/src/assets/images/about/plants.jpeg",
         "extraImages": [
           "/src/assets/images/about/extras/plants-2.jpeg",
           "/src/assets/images/about/extras/plants-3.jpeg"
-        ]
+        ],
+        "alt": "Plants",
+        "body": "I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants!"
       }
     ]
   },
