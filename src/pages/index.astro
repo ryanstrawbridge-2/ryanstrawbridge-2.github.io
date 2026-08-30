@@ -60,6 +60,17 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).so
     b.data.date.valueOf() - a.data.date.valueOf(),
 );
 
+// The collage reserves column 1 for the `large` cell and column 2 for `video`,
+// each spanning rows 1-2; everything else is a 1x1 cell. Work out how many rows
+// that needs so the CSS can scale its aspect ratio to match — a fixed 21/9 with
+// fixed rows meant an added photo landed in a collapsed row and disappeared.
+const showcaseItems = home.showcase?.items ?? [];
+const hasLarge = showcaseItems.some((x) => x.size === 'large');
+const hasVideo = showcaseItems.some((x) => x.size === 'video');
+const regularCells = showcaseItems.length - (hasLarge ? 1 : 0) - (hasVideo ? 1 : 0);
+const slotsInFirstRows = 4 + (hasLarge ? 0 : 2) + (hasVideo ? 0 : 2);
+const collageRows = 2 + Math.ceil(Math.max(0, regularCells - slotsInFirstRows) / 4);
+
 const aboutBioParagraphs = home.aboutSection.bio
   .split(/\n\s*\n+/)
   .map((p) => p.trim())
@@ -111,18 +122,25 @@ const aboutBioParagraphs = home.aboutSection.bio
   {home.showcase?.show !== false && (
     <section class="showcase">
       <div class="container">
-        <div class="collage" aria-label="Engineering work in action">
+        <div class="collage" aria-label="Engineering work in action" style={`--collage-rows: ${collageRows};`}>
           {
             (home.showcase?.items ?? []).map((item, i) => {
               const img = resolveSiteImage(item.image);
               // Cell role drives placement: `large` and `video` are the two
-              // dominant cells the grid reserves columns for.
-              const cls = item.size === 'large'
-                ? 'collage-item collage-large'
-                : item.size === 'video'
-                  ? 'collage-item collage-video'
-                  : 'collage-item';
-              const wide = item.size === 'large';
+              // dominant cells, each pinned to its own column and spanning both
+              // rows. Only the first of each role can take that slot — a second
+              // one would be placed on top of it — so any extra falls back to a
+              // regular cell rather than overlapping.
+              const items = home.showcase?.items ?? [];
+              const isFirstOfRole = (role: string) =>
+                item.size === role && items.findIndex((x) => x.size === role) === i;
+              const dominant = isFirstOfRole('large')
+                ? 'collage-large'
+                : isFirstOfRole('video')
+                  ? 'collage-video'
+                  : '';
+              const cls = dominant ? `collage-item ${dominant}` : 'collage-item';
+              const wide = dominant === 'collage-large';
               return (
                 <div class={cls} data-tina-field={f('showcase', 'items', i, item.video ? 'video' : 'image')}>
                   {item.video ? (
@@ -556,12 +574,18 @@ const aboutBioParagraphs = home.aboutSection.bio
       .collage {
         gap: 0.75rem;
         /* 4 columns: feature column (2.4fr) + video column (1.6fr) +
-           two side columns. Two rows. Dominant cells: 2.4×2 grid units
-           each, supporting cells 1×1. */
+           two side columns. The two dominant cells span rows 1-2; supporting
+           cells are 1x1 and fill the remaining slots.
+
+           Rows are auto rather than a fixed `repeat(2, ...)` with an
+           aspect-ratio: pinning both meant a 7th photo landed in an implicit
+           third row that collapsed to 0px and vanished. Auto rows let extra
+           photos added in the CMS grow the collage instead. */
         grid-template-columns: 2.4fr 1.6fr 1fr 1fr;
-        grid-template-rows: repeat(2, minmax(220px, 1fr));
-        aspect-ratio: 21 / 9;
-        max-height: 620px;
+        grid-template-rows: repeat(var(--collage-rows, 2), minmax(220px, 1fr));
+        /* Height scales with row count, so the six-cell layout keeps its
+           original 21/9 proportions and extra rows extend it evenly. */
+        aspect-ratio: 21 / calc(9 * var(--collage-rows, 2) / 2);
       }
     }
     .collage-item {
