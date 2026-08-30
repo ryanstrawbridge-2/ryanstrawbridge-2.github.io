@@ -12,7 +12,7 @@ gallery:
   - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-03.jpeg
     alt: CNC seam cutter
   - image: /src/assets/images../../assets/images/projects/cnc-seam-cutter/cutter-04.jpeg
-    alt: CNC seam cutter
+    alt: Edge Finder Testing
 tools:
   - NX
   - GD&T
