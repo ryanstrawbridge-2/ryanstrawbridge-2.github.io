@@ -4,7 +4,7 @@ subtitle: Heat shielding fixture for circuit card reflow
 organization: Raytheon
 date: 2024-08-01T00:00:00.000Z
 summary: Designed a Durastone heat-shielding fixture to prevent filter overheating during reflow of circuit cards.
-hero: /src/assets/images../../assets/images/sample.webp
+hero: ../../assets/images/sample.webp
 heroAlt: Similar fixture stock image
 tools:
   - Mechanical design

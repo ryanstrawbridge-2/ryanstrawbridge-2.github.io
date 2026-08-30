@@ -4,16 +4,16 @@ subtitle: Rigging fixture for handling magnet sub-assemblies
 organization: Commonwealth Fusion Systems
 date: 2026-02-02T00:00:00.000Z
 summary: 'Designed and FEA-verified a 3-point lifting frame for safe crane handling of poloidal field magnet sub-assemblies, certified to ASME BTH-1 design factors.'
-hero: /src/assets/images../../assets/images/projects/lifting-frame/frame-07.jpeg
+hero: ../../assets/images/projects/lifting-frame/frame-07.jpeg
 heroAlt: 3-point lifting frame on the manufacturing floor
 gallery:
-  - image: /src/assets/images/Rev1LiftJoint.jpg
+  - image: ../../assets/images/Rev1LiftJoint.jpg
     alt: Rev 1 Joint
     caption: First revision joint with weldments
-  - image: /src/assets/images/Picture1.jpg
+  - image: ../../assets/images/Picture1.jpg
     alt: Rev 2 joint
     caption: 'Second Revision Joint '
-  - image: /src/assets/images../../assets/images/lifttestblurred.png
+  - image: ../../assets/images/lifttestblurred.png
 tools:
   - NX
   - Lifting Documentation (ASME BTH-1 | ASME B30.20)
