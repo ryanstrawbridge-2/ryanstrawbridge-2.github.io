@@ -10,8 +10,9 @@ gallery:
   - image: /src/assets/images/Rev1LiftJoint.jpg
     alt: Rev 1 Joint
     caption: First revision joint with weldments
-  - image: /src/assets/images../../assets/images/projects/lifting-frame/frame-07.jpeg
-    alt: Lifting frame
+  - image: /src/assets/images/Picture1.jpg
+    alt: Rev 2 joint
+    caption: 'Second Revision Joint '
   - image: /src/assets/images../../assets/images/lifttestblurred.png
 tools:
   - NX
