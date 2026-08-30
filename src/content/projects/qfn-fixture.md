@@ -1,6 +1,6 @@
 ---
-title: QFN Solder Fixture & Stencil
-subtitle: Heat shielding fixture and stencil optimization for circuit card reflow
+title: Solder Reflow Fixture
+subtitle: Heat shielding fixture for circuit card reflow
 organization: Raytheon
 date: 2024-08-01T00:00:00.000Z
 summary: Designed a Durastone heat-shielding fixture and optimized solder stencil patterns to prevent filter overheating during reflow of circuit cards.
