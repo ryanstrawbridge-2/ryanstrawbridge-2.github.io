@@ -76,7 +76,7 @@
       {
         "role": "Propulsion Sub-Team Lead",
         "org": "Northeastern Aerospace Club (AeroNU)",
-        "blurb": "Liquid rocket engine team since 2023. Currently designing the servo-to-valve torque coupling for a full-port ball valve regulating nitrogen from a 2,500 psi supply to a 650 psi run tank.",
+        "blurb": "Liquid rocket engine team since 2023. Currently designing a servo-to-valve torque coupling and custom ball valve regulator for the feed system on our flight vehicle. ",
         "logo": "/src/assets/images/experience/aeronu.png"
       }
     ]
