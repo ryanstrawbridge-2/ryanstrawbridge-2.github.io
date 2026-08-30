@@ -17,6 +17,9 @@ gallery:
   - image: /src/assets/images/beforefloor.jpg
     alt: beforefloor
     caption: Previous Frame
+  - image: /src/assets/images/afterfloor.jpg
+    alt: afterfloor
+    caption: New Design Floor Space
 tools:
   - NX
   - Lifting Documentation (ASME BTH-1 | ASME B30.20)
