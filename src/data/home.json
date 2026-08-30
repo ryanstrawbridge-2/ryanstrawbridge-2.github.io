@@ -89,8 +89,8 @@
     "photoFocalPoint": "center",
     "eyebrow": "About me",
     "heading": "Hi, I'm Ryan.",
-    "lede": "I'm a mechanical engineer in Boston, focused on clean energy and aerospace. I love designing equipment that real people use on the floor!",
-    "bio": "I'm currently a Manufacturing Engineering Co-op at Commonwealth Fusion Systems, where I support the poloidal field magnets for the SPARC tokamak. Previously I was an Operations Engineering Co-op at Raytheon Missiles & Defense in Andover, working on circuit card production for missile and radar systems. I also lead the propulsion sub-team at Northeastern's Aerospace Club, and I'm the mechanical design lead on my senior capstone — a low-cost underwater acoustic release for ropeless fishing gear.\n\nI gravitate toward designs that improve safety and ergonomics for the people who use them. The best mechanical engineering, to me, is invisible — it makes someone's job easier without them ever having to think about it."
+    "lede": "I'm a mechanical engineer, focused on clean energy and aerospace. ",
+    "bio": "I'm currently working on a low-cost underwater mechanical release system for underwater robotic recovery for my senior capstone. I am also working on the feed system for a liquid rocket engine on Northeastern's Aerospace Club. I've previously worked as a Manufacturing Engineer at Commonwealth Fusion Systems, where I supported the poloidal field magnets for the SPARC tokamak. "
   },
   "interestsSection": {
     "show": true,
