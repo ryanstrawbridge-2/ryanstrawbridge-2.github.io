@@ -31,16 +31,16 @@ draft: false
 
 ## Problem
 
-The poloidal-field magnet sub-assemblies needed to move from the assembly fixture to test stations, but the existing rigging used a generic spreader bar that produced asymmetric loading on the lift points and took up too much space to store. The mismatch between the assembly's center of gravity and the bar's geometry forced operators to manually balance the load with come-alongs. This was slow and ergonomically poor process.
+Existing lifting equipment was oversized and unstable for lifting custom magnet sub-assemblies. Simple lifts would take up large portions of shifts. Previous equipment took valuable floor space in storage. 
 
 ## What I did
 
-* Modeled the assembly's mass distribution and computed CG offset across all expected configurations.
-* Designed a 3-point lifting frame whose attach points line up with the assembly's lift lugs, keeping the load level without manual rebalancing.
-* Specified weld procedures and inspection requirements for the fabricator; reviewed the weld map at hand-off.
+* Designed and structurally analyzed an aluminum 3-point lifting frame. 
+* Specified weld procedures and inspection requirements for the fabricator. Worked with NDT to validate welds.
 * Worked with riggers on initial proof-load testing and walked through the lift plan with the safety team.
 
 ## Outcome
 
-* Reduced handling time during magnet stack-ups.
-* Frame proof-tested to **125% of rated load** with no measurable deformation.
+* Saved 30-45 minutes per lift and 90 square feet of floor space in storage
+* Increased table space for more fixture tooling for magnet stacking 
+* Operator feedback says it’s much quicker and feels safer to use!
