@@ -23,11 +23,11 @@ order: 4
 
 ## What I did
 
-* Designed a universal PCB component heat shield with iterative pin alignment 
-* Collaborated with operators to ensure quick, reliable installation.
+* Designed a universal PCB component heat shield with iterative pin alignment using Gerber files and SolidWorks.
+* Printed 3 test fixtures to see how operators worked with the new tool.
 
 ## Outcome
 
-* 3D Print fit well, and operators affirmed its use.
-* Co-worker brought the design to a symposium to discuss the design 
-* A similar design was used after my co-op had concluded.
+* 3D Print fit well, and operators affirmed its usefulness. 
+* Projected to reduce the number of required reworks on the board suite.
+* A co-worker brought the design to a symposium to present after the conclusion of my co-op.
