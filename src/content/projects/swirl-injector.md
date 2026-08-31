@@ -4,7 +4,7 @@ subtitle: AeroNU Mechanical Design
 organization: Northeastern Aerospace Club
 date: 2025-10-01T00:00:00.000Z
 summary: Initial design of a machinable coaxial swirl injector for mixing kerosene and gaseous oxygen for optimal combustion in a small bipropellant rocket engine.
-hero: ../../assets/images/projects/swirl-injector/hero.jpeg
+hero: /src/assets/images../../assets/images/projects/swirl-injector/hero.jpeg
 heroAlt: Coaxial swirl injector CAD render
 tools:
   - SolidWorks
@@ -17,7 +17,7 @@ draft: false
 
 ## Problem
 
-Tasked with the initial design of a machinable swirl injector for mixing kerosene and gaseous oxygen well — a critical step in achieving optimal combustion for a student-built rocket engine.
+Tasked with the initial design of a machinable swirl injector for mixing kerosene and gaseous oxygen well for combustion.
 
 ## What I did
 
@@ -25,14 +25,12 @@ Tasked with the initial design of a machinable swirl injector for mixing kerosen
 * Collaborated with other team members to learn HSMWorks CAM, SolidWorks Flow Simulation, and the underlying fluid principles together.
 * Sized the injector around the chamber and nozzle so the full assembly stacked up cleanly.
 
-![Full stackup of injector with chamber and nozzle](../../assets/images/projects/swirl-injector/full-stackup.jpeg)
-*Full stackup with chamber and nozzle.*
-
-*Flow test — solving for required pressure.*
+![Full stackup of injector with chamber and nozzle](/src/assets/images../../assets/images/projects/swirl-injector/full-stackup.jpeg)
+*Full stackup without chamber and nozzle.*
 
 ## Outcome
 
 * Water flow testing showed the expected swirling effect, mixing, and conical spray pattern.
 * Stacked up cleanly with the chamber and nozzle for downstream integration.
 
-![Injector detail view](../../assets/images/projects/swirl-injector/detail.jpeg)
+![Injector detail view](/src/assets/images../../assets/images/projects/swirl-injector/detail.jpeg)
