@@ -4,7 +4,7 @@ subtitle: Heat shielding fixture for circuit card reflow
 organization: Raytheon
 date: 2024-08-01T00:00:00.000Z
 summary: Designed a Durastone heat-shielding fixture to prevent filter overheating during reflow of circuit cards.
-hero: ../../assets/images/sample.webp
+hero: /src/assets/images../../assets/images/sample.webp
 heroAlt: Similar fixture stock image
 tools:
   - Mechanical design
@@ -23,9 +23,11 @@ order: 4
 
 ## What I did
 
-* Designed a heat-shielding fixture out of Durastone to apply controlled pressure on the QFN during reflow while keeping adjacent components cool.
-* Collaborated closely with operators to ensure ease of use, iterating with FDM 3D-printed prototypes before committing to the production fixture.
+* Designed a universal PCB component heat shield with iterative pin alignment 
+* Collaborated with operators to ensure quick, reliable installation.
 
 ## Outcome
 
-* Prevented filter overheating across the entire board suite, since the same through-hole pattern was reused on adjacent assemblies.
+* 3D Print fit well, and operators affirmed its use.
+* Co-worker brought the design to a symposium to discuss the design 
+* A similar design was used after my co-op had concluded.
