@@ -13,7 +13,7 @@ gallery:
   - image: ../../assets/images/Picture1.jpg
     alt: Rev 2 joint
     caption: 'Second Revision Joint '
-  - image: ../../assets/images/lifttestblurred.png
+  - image: ../../assets/images/projects/lifting-frame/lifttestblurred.jpg
   - image: ../../assets/images/beforefloor.jpg
     alt: beforefloor
     caption: Previous Frame
