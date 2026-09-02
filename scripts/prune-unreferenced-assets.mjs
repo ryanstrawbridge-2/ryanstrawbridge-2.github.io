@@ -31,6 +31,15 @@ if (!existsSync(ASTRO_DIR)) {
   process.exit(0);
 }
 
+/** Percent-decoded, falling back to the raw value if it isn't valid encoding. */
+const decode = (value) => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
 const walk = async (dir, out = []) => {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
@@ -42,6 +51,10 @@ const walk = async (dir, out = []) => {
 
 const all = await walk(DIST);
 
+// Filenames can contain spaces and non-ASCII — macOS screenshots use a narrow
+// no-break space before AM/PM — and the HTML references them percent-encoded.
+// Matching only [\w.-] treated those as unreferenced and deleted images the
+// pages actually use, so match liberally and decode before comparing.
 // Collect assets referenced as an actual _astro URL. Matching bare filenames
 // is too loose: the visual-editing payload carries hashed basenames as plain
 // text, and treating those as references keeps every original alive.
@@ -50,9 +63,9 @@ for (const file of all) {
   if (!TEXT_EXT.has(extname(file).toLowerCase())) continue;
   const text = await readFile(file, 'utf8');
   for (const match of text.matchAll(
-    /_astro\/([\w.-]+\.(?:jpe?g|png|webp|avif|gif|svg))/gi,
+    /_astro\/([^"'\s,()<>]+\.(?:jpe?g|png|webp|avif|gif|svg))/gi,
   )) {
-    referenced.add(match[1]);
+    referenced.add(decode(match[1]));
   }
 }
 
@@ -76,8 +89,9 @@ const missing = [];
 for (const file of all) {
   if (extname(file).toLowerCase() !== '.html' || !existsSync(file)) continue;
   const html = await readFile(file, 'utf8');
-  for (const match of html.matchAll(/\/_astro\/([\w.-]+\.(?:jpe?g|png|webp|avif|gif|svg))/gi)) {
-    if (!existsSync(join(ASTRO_DIR, match[1]))) missing.push(`${file}: ${match[1]}`);
+  for (const match of html.matchAll(/\/_astro\/([^"'\s,()<>]+\.(?:jpe?g|png|webp|avif|gif|svg))/gi)) {
+    const name = decode(match[1]);
+    if (!existsSync(join(ASTRO_DIR, name))) missing.push(`${file}: ${name}`);
   }
 }
 
