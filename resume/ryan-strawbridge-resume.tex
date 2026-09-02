@@ -1,0 +1,363 @@
+%---------------------------------------------------------------
+% Resume in LaTeX -- Ryan Strawbridge
+% Template originally by Vishhal Shashi Kumar.
+%
+% Build:  tectonic ryan-strawbridge-resume.tex
+% Output: ryan-strawbridge-resume.pdf
+%
+% If it spills onto page 2, shave \entrygap and \sectiongap first
+% (1pt at a time). If it looks too airy, do the opposite.
+%---------------------------------------------------------------
+
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{mathpazo}
+\usepackage[T1]{fontenc}
+
+% ATS-friendly glyph mapping. These are pdfTeX primitives; XeTeX (what
+% tectonic runs) doesn't have them, so guard it and the file compiles under
+% both pdflatex (Overleaf) and tectonic.
+\ifdefined\pdfgentounicode
+  \input{glyphtounicode}
+\fi
+
+% slightly open leading -- Palatino/Charter have a large x-height
+\linespread{1.05}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+%---------------------------------------------------------------
+% Margins
+%---------------------------------------------------------------
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-0.65in}
+\addtolength{\textheight}{1.45in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+%===============================================================
+% SPACING CONTROLS -- the only numbers you should need to touch
+%===============================================================
+
+\newlength{\sectiongap}   \setlength{\sectiongap}{8pt}   % above each section title
+\newlength{\afterrulegap} \setlength{\afterrulegap}{3pt} % below the section rule
+\newlength{\entrygap}     \setlength{\entrygap}{4pt}     % between jobs / entries
+\newlength{\bulletgap}    \setlength{\bulletgap}{1pt}    % between bullets in one entry
+\newlength{\headgap}      \setlength{\headgap}{2pt}      % heading block to its bullets
+
+%---------------------------------------------------------------
+% Section formatting
+%---------------------------------------------------------------
+
+\titleformat{\section}
+  {\scshape\raggedright\large}{}{0em}{}
+  [\color{black}\titlerule]
+\titlespacing*{\section}{0pt}{\sectiongap}{\afterrulegap}
+
+% ATS friendly (pdfTeX only -- see the guard above)
+\ifdefined\pdfgentounicode
+  \pdfgentounicode=1
+\fi
+
+%---------------------------------------------------------------
+% Custom commands
+%---------------------------------------------------------------
+
+\newcommand{\resumeItem}[1]{\item\small{#1}}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{\entrygap}\item
+    \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small #3} & \textit{\small #4}
+    \end{tabular*}\vspace{-5pt}
+}
+
+% Second role at the same employer -- no company line repeated
+\newcommand{\resumeSubSubheading}[2]{
+  \vspace{2pt}\item
+    \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textit{\small #1} & \textit{\small #2}
+    \end{tabular*}\vspace{-5pt}
+}
+
+% Two-line education / degree entry
+\newcommand{\resumeEducation}[5]{
+  \vspace{\entrygap}\item
+    \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} \textit{\small -- #2} & #3 \\
+      \textit{\small #4} & \textit{\small #5}
+    \end{tabular*}\vspace{-4pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+  \vspace{\entrygap}\item
+    \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \small #1 & \small #2
+    \end{tabular*}\vspace{-8pt}
+}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{
+  \begin{itemize}[
+    leftmargin=0in,
+    label={},
+    topsep=-\entrygap,
+    itemsep=0pt,
+    parsep=0pt,
+    partopsep=0pt
+  ]
+}
+
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+
+\newcommand{\resumeItemListStart}{
+  \begin{itemize}[
+    leftmargin=0.20in,
+    topsep=\headgap,
+    itemsep=\bulletgap,
+    parsep=0pt,
+    partopsep=0pt
+  ]
+}
+
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%===============================================================
+% RESUME
+%===============================================================
+
+\begin{document}
+
+%----------HEADING----------
+
+\begin{center}
+    \textbf{\LARGE Ryan Strawbridge} \\ \vspace{3pt}
+    \small
+    508.594.9661 $|$
+    \href{mailto:strawbridge.r@northeastern.edu}
+    {\underline{strawbridge.r@northeastern.edu}} $|$
+    \href{https://www.linkedin.com/in/ryan-strawbridge}
+    {\underline{LinkedIn}} $|$
+    \href{https://ryanstrawbridge-2.github.io}
+    {\underline{Portfolio}} $|$
+    Boston, MA $|$
+    DoD Security Clearance
+\end{center}
+
+\vspace{-10pt}
+
+%-----------EDUCATION-----------
+
+\section{Education}
+
+\resumeSubHeadingListStart
+
+  \resumeEducation
+    {Northeastern University}{Boston, MA}{May 2027}
+    {Bachelor of Science in Mechanical Engineering (BSME)}{GPA: 3.58}
+
+\resumeSubHeadingListEnd
+
+\vspace{\entrygap}
+
+{\small
+\textbf{Coursework:}
+Mechanical Design, Heat Transfer, Fluid Mechanics, Solid Mechanics,
+Thermodynamics, Material Science, Dynamics \\[3pt]
+\textbf{Activities:}
+AeroNU Propulsion Member $|$ Running Club President $|$
+Rhythm Guitarist in Alt. Rock Band \\[3pt]
+\textbf{Achievements:}
+DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
+800th in the Boston Marathon
+}
+
+%-----------PROFESSIONAL EXPERIENCE-----------
+
+\section{Professional Experience}
+
+\resumeSubHeadingListStart
+
+% CFS -- TERM 2
+\resumeSubheading
+  {Commonwealth Fusion Systems}
+  {Devens, MA}
+  {Manufacturing / Equipment Engineering Co-op (Term 2)}
+  {Jan 2026 -- Jun 2026}
+
+\resumeItemListStart
+
+  \resumeItem{
+  Designed and validated a 2,100 lb hand-portable lifting frame to BTH-1 and
+  ASME B30.20, earning sign-off from structural engineering and safety;
+  increased table space for fixture tooling during magnet stacking and saved
+  30--45 minutes per lift}
+
+  \resumeItem{
+  Developed a modular CNC seam-cutting fixture accommodating 11 cable
+  configurations, enabling qualification testing ahead of a new production
+  line; applied GD\&T with position and symmetry controls on dowel-pin datums
+  for repeatable alignment, reducing future operation time by over 80\%}
+
+  \resumeItem{
+  Deployed a low-cost adjustable fixture using welded tabs and off-the-shelf
+  linear rails and carriages to maintain cable alignment during insulation
+  wrapping, improving process robustness and reducing labor by 0.5--3 hours
+  per magnet layer}
+
+\resumeItemListEnd
+
+% CFS -- TERM 1
+\resumeSubSubheading
+  {Manufacturing Engineering Co-op (Term 1)}
+  {Jan 2025 -- Jun 2025}
+
+\resumeItemListStart
+
+  \resumeItem{
+  Re-designed a hydraulic piston-driven bending machine in Siemens NX using
+  bolt safety analysis and first-principles calculations, cutting operation
+  time by 75\% and reducing injury risk; still in use over a year later,
+  saving hundreds of labor hours}
+
+  \resumeItem{
+  Developed a predictive equation relating bend offset, bend radius, and arc
+  length through iterative spring-back experiments and data interpolation,
+  eliminating trial-and-error die design and enabling future cable-bending
+  dies to be sized analytically on the first iteration}
+
+  \resumeItem{
+  Owned a work cell and wrote detailed work instructions with technicians
+  covering cable assembly, joint placement, orbital cutting, and welding,
+  replacing tribal knowledge with a repeatable reference used on the
+  production floor}
+
+\resumeItemListEnd
+
+% RAYTHEON
+\resumeSubheading
+  {Raytheon Missiles \& Defense}
+  {Andover, MA}
+  {Operations Engineering Co-op}
+  {Jan 2024 -- Sep 2024}
+
+\resumeItemListStart
+
+  \resumeItem{
+  Prototyped a composite fixture using SolidWorks and PCB Gerber files to
+  shield heat-sensitive filters from 93\,\textdegree C while enabling reflow of
+  adjacent components, increasing first-pass yield and removing filter damage
+  as a scrap driver on the line}
+
+  \resumeItem{
+  Ran a nine-configuration solder stencil study varying placement and volume
+  to provide off-gas escape channels, reducing voiding and removing a rework
+  step from the process}
+
+  \resumeItem{
+  Co-owned a work cell and developed thermal reflow profiles by refining oven
+  parameters through thermocouple data, operator input, and X-ray inspection
+  to IPC-J-STD-001 Class 3, reducing rework time across 15 programs}
+
+\resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------
+
+\section{Projects}
+
+\resumeSubHeadingListStart
+
+% CAPSTONE
+\resumeSubheading
+  {Underwater Acoustic Release Mechanism -- Capstone Project}
+  {Boston, MA}
+  {Mechanical Design Lead -- Release System}
+  {Jun 2026 -- Present}
+
+\resumeItemListStart
+
+  \resumeItem{
+  Own the mechanical design of a low-cost underwater acoustic release
+  mechanism for underwater robot recovery; designing a rotary lever arm
+  mechanism and using first-principles force analysis to evaluate and rule out
+  initial design concepts}
+
+  \resumeItem{
+  Performed structural analysis of the release shaft under combined axial
+  compression and torsion, and selected O-ring seal geometry using Parker's
+  O-Ring Handbook to keep the rotating, pressure-sealed shaft interface
+  leak-free at 300 m depth}
+
+  \resumeItem{
+  Validating hand-calculated stress predictions on housing and latch
+  components in Ansys FEA under combined pressure and mechanical loading}
+
+\resumeItemListEnd
+
+% AERONU
+\resumeSubheading
+  {AerospaceNU -- Liquid Rocketry Club}
+  {Boston, MA}
+  {Liquid Rocket Engine Member}
+  {Sep 2023 -- Present}
+
+\resumeItemListStart
+
+  \resumeItem{
+  Designing and validating an actively controlled nitrogen pressurant
+  subsystem, integrating a servo-actuated ball valve and torque coupling with
+  closed-loop pressure regulation based on downstream pressure feedback}
+
+  \resumeItem{
+  Supported setup and execution of three successful static-fire tests,
+  integrating propulsion, electrical, and instrumentation systems while
+  configuring test hardware and data acquisition equipment}
+
+\resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+%-----------SKILLS-----------
+
+\section{Technical Skills}
+
+\vspace{6.5pt}
+{\small
+\textbf{Software:}
+Siemens NX, SolidWorks, Ansys Mechanical, Arduino, Teamcenter, ManufacturO,
+Odoo, Confluence, Jira \\[3pt]
+\textbf{Design:}
+Structural Analysis, DFM, GD\&T, FEA (Ansys -- developing) \\[3pt]
+\textbf{Fabrication:}
+Manual G-Code Programming, CNC Milling, Power Tools, TIG Welding,
+3D Printing, Soldering, Water Jetting, Laser Cutting
+}
+
+%---------------------------------------------------------------
+
+\end{document}
