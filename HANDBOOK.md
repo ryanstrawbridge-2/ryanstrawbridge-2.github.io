@@ -116,6 +116,28 @@ If you see a "Push stuck" or "Site down" notification, run `tail ~/Library/Logs/
 
 ---
 
+## Publishing local edits
+
+After editing at `localhost:4321/admin/`, nothing is live until you publish.
+One command does it:
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run publish
+```
+
+With your own message:
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run publish -- "Added ball valve photos"
+```
+
+It normalises the image paths TinaCMS writes in a broken form, pulls anything
+that landed on GitHub while you were editing, builds (so a broken site fails on
+your machine, not on the deploy), then commits and pushes. It stops if there's
+nothing to publish, and asks before committing anything over 5 MB.
+
+---
+
 ## Common operations cheat sheet
 
 ```bash
