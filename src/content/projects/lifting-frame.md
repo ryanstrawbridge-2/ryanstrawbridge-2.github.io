@@ -35,7 +35,8 @@ Existing lifting equipment was oversized and unstable for lifting custom magnet 
 
 ## What I did
 
-* Designed and structurally analyzed an aluminum 3-point lifting frame. 
+* Designed and structurally analyzed a **2,100 lb** hand-portable aluminum 3-point lifting frame.
+* Validated it against **ASME BTH-1** and **ASME B30.20**, carrying the design through sign-off with structural engineering and safety.
 * Specified weld procedures and inspection requirements for the fabricator. Worked with NDT to validate welds.
 * Worked with riggers on initial proof-load testing and walked through the lift plan with the safety team.
 

@@ -64,13 +64,13 @@
       {
         "role": "Manufacturing Engineering Co-op",
         "org": "Commonwealth Fusion Systems",
-        "blurb": "Supported the poloidal field magnets for the SPARC tokamak. Designed equipment, optimized production processes, and worked alongside operators on the floor.",
+        "blurb": "Two terms supporting the poloidal field magnets for the SPARC tokamak. Designed a 2,100 lb lifting frame certified to ASME BTH-1, conformal fixturing for 11 cable configurations, and tooling that cut hours out of the insulation-wrapping process.",
         "logo": "/src/assets/images/experience/cfs.png"
       },
       {
         "role": "Operations Engineering Co-op",
         "org": "Raytheon Missiles & Defense",
-        "blurb": "Worked on circuit card production for missile and radar systems. Designed heat-shielding fixtures, solder stencils, and led yield improvements on the floor.",
+        "blurb": "Circuit card production for missile and radar systems. Designed a composite fixture shielding heat-sensitive filters from 93 °C reflow, and ran a nine-configuration solder stencil study that reduced rework across 15 programs.",
         "logo": "/src/assets/images/experience/raytheon.png"
       },
       {

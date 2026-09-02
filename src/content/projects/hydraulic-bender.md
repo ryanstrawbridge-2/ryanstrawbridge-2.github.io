@@ -34,5 +34,6 @@ The previous bending equipment produced bends shorter than required, formed only
 ## Outcome
 
 * Consistently bending to spec on the first press.
-* Cut bending operation time from a full shift down to a quarter.
+* Cut operation time by **75%**, from a full shift to a quarter of one.
+* Still in use over a year later, saving hundreds of labor hours.
 * Improved ergonomics, reduced injury risk, and increased first-pass accuracy.

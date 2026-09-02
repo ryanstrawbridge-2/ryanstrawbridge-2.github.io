@@ -29,5 +29,5 @@ During cable insulation wrapping, the first turn of the cable had to be placed b
 
 ## Outcome
 
-* Cut initial processing time per magnet layer.
+* Saved **0.5–3 hours per magnet layer**, depending on configuration.
 * Removed the unwind-and-re-lay rework caused by cable sway and misalignment.
