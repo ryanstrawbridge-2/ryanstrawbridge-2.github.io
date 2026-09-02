@@ -18,7 +18,7 @@ tools:
   - GD&T
   - CNC programming
   - Fixture design
-order: 3
+order: 5
 draft: false
 ---
 

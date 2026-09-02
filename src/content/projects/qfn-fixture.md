@@ -12,7 +12,7 @@ tools:
   - FDM 3D printing
   - Reflow / solder process
   - DOE on stencil patterns
-order: 4
+order: 6
 ---
 
 > STOCK IMAGE SHOWN - *Specific designs are ITAR restricted*
@@ -28,6 +28,6 @@ order: 4
 
 ## Outcome
 
-* 3D Print fit well, and operators affirmed its usefulness. 
+* 3D Print fit well, and operators affirmed its usefulness.
 * Projected to reduce the number of required reworks on the board suite.
 * A co-worker brought the design to a symposium to present after the conclusion of my co-op.
