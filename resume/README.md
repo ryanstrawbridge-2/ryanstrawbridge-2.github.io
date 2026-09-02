@@ -38,7 +38,21 @@ The spacing block near the top is the only part you should need to touch:
 | `\entrygap` | 4pt | space between jobs / entries |
 | `\bulletgap` | 1pt | space between bullets in one entry |
 | `\headgap` | 2pt | heading block to its bullets |
+| `\rolegap` | 13pt | pull-up under a second-role line (Term 1) |
 
 At the template's original 9pt/5pt this content ran to two pages; 8pt/4pt fits
 it on one. If you add a bullet and it spills again, drop `\sectiongap` and
 `\entrygap` by 1pt at a time before touching anything else.
+
+## Why `\rolegap` is so much larger than the others
+
+`\resumeSubheading` (a normal job) builds a **two-row** table — employer on
+top, role underneath — and ends with `\vspace{-5pt}` to pull the bullets up
+close. `\resumeSubSubheading` (the Term 1 line, where the employer isn't
+repeated) is only **one row**. Because the table is set with `[t]`, the box
+hangs below the baseline by its own height, so a one-row box needs a bigger
+pull-up than a two-row one to end up looking the same. `-5pt` there left a
+visibly larger gap under Term 1 than under Term 2; `13pt` matches them.
+
+If you add another repeated-employer role and its bullets sit too low, raise
+`\rolegap`. If they collide with the role line, lower it.

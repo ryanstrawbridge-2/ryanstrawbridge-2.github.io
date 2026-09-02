@@ -65,6 +65,7 @@
 \newlength{\entrygap}     \setlength{\entrygap}{4pt}     % between jobs / entries
 \newlength{\bulletgap}    \setlength{\bulletgap}{1pt}    % between bullets in one entry
 \newlength{\headgap}      \setlength{\headgap}{2pt}      % heading block to its bullets
+\newlength{\rolegap}     \setlength{\rolegap}{13pt}     % pull-up under a second-role line
 
 %---------------------------------------------------------------
 % Section formatting
@@ -95,11 +96,16 @@
 }
 
 % Second role at the same employer -- no company line repeated
+% Second role at the same employer -- no company line repeated.
+% This tabular has ONE row where \resumeSubheading has two. With [t] the box
+% hangs below the baseline by its own height, so the -5pt that suits the
+% two-row version leaves a visible gap here. \rolegap is the pull-up; raise it
+% if the bullets sit too far below the role line.
 \newcommand{\resumeSubSubheading}[2]{
   \vspace{2pt}\item
     \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
       \textit{\small #1} & \textit{\small #2}
-    \end{tabular*}\vspace{-5pt}
+    \end{tabular*}\vspace{-\rolegap}
 }
 
 % Two-line education / degree entry
