@@ -65,7 +65,7 @@
 \newlength{\entrygap}     \setlength{\entrygap}{4pt}     % between jobs / entries
 \newlength{\bulletgap}    \setlength{\bulletgap}{1pt}    % between bullets in one entry
 \newlength{\headgap}      \setlength{\headgap}{2pt}      % heading block to its bullets
-\newlength{\rolegap}     \setlength{\rolegap}{13pt}     % pull-up under a second-role line
+\newlength{\rolegap}      \setlength{\rolegap}{13pt}     % pull-up under a second-role line
 
 %---------------------------------------------------------------
 % Section formatting
@@ -95,12 +95,11 @@
     \end{tabular*}\vspace{-5pt}
 }
 
-% Second role at the same employer -- no company line repeated
 % Second role at the same employer -- no company line repeated.
 % This tabular has ONE row where \resumeSubheading has two. With [t] the box
 % hangs below the baseline by its own height, so the -5pt that suits the
 % two-row version leaves a visible gap here. \rolegap is the pull-up; raise it
-% if the bullets sit too far below the role line.
+% if the bullets sit too far below the role line, lower it if they collide.
 \newcommand{\resumeSubSubheading}[2]{
   \vspace{2pt}\item
     \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
@@ -169,8 +168,7 @@
     {\underline{LinkedIn}} $|$
     \href{https://ryanstrawbridge-2.github.io}
     {\underline{Portfolio}} $|$
-    Boston, MA $|$
-    DoD Security Clearance
+    Boston, MA
 \end{center}
 
 \vspace{-10pt}
@@ -191,8 +189,8 @@
 
 {\small
 \textbf{Coursework:}
-Mechanical Design, Heat Transfer, Fluid Mechanics, Solid Mechanics,
-Thermodynamics, Material Science, Dynamics \\[3pt]
+Heat Transfer | Fluid Mechanics | Solid Mechanics |
+Thermodynamics | Material Science | Dynamics \\[3pt]
 \textbf{Activities:}
 AeroNU Propulsion Member $|$ Running Club President $|$
 Rhythm Guitarist in Alt. Rock Band \\[3pt]
@@ -217,22 +215,22 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
 \resumeItemListStart
 
   \resumeItem{
-  Designed and validated a 2,100 lb hand-portable lifting frame to BTH-1 and
-  ASME B30.20, earning sign-off from structural engineering and safety;
-  increased table space for fixture tooling during magnet stacking and saved
-  30--45 minutes per lift}
+  Designed and validated a 2,100 lb hand-portable lifting frame to
+  \textbf{BTH-1} and \textbf{ASME B30.20}, earning sign-off from structural
+  engineering and safety; increased table space for fixture tooling during
+  magnet stacking and \textbf{saved 30--45 minutes per lift}}
 
   \resumeItem{
   Developed a modular CNC seam-cutting fixture accommodating 11 cable
   configurations, enabling qualification testing ahead of a new production
-  line; applied GD\&T with position and symmetry controls on dowel-pin datums
-  for repeatable alignment, reducing future operation time by over 80\%}
+  line; \textbf{applied GD\&T} with position and symmetry controls on dowel-pin datums
+  for repeatable alignment, \textbf{reducing future operation time by over 80\%}}
 
   \resumeItem{
   Deployed a low-cost adjustable fixture using welded tabs and off-the-shelf
   linear rails and carriages to maintain cable alignment during insulation
-  wrapping, improving process robustness and reducing labor by 0.5--3 hours
-  per magnet layer}
+  wrapping, improving process robustness and \textbf{reducing labor by 0.5--3 hours
+  per magnet layer}}
 
 \resumeItemListEnd
 
@@ -246,17 +244,17 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
   \resumeItem{
   Re-designed a hydraulic piston-driven bending machine in Siemens NX using
   bolt safety analysis and first-principles calculations, cutting operation
-  time by 75\% and reducing injury risk; still in use over a year later,
-  saving hundreds of labor hours}
+  time by 75\% and reducing injury risk; \textbf{still in use over a year later,
+  saving hundreds of labor hours}}
 
   \resumeItem{
   Developed a predictive equation relating bend offset, bend radius, and arc
   length through iterative spring-back experiments and data interpolation,
-  eliminating trial-and-error die design and enabling future cable-bending
+  \textbf{eliminating trial-and-error die design} and enabling future cable-bending
   dies to be sized analytically on the first iteration}
 
   \resumeItem{
-  Owned a work cell and wrote detailed work instructions with technicians
+  \textbf{Owned a work cell} and wrote detailed work instructions with technicians
   covering cable assembly, joint placement, orbital cutting, and welding,
   replacing tribal knowledge with a repeatable reference used on the
   production floor}
@@ -275,18 +273,18 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
   \resumeItem{
   Prototyped a composite fixture using SolidWorks and PCB Gerber files to
   shield heat-sensitive filters from 93\,\textdegree C while enabling reflow of
-  adjacent components, increasing first-pass yield and removing filter damage
+  adjacent components, \textbf{increasing first-pass yield} and removing filter damage
   as a scrap driver on the line}
 
   \resumeItem{
   Ran a nine-configuration solder stencil study varying placement and volume
-  to provide off-gas escape channels, reducing voiding and removing a rework
-  step from the process}
+  to provide off-gas escape channels, reducing voiding and \textbf{removing a rework
+  step} from the process}
 
   \resumeItem{
-  Co-owned a work cell and developed thermal reflow profiles by refining oven
+  \textbf{Co-owned a work cell} and developed thermal reflow profiles by refining oven
   parameters through thermocouple data, operator input, and X-ray inspection
-  to IPC-J-STD-001 Class 3, reducing rework time across 15 programs}
+  to IPC-J-STD-001 Class 3, \textbf{reducing rework time across 15 programs}}
 
 \resumeItemListEnd
 
@@ -308,20 +306,20 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
 \resumeItemListStart
 
   \resumeItem{
-  Own the mechanical design of a low-cost underwater acoustic release
+  \textbf{Own the mechanical design} of a low-cost underwater acoustic release
   mechanism for underwater robot recovery; designing a rotary lever arm
   mechanism and using first-principles force analysis to evaluate and rule out
   initial design concepts}
 
   \resumeItem{
-  Performed structural analysis of the release shaft under combined axial
+  Performed \textbf{structural analysis} of the release shaft under combined axial
   compression and torsion, and selected O-ring seal geometry using Parker's
   O-Ring Handbook to keep the rotating, pressure-sealed shaft interface
   leak-free at 300 m depth}
 
   \resumeItem{
   Validating hand-calculated stress predictions on housing and latch
-  components in Ansys FEA under combined pressure and mechanical loading}
+  components in \textbf{Ansys FEA} under combined pressure and mechanical loading}
 
 \resumeItemListEnd
 
@@ -340,7 +338,7 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
   closed-loop pressure regulation based on downstream pressure feedback}
 
   \resumeItem{
-  Supported setup and execution of three successful static-fire tests,
+  Supported setup and execution of \textbf{three successful static-fire tests},
   integrating propulsion, electrical, and instrumentation systems while
   configuring test hardware and data acquisition equipment}
 
@@ -355,13 +353,11 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
 \vspace{6.5pt}
 {\small
 \textbf{Software:}
-Siemens NX, SolidWorks, Ansys Mechanical, Arduino, Teamcenter, ManufacturO,
-Odoo, Confluence, Jira \\[3pt]
+Siemens NX | SolidWorks | Ansys Mechanical | Arduino | Teamcenter | ManufacturO | Odoo | Confluence | Jira \\[3pt]
 \textbf{Design:}
 Structural Analysis, DFM, GD\&T, FEA (Ansys -- developing) \\[3pt]
 \textbf{Fabrication:}
-Manual G-Code Programming, CNC Milling, Power Tools, TIG Welding,
-3D Printing, Soldering, Water Jetting, Laser Cutting
+Manual G-Code | CNC Milling | Power Tools | TIG Welding | 3D Printing | Soldering | Water Jetting | Laser Cutting
 }
 
 %---------------------------------------------------------------
