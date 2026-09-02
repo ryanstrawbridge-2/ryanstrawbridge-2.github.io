@@ -31,5 +31,3 @@ portfolio-photos/
 # jetbrains setting folder
 .idea/
 
-# Photo manager: removals land here, recoverable in the app
-.photo-trash/

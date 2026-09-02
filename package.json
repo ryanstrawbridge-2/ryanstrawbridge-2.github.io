@@ -14,8 +14,6 @@
     "preview": "astro preview",
     "astro": "astro",
     "tina": "tinacms",
-    "photos": "node scripts/photo-manager.mjs",
-    "photos:report": "node scripts/photo-report.mjs",
     "publish": "bash scripts/publish.sh"
   },
   "dependencies": {
