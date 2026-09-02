@@ -31,3 +31,10 @@ portfolio-photos/
 # jetbrains setting folder
 .idea/
 
+# LaTeX build artifacts (the .tex and the .pdf are the deliverables)
+resume/*.aux
+resume/*.log
+resume/*.out
+resume/*.fls
+resume/*.fdb_latexmk
+resume/*.synctex.gz
