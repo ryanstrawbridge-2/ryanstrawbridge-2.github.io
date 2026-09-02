@@ -3,7 +3,7 @@ title: Faucet Leak Ring
 subtitle: Personal design + 3D print
 date: 2025-03-01T00:00:00.000Z
 summary: 'A small printed ring that catches runoff at the base of an apartment faucet. Took inspiration from wine bottle drip rings. Measured, designed, and printed in an afternoon.'
-hero: /src/assets/images../../assets/images/projects/faucet-leak-ring/hero.jpeg
+hero: ../../assets/images/projects/faucet-leak-ring/hero.jpeg
 heroAlt: 3D printed faucet leak ring
 tools:
   - CAD
@@ -34,5 +34,5 @@ Took inspiration from wine bottle drip rings to catch the runoff. Measured the f
 
 Prototype worked great! Happier apartment vibes without every countertop appliance soaked in water.
 
-![The ring installed on the faucet](/src/assets/images../../assets/images/projects/faucet-leak-ring/on-faucet.jpeg)
+![The ring installed on the faucet](../../assets/images/projects/faucet-leak-ring/on-faucet.jpeg)
 *Installed on the faucet.*

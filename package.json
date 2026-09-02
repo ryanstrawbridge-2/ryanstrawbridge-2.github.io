@@ -6,8 +6,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "astro dev",
-    "dev:tina": "tinacms dev -c \"astro dev\"",
+    "dev": "node scripts/fix-cms-paths.mjs && astro dev",
+    "dev:tina": "node scripts/fix-cms-paths.mjs && tinacms dev -c \"astro dev\"",
     "build": "node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs && node scripts/generate-cms-thumbnails.mjs",
     "build:tina": "tinacms build && node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs && node scripts/generate-cms-thumbnails.mjs",
     "fix:paths": "node scripts/fix-cms-paths.mjs",
