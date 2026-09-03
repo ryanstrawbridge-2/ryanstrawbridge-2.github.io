@@ -66,7 +66,6 @@ interests) *are* clickable.
 
 <!-- Delete this whole section once both items are done. -->
 
-- [ ] Drop résumé PDF at `public/resume.pdf` so the home page button isn't a dead link.
 - [ ] Finish TinaCloud config so `/admin/` lights up:
   - Project page: https://app.tina.io/projects/a5253d2b-6939-4ae7-903b-b1f1e02657fa
   - GitHub secrets needed: `TINA_PUBLIC_CLIENT_ID` and `TINA_TOKEN` (Content Read-only token).

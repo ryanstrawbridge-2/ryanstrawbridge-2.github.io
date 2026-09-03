@@ -99,7 +99,7 @@ Body sections: **Problem** → **What I did** → **Outcome**. Don't deviate fro
 ## What's deliberately NOT in the repo
 
 - `.env.local` (TinaCMS credentials, gitignored).
-- `public/resume.pdf` — referenced from the home page; drop the latest compile here when applying.
+- `public/RyanStrawbridgeResume.pdf` — the download linked from the home page. The filename is what visitors get, so keep it presentable; drop the latest compile here when applying.
 - Source 5712×4284 photos — resized to 2400px max before commit.
 - The 4th hero video (`home-hero.mp4`) — too large to push.
 

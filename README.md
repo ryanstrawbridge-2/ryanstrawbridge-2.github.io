@@ -52,7 +52,7 @@ Embed body images with relative markdown paths — Astro optimizes them at build
 
 ## Updating the résumé
 
-Drop a fresh `resume.pdf` into `public/` — it's linked from the home page as `/resume.pdf`. Source lives at `~/Documents/Resumes/resume.typ` (Typst).
+Drop a fresh `RyanStrawbridgeResume.pdf` into `public/` — it's linked from the home page as `/RyanStrawbridgeResume.pdf`, and that filename is what a visitor's browser saves. LaTeX source lives in `resume/`.
 
 ## Deploy
 
