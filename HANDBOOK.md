@@ -115,6 +115,40 @@ If you see a "Push stuck" or "Site down" notification, run `tail ~/Library/Logs/
 
 ---
 
+## Updating the résumé
+
+The site serves `public/RyanStrawbridgeResume.pdf` — and that filename is what a
+visitor's browser saves, so keep it presentable.
+
+Overleaf can't push to this repo without Git premium, so the update is one
+command instead. In Overleaf: **Menu → Download → Source** (this is free, unlike
+the Git integration), then:
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run resume
+```
+
+With no argument it grabs the newest `.zip` or `.pdf` from `~/Downloads`. Pass a
+path to pick a specific one:
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run resume -- ~/Downloads/Resume.zip
+```
+
+Given the **source zip** it extracts the `.tex` into `resume/`, compiles it, and
+installs the PDF — so the source in the repo and the PDF on the site can't drift
+apart. Given a **PDF** it installs just that and warns you that `resume/*.tex` is
+now stale.
+
+It stops there deliberately so you can look at the PDF before it goes out:
+
+```bash
+open public/RyanStrawbridgeResume.pdf
+cd ~/Documents/Projects/portfolio && npm run publish -- "Update resume"
+```
+
+---
+
 ## Publishing local edits
 
 After editing at `localhost:4321/admin/`, nothing is live until you publish.

@@ -14,7 +14,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "tina": "tinacms",
-    "publish": "bash scripts/publish.sh"
+    "publish": "bash scripts/publish.sh",
+    "resume": "bash scripts/update-resume.sh"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",
