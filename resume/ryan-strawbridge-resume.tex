@@ -65,7 +65,6 @@
 \newlength{\entrygap}     \setlength{\entrygap}{4pt}     % between jobs / entries
 \newlength{\bulletgap}    \setlength{\bulletgap}{1pt}    % between bullets in one entry
 \newlength{\headgap}      \setlength{\headgap}{2pt}      % heading block to its bullets
-\newlength{\rolegap}      \setlength{\rolegap}{13pt}     % pull-up under a second-role line
 
 %---------------------------------------------------------------
 % Section formatting
@@ -95,16 +94,12 @@
     \end{tabular*}\vspace{-5pt}
 }
 
-% Second role at the same employer -- no company line repeated.
-% This tabular has ONE row where \resumeSubheading has two. With [t] the box
-% hangs below the baseline by its own height, so the -5pt that suits the
-% two-row version leaves a visible gap here. \rolegap is the pull-up; raise it
-% if the bullets sit too far below the role line, lower it if they collide.
+% Second role at the same employer -- no company line repeated
 \newcommand{\resumeSubSubheading}[2]{
   \vspace{2pt}\item
     \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
       \textit{\small #1} & \textit{\small #2}
-    \end{tabular*}\vspace{-\rolegap}
+    \end{tabular*}\vspace{-13pt}
 }
 
 % Two-line education / degree entry
@@ -163,12 +158,12 @@
     \small
     508.594.9661 $|$
     \href{mailto:strawbridge.r@northeastern.edu}
-    {\underline{strawbridge.r@northeastern.edu}} $|$
+    {strawbridge.r@northeastern.edu} $|$
     \href{https://www.linkedin.com/in/ryan-strawbridge}
     {\underline{LinkedIn}} $|$
     \href{https://ryanstrawbridge-2.github.io}
-    {\underline{Portfolio}} $|$
-    Boston, MA
+    {\underline{Portfolio}} 
+
 \end{center}
 
 \vspace{-10pt}
@@ -215,36 +210,29 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
 \resumeItemListStart
 
   \resumeItem{
-  Designed and validated a 2,100 lb hand-portable lifting frame to
-  \textbf{BTH-1} and \textbf{ASME B30.20}, earning sign-off from structural
-  engineering and safety; increased table space for fixture tooling during
-  magnet stacking and \textbf{saved 30--45 minutes per lift}}
+  Designed and validated a 2,100-lb hand-portable lifting frame to \textbf{BTH-1} and \textbf{ASME B30.20} using statics, buckling, threaded-joint, and weld analysis; earned structural engineering and safety approval and \textbf{reduced lift time by 30--45 minutes}.}
 
   \resumeItem{
-  Developed a modular CNC seam-cutting fixture accommodating 11 cable
-  configurations, enabling qualification testing ahead of a new production
-  line; \textbf{applied GD\&T} with position and symmetry controls on dowel-pin datums
-  for repeatable alignment, \textbf{reducing future operation time by over 80\%}}
+  Designed a modular CNC seam-cutting fixture using \textbf{GD\&T} and dowel-pin datums for repeatable alignment; enabled early qualification testing and \textbf{reduced projected operation time by over 80\%}.}
 
   \resumeItem{
   Deployed a low-cost adjustable fixture using welded tabs and off-the-shelf
   linear rails and carriages to maintain cable alignment during insulation
   wrapping, improving process robustness and \textbf{reducing labor by 0.5--3 hours
   per magnet layer}}
-
+  
 \resumeItemListEnd
 
 % CFS -- TERM 1
+\vspace{3pt}
 \resumeSubSubheading
-  {Manufacturing Engineering Co-op (Term 1)}
+  {Manufacturing Engineering Co-op (Term 1)} 
   {Jan 2025 -- Jun 2025}
-
 \resumeItemListStart
-
   \resumeItem{
   Re-designed a hydraulic piston-driven bending machine in Siemens NX using
   bolt safety analysis and first-principles calculations, cutting operation
-  time by 75\% and reducing injury risk; \textbf{still in use over a year later,
+  time and reducing injury risk; \textbf{still in use over a year later,
   saving hundreds of labor hours}}
 
   \resumeItem{
@@ -254,13 +242,13 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
   dies to be sized analytically on the first iteration}
 
   \resumeItem{
-  \textbf{Owned a work cell} and wrote detailed work instructions with technicians
+  Owned a work cell and wrote detailed work instructions with technicians
   covering cable assembly, joint placement, orbital cutting, and welding,
   replacing tribal knowledge with a repeatable reference used on the
   production floor}
 
 \resumeItemListEnd
-
+\vspace{3pt}
 % RAYTHEON
 \resumeSubheading
   {Raytheon Missiles \& Defense}
@@ -274,12 +262,12 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
   Prototyped a composite fixture using SolidWorks and PCB Gerber files to
   shield heat-sensitive filters from 93\,\textdegree C while enabling reflow of
   adjacent components, \textbf{increasing first-pass yield} and removing filter damage
-  as a scrap driver on the line}
+  as a scrap driver on the line.}
 
   \resumeItem{
   Ran a nine-configuration solder stencil study varying placement and volume
-  to provide off-gas escape channels, reducing voiding and \textbf{removing a rework
-  step} from the process}
+  to provide off-gas escape channels, reducing voiding and \textbf{removing a rework}
+  step from the process}
 
   \resumeItem{
   \textbf{Co-owned a work cell} and developed thermal reflow profiles by refining oven
@@ -325,9 +313,9 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
 
 % AERONU
 \resumeSubheading
-  {AerospaceNU -- Liquid Rocketry Club}
+  {AerospaceNU --  Liquid Rocket Engine}
   {Boston, MA}
-  {Liquid Rocket Engine Member}
+  {\textit{Propulsion - Feed System Team} }
   {Sep 2023 -- Present}
 
 \resumeItemListStart
@@ -355,7 +343,7 @@ DoD Security Clearance $|$ CSWA Certified $|$ Lean Six Sigma Certification $|$
 \textbf{Software:}
 Siemens NX | SolidWorks | Ansys Mechanical | Arduino | Teamcenter | ManufacturO | Odoo | Confluence | Jira \\[3pt]
 \textbf{Design:}
-Structural Analysis, DFM, GD\&T, FEA (Ansys -- developing) \\[3pt]
+Structural Analysis | DFM | GD\&T | FEA (Ansys -- developing) \\[3pt]
 \textbf{Fabrication:}
 Manual G-Code | CNC Milling | Power Tools | TIG Welding | 3D Printing | Soldering | Water Jetting | Laser Cutting
 }
