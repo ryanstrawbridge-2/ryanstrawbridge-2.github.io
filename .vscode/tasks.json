@@ -1,0 +1,47 @@
+{
+  // Cmd+Shift+P -> "Run Task", or Terminal -> Run Task.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Publish site",
+      "detail": "Normalize CMS image paths, pull, build, commit, push",
+      "type": "shell",
+      "command": "npm run publish -- \"${input:commitMessage}\"",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "Build resume PDF",
+      "detail": "Compile resume/ryan-strawbridge-resume.tex into public/RyanStrawbridgeResume.pdf",
+      "type": "shell",
+      "command": "npm run resume:build",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "Build resume PDF, then publish",
+      "detail": "Compile the .tex and push the result in one go",
+      "type": "shell",
+      "command": "npm run resume:build && npm run publish -- \"${input:commitMessage}\"",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "Start local editor",
+      "detail": "TinaCMS + Astro dev at localhost:4321/admin",
+      "type": "shell",
+      "command": "npm run dev:tina",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "commitMessage",
+      "type": "promptString",
+      "description": "Commit message",
+      "default": "Content update"
+    }
+  ]
+}

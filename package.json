@@ -15,7 +15,8 @@
     "astro": "astro",
     "tina": "tinacms",
     "publish": "bash scripts/publish.sh",
-    "resume": "bash scripts/update-resume.sh"
+    "resume": "bash scripts/update-resume.sh",
+    "resume:build": "bash scripts/update-resume.sh --local"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",

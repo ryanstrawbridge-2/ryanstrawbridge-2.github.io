@@ -3,6 +3,7 @@
 #
 #   npm run resume                      # newest Overleaf .zip or .pdf in ~/Downloads
 #   npm run resume -- ~/path/thing.zip  # a specific file
+#   npm run resume:build                # compile resume/*.tex as it stands
 #
 # Give it the SOURCE zip (Overleaf: Menu -> Download -> Source) and it keeps
 # resume/*.tex and the published PDF in lockstep — the .tex is extracted and
@@ -19,6 +20,22 @@ TEX_DIR="resume"
 TECTONIC="${TECTONIC:-$HOME/.local/bin/tectonic}"
 
 SRC="${1:-}"
+
+# Editing resume/ryan-strawbridge-resume.tex directly? Compile that, no import.
+if [ "$SRC" = "--local" ] || [ "$SRC" = "local" ]; then
+  [ -x "$TECTONIC" ] || { echo "tectonic not at $TECTONIC"; exit 1; }
+  echo "→ compiling $TEX_DIR/ryan-strawbridge-resume.tex"
+  ( cd "$TEX_DIR" && "$TECTONIC" ryan-strawbridge-resume.tex >/dev/null )
+  cp "$TEX_DIR/ryan-strawbridge-resume.pdf" "$PUBLIC_PDF"
+  echo "→ installed $PUBLIC_PDF"
+  SIZE=$(( $(wc -c < "$PUBLIC_PDF") / 1024 ))
+  echo
+  echo "✓ ${SIZE} KB. Check it, then publish:"
+  echo "    open $PUBLIC_PDF"
+  echo "    npm run publish -- \"Update resume\""
+  exit 0
+fi
+
 if [ -z "$SRC" ]; then
   # Newest Overleaf-looking export in Downloads.
   SRC=$(ls -t "$HOME"/Downloads/*.zip "$HOME"/Downloads/*.pdf 2>/dev/null | head -1 || true)
