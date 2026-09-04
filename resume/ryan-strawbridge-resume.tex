@@ -184,7 +184,11 @@
 
 \resumeSubHeadingListEnd
 
-\vspace{\entrygap}
+% \resumeSubHeadingListStart sets topsep=-\entrygap, and topsep applies at
+% BOTH ends of a list — so the list closes with -\entrygap, which exactly
+% cancels a plain \vspace{\entrygap} here and leaves Coursework jammed
+% against the degree lines. The +4pt restores an even gap.
+\vspace{\dimexpr\entrygap+4pt}
 
 {\small
 \textbf{Coursework:}
