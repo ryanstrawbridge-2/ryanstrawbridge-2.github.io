@@ -83,7 +83,7 @@
   },
   "aboutSection": {
     "show": true,
-    "photo": "/src/assets/images/home/lifting-test.jpeg",
+    "photo": "/src/assets/images/lifttestblurred.png",
     "photoAlt": "Ryan during a lift test of a 3-point lifting frame",
     "photoPosition": "left",
     "photoFocalPoint": "center",
