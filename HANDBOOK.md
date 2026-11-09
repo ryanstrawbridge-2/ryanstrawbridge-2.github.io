@@ -377,6 +377,14 @@ launchctl load -w ~/Library/LaunchAgents/com.ryanstrawbridge.portfolio-sync.plis
 
 ## Troubleshooting
 
+### "iCloud conflict copies" stops a publish
+iCloud sometimes duplicates a file as `photo 2.jpg` when a lot changes at once.
+They're never edits — delete them and publish again:
+
+```bash
+cd ~/Documents/Projects/portfolio && find src public resume -name '* [0-9].*' -delete
+```
+
 ### Push stuck for hours
 Pushes have a 90-second timeout; they retry next hour. If 3+ fail in a row a notification fires. Kill zombies (`pkill -9 -f "git push"`), then run the manual push command above. SSH path can be fragile on hotspot/VPN.
 

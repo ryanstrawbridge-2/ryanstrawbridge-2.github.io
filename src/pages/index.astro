@@ -50,6 +50,8 @@ const aboutFocal = focalCssOf(home.aboutSection.photoFocalPoint ?? 'center');
 const logoH = logoSizeHeight[home.experienceSection.logoSize ?? 'medium'];
 const heroHeadshot = resolveSiteImage(home.hero.headshot);
 const aboutPhoto = resolveSiteImage(home.aboutSection.photo);
+// Still frame for the collage video, so the tile isn't blank before it loads.
+const collagePoster = resolveSiteImage('/src/assets/images/home/aero-testing-poster.jpg');
 
 
 
@@ -145,9 +147,21 @@ const aboutBioParagraphs = home.aboutSection.bio
               return (
                 <div class={cls} data-tina-field={f('showcase', 'items', i, item.video ? 'video' : 'image')}>
                   {item.video ? (
-                    <video autoplay muted loop playsinline preload="metadata" aria-label={item.alt}>
-                      <source src={item.video} type="video/mp4" />
-                    </video>
+                    /* data-src, not src: an autoplaying <video> downloads the
+                       whole file immediately regardless of preload="metadata",
+                       which cost every phone visitor 4.7 MB before they'd even
+                       scrolled to it. The poster shows instantly and the script
+                       below attaches the real source once it's in view — and
+                       not at all on a metered connection or reduced motion. */
+                    <video
+                      muted
+                      loop
+                      playsinline
+                      preload="none"
+                      poster={collagePoster?.src}
+                      data-src={item.video}
+                      aria-label={item.alt}
+                    />
                   ) : img ? (
                     <Image
                       src={img}
@@ -313,6 +327,57 @@ const aboutBioParagraphs = home.aboutSection.bio
     </div>
   </section>
   )}
+
+  <script>
+    // The collage video carries data-src instead of src. An autoplaying <video>
+    // fetches the entire file as soon as it's parsed — preload="metadata" does
+    // not apply once autoplay is set — so the source is attached only when the
+    // tile is actually near the viewport.
+    //
+    // It stays a poster image, and never downloads, when the visitor has asked
+    // to reduce motion or their browser reports a metered/slow connection.
+    const deferred = document.querySelectorAll('video[data-src]');
+    if (deferred.length) {
+      const conn = navigator.connection || {};
+      const frugal =
+        conn.saveData === true ||
+        /^(slow-)?2g$/.test(conn.effectiveType || '') ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  
+      if (!frugal) {
+        const load = (video) => {
+          if (video.dataset.loaded) return;
+          video.dataset.loaded = '1';
+          const source = document.createElement('source');
+          source.src = video.dataset.src;
+          source.type = 'video/mp4';
+          video.appendChild(source);
+          video.load();
+          video.play().catch(() => {
+            // Autoplay refused (iOS low-power mode, for one). The poster and
+            // controls are enough; don't make it an error.
+            video.setAttribute('controls', '');
+          });
+        };
+  
+        if ('IntersectionObserver' in window) {
+          const io = new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                load(entry.target);
+                io.unobserve(entry.target);
+              }
+            },
+            { rootMargin: '300px' },
+          );
+          for (const video of deferred) io.observe(video);
+        } else {
+          for (const video of deferred) load(video);
+        }
+      }
+    }
+  </script>
 
   <TinaEditBridge query={HOME_QUERY} variables={HOME_VARIABLES} data={tinaData} id={tinaId} />
 

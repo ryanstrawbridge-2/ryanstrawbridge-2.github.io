@@ -72,6 +72,19 @@ if [ -n "$BIG" ]; then
   echo
 fi
 
+# iCloud Drive syncs ~/Documents, and when a build rewrites hundreds of files at
+# once it forks "conflict" copies named "thing 2.jpg". dist/ is excluded via
+# xattr (see CLAUDE.md), but if one ever lands in the source tree it must not be
+# committed — it's never intentional and it confuses the asset pruner.
+CONFLICTS=$(find src public resume -name '* [0-9].*' 2>/dev/null || true)
+if [ -n "$CONFLICTS" ]; then
+  echo "⚠️  iCloud conflict copies in the source tree:"
+  echo "$CONFLICTS" | sed 's/^/    /'
+  echo "    These are duplicates, not edits. Delete them and re-run:"
+  echo "    find src public resume -name '* [0-9].*' -delete"
+  exit 1
+fi
+
 echo "→ pulling anything new from GitHub"
 git pull --rebase --autostash
 

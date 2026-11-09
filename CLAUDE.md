@@ -173,6 +173,15 @@ GitHub SSH push from background processes stalls on large payloads.
     reopened on the next load — opening it inline looked like it worked and then
     vanished. Anything else that needs to outlive a save needs the same trick.
 
+26. **iCloud Drive syncs ~/Documents, and it forks conflict copies.** A build
+    rewrites hundreds of files at once, iCloud sees the churn and writes
+    `thing 2.webp` next to `thing.webp` — 783 of them accumulated in `dist/`,
+    and one reached `src/assets/images/home/`. `dist`, `.astro` and
+    `node_modules` are now excluded with
+    `xattr -w 'com.apple.fileprovider.ignore#P' 1 <dir>`; re-apply that after
+    deleting and recreating any of them. `publish.sh` refuses to publish while
+    a `* [0-9].*` file sits in `src/`, `public/` or `resume/`.
+
 ## macOS gotchas
 
 - `/usr/bin/timeout` doesn't exist. Use the `timeout_cmd` perl wrapper in `scripts/auto-sync.sh`.
