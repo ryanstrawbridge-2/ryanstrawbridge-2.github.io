@@ -3,17 +3,17 @@ title: Underwater Mechanical Release System
 organization: 'Capstone Project - Underwater Acoustic Release System - It''s That Deep '
 date: 2026-06-24T20:30:15.114Z
 summary: 'Designed the mechanical release for a resettable, low-cost underwater retrieval system rated to 300 m, targeting under $400 against $2,000+ commercial systems.'
-hero: /src/assets/images/ITD_overview.png
+hero: ../../assets/images/ITD_overview.png
 heroAlt: CAD mockup
 heroFocalPoint: ''
 heroAspect: wide
 galleryLayout: stacked
 gallery:
-  - image: /src/assets/images../../assets/images/sizecompITD.png
+  - image: ../../assets/images/sizecompITD.png
     caption: Size study for motor
-  - image: /src/assets/images../../assets/images/11/9/ITD_assembly1.jpeg
+  - image: ../../assets/images/11/9/ITD_assembly1.jpeg
     caption: Prototype
-  - image: /src/assets/images../../assets/images/release-system-sketches.png
+  - image: ../../assets/images/release-system-sketches.png
     alt: Initial concepts
     caption: Pelican Hook design concept
 tools:
