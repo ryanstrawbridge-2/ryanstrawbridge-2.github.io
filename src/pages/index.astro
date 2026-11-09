@@ -7,6 +7,7 @@ import TinaEditBridge from '../components/TinaEditBridge.astro';
 import home from '../data/home.json';
 import { inlineEmphasis } from '../lib/inline-emphasis';
 import { resolveSiteImage } from '../lib/site-images';
+import StudioOverlay from '../components/StudioOverlay.astro';
 import {
   HOME_QUERY,
   HOME_VARIABLES,
@@ -314,6 +315,11 @@ const aboutBioParagraphs = home.aboutSection.bio
   )}
 
   <TinaEditBridge query={HOME_QUERY} variables={HOME_VARIABLES} data={tinaData} id={tinaId} />
+
+
+  {/* Dev only. Renders nothing in a production build. */}
+
+  <StudioOverlay mode="home" />
 
   <script>
     // Track resume-CTA clicks. Replace console.log with analytics call

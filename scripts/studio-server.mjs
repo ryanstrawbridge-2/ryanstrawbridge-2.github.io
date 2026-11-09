@@ -37,6 +37,7 @@ import {
   VIDEO_EXT,
   mb,
 } from './lib/media.mjs';
+import { readHome, writeHome, setPath } from './lib/homejson.mjs';
 import {
   readProject,
   writeProject,
@@ -52,6 +53,8 @@ const CONTENT = join(ROOT, 'src/content/projects');
 const IMAGES = join(ROOT, 'src/assets/images/projects');
 const VIDEOS = join(ROOT, 'public/videos');
 const LIBRARY = join(ROOT, 'portfolio-photos');
+const HOME_JSON = join(ROOT, 'src/data/home.json');
+const HOME_IMAGES = join(ROOT, 'src/assets/images/home');
 const THUMBS = join(ROOT, '.astro/studio-thumbs');
 
 const PORT = Number(process.env.STUDIO_PORT || 4322);
@@ -345,10 +348,31 @@ const libraryThumb = async (source, folder, file) => {
   return data;
 };
 
-const pickFromLibrary = async ({ slug, source = 'library', folder, file, section, width }) => {
+const pickFromLibrary = async ({ slug, source = 'library', folder, file, section, width, homePath }) => {
   const src = sourcePath(source, folder, file);
   const ext = extname(file).toLowerCase();
   const stem = slugify(basename(file, extname(file))) || 'photo';
+
+  // Targeting a home-page slot: set that one field instead of adding a row.
+  if (homePath) {
+    if (source === 'videos') {
+      await withHome((home) => setPath(home, homePath, homeVideoRef(file)));
+      return { kind: 'video', file, reused: true, home: true };
+    }
+    if (source !== 'library') {
+      // Already committed — point at it where it sits.
+      const ref = `/src/assets/images/${[folder, file].filter(Boolean).join('/')}`;
+      await withHome((home) => setPath(home, homePath, ref));
+      return { kind: 'image', file, reused: true, home: true };
+    }
+    await mkdir(HOME_IMAGES, { recursive: true });
+    const input = await readFile(src);
+    const encoded = await encode(input, ext);
+    const outName = await uniqueName(HOME_IMAGES, stem, encoded.ext);
+    await writeFile(join(HOME_IMAGES, outName), encoded.data);
+    await withHome((home) => setPath(home, homePath, homeRef(outName)));
+    return { kind: 'image', file: outName, before: input.length, after: encoded.data.length, home: true };
+  }
 
   // Already committed — just reference it. Copying would duplicate the bytes
   // and leave two paths to keep in step.
@@ -396,6 +420,70 @@ const pickFromLibrary = async ({ slug, source = 'library', folder, file, section
   return { index, kind: 'image', file: outName, before: input.length, after: encoded.data.length };
 };
 
+
+// ---------------------------------------------------------------------------
+// Home page: src/data/home.json, a fixed set of slots rather than a list.
+//
+// Paths come straight from the data-tina-field attributes already in
+// index.astro ("home.aboutSection.photo"), so the template needed no new
+// markup for this.
+// ---------------------------------------------------------------------------
+
+/** JSON data files store the rooted form; see scripts/fix-cms-paths.mjs. */
+const homeRef = (filename) => `/src/assets/images/home/${filename}`;
+
+/**
+ * index.astro feeds showcase video straight into <source src>, so the home
+ * slot stores a site-absolute path. Project galleries store a bare filename and
+ * the template prefixes it — two different conventions for the same kind of
+ * value, so don't unify them without changing both templates.
+ */
+const homeVideoRef = (filename) => `/videos/${String(filename).replace(/^\/?videos\//, '')}`;
+
+const withHome = async (mutate) => {
+  const data = await readHome(HOME_JSON);
+  const result = await mutate(data);
+  await writeHome(HOME_JSON, data);
+  nudgeAstro();
+  return result ?? {};
+};
+
+const patchHome = async ({ path, value }) =>
+  withHome((data) => setPath(data, path, value));
+
+/** Replace the photo in one home slot with an uploaded file. */
+const uploadHome = async ({ path, filename, data }) => {
+  const ext = extname(filename || '').toLowerCase();
+  const stem = slugify(basename(filename || 'photo', ext)) || 'photo';
+  const input = Buffer.from(data, 'base64');
+
+  if (VIDEO_EXT.has(ext)) {
+    // Only the showcase takes video, and it reads from public/videos.
+    await mkdir(VIDEOS, { recursive: true });
+    const outName = await uniqueName(VIDEOS, stem, '.mp4');
+    const target = join(VIDEOS, outName);
+    if (ext === '.mov') {
+      if (!hasVideoConverter()) throw new Error('.mov needs /usr/bin/avconvert, which is missing');
+      const scratch = join(tmpdir(), `studio-${Date.now()}.mov`);
+      await writeFile(scratch, input);
+      try { await convertVideo(scratch, target); } finally { await unlink(scratch).catch(() => {}); }
+    } else {
+      await writeFile(target, input);
+    }
+    await withHome((home) => setPath(home, path, homeVideoRef(outName)));
+    return { kind: 'video', file: `public/videos/${outName}` };
+  }
+
+  if (!IMAGE_EXT.has(ext)) throw new Error(`${ext || 'that file'} isn't an image or a video`);
+
+  await mkdir(HOME_IMAGES, { recursive: true });
+  const encoded = await encode(input, ext);
+  const outName = await uniqueName(HOME_IMAGES, stem, encoded.ext);
+  await writeFile(join(HOME_IMAGES, outName), encoded.data);
+  await withHome((home) => setPath(home, path, homeRef(outName)));
+  return { kind: 'image', file: outName, before: input.length, after: encoded.data.length };
+};
+
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
     withProject(slug, (file) => patchGalleryItem(file.doc, index, patch)),
@@ -406,6 +494,8 @@ const ROUTES = {
   '/project/patch': ({ slug, patch }) => withProject(slug, (file) => patchTopLevel(file.doc, patch)),
   '/upload': handleUpload,
   '/library/pick': pickFromLibrary,
+  '/home/patch': patchHome,
+  '/home/upload': uploadHome,
 };
 
 const server = createServer(async (req, res) => {

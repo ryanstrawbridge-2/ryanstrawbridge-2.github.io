@@ -56,7 +56,7 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | CMS thumbnail previews | `scripts/generate-cms-thumbnails.mjs` |
 | Photo/video intake | `scripts/media-intake.mjs` (`npm run photos`) |
 | Live editor (dev only) | `scripts/studio.sh` (`npm run studio`), `scripts/studio-server.mjs`, `src/components/StudioOverlay.astro` |
-| Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs` |
+| Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs`, `scripts/lib/homejson.mjs` |
 | Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
 | Ryan's photo library (gitignored) | `portfolio-photos/` — 132 originals, READ-ONLY; studio browses and copies from it, never writes |
@@ -139,6 +139,20 @@ GitHub SSH push from background processes stalls on large payloads.
     anything a visitor sees must be committed. The library panel exists so the
     originals can STAY local while only the picked, optimised copies enter the
     repo — that's the closest thing to "pull from my machine" that works.
+
+20. **Studio's home mode reuses `data-tina-field` as its path source.** Every
+    editable home image already carries `...---home.aboutSection.photo`, so
+    `index.astro` needed no new markup — the overlay splits on `---home.` and
+    patches that JSON path. If a `data-tina-field` is ever removed from an
+    image wrapper, that slot silently stops being editable in studio too.
+21. **Two different conventions for a video path.** `home.json` showcase items
+    feed `<source src>` directly and store `/videos/x.mp4`; project gallery rows
+    store a bare `x.mp4` and the template prefixes it. `homeVideoRef()` exists
+    for that. Don't unify one without changing the other template.
+22. **`:global()` does not work in `is:inline` styles.** StudioOverlay's CSS
+    ships as raw CSS, so a rule containing `:global(...)` is invalid and the
+    browser drops it silently — the overlay just appears not to respond to
+    hover. Write plain selectors there.
 
 ## macOS gotchas
 

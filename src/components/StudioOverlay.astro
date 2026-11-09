@@ -10,8 +10,10 @@
 interface Props {
   /** Heading ids on this page, for the "move to section" menu. */
   headings?: string[];
+  /** 'project' edits a gallery list; 'home' edits fixed slots in home.json. */
+  mode?: 'project' | 'home';
 }
-const { headings = [] } = Astro.props;
+const { headings = [], mode = 'project' } = Astro.props;
 const enabled = import.meta.env.DEV;
 const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
 ---
@@ -21,13 +23,14 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     <div
       id="studio"
       data-port={studioPort}
+      data-mode={mode}
       data-headings={JSON.stringify(headings)}
       hidden
     >
       <div class="studio-bar">
         <span class="studio-dot" />
         <strong>Studio</strong>
-        <span class="studio-hint">drag a photo to crop · hover for controls · drop files anywhere</span>
+        <span class="studio-hint">{mode === 'home' ? 'hover a photo to replace it · drop a file on any photo' : 'drag a photo to crop · hover for controls · drop files anywhere'}</span>
         <button type="button" class="studio-library-open">library</button>
         <button type="button" class="studio-off" title="Hide until reload">hide</button>
       </div>
@@ -213,6 +216,31 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-lib-tile[disabled] { opacity: 0.5; cursor: progress; }
   .studio-lib-empty { color: rgb(255 255 255 / 0.5); font-size: 0.82rem; padding: 1rem; }
 
+  /* --- home page slots ---------------------------------------------------- */
+
+  .studio-slot { position: relative; }
+  .studio-slot:hover img,
+  .studio-slot:hover video {
+    outline: 2px solid rgb(37 99 235 / 0.9);
+    outline-offset: 2px;
+  }
+  .studio-slot-over {
+    outline: 3px dashed #2563eb;
+    outline-offset: 3px;
+    background: rgb(37 99 235 / 0.08);
+  }
+  .studio-slot-path {
+    font-size: 0.62rem;
+    padding: 0.3rem 0.4rem;
+    border-radius: 5px;
+    background: rgb(0 0 0 / 0.7);
+    color: rgb(255 255 255 / 0.75);
+    font-family: ui-monospace, monospace;
+    align-self: center;
+  }
+  .studio-slot[data-tina-field*='photo'] img { cursor: grab; }
+  .studio-slot.is-dragging img { cursor: grabbing; }
+
   /* --- per-figure editing ------------------------------------------------ */
 
   figure[data-studio-index] { position: relative; }
@@ -238,6 +266,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     font-family: ui-sans-serif, system-ui, sans-serif;
   }
   figure[data-studio-index]:hover .studio-tools,
+  .studio-slot:hover .studio-tools,
   .studio-tools:focus-within { opacity: 1; pointer-events: auto; }
 
   .studio-tools button,
@@ -263,7 +292,9 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     opacity: 0; transition: opacity 120ms ease;
   }
   figure[data-studio-index]:hover .studio-crosshair,
-  figure[data-studio-index].is-dragging .studio-crosshair { opacity: 1; }
+  figure[data-studio-index].is-dragging .studio-crosshair,
+  .studio-slot:hover .studio-crosshair,
+  .studio-slot.is-dragging .studio-crosshair { opacity: 1; }
   figure.g-full .studio-crosshair { display: none; }
 </style>
 )}
@@ -276,10 +307,21 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     const API = `http://127.0.0.1:${PORT}`;
     const HEADINGS = JSON.parse(root.dataset.headings || '[]');
     const slug = document.querySelector('[data-studio-slug]')?.getAttribute('data-studio-slug');
+    const MODE = root.dataset.mode || 'project';
 
     const bar = root.querySelector('.studio-bar');
     const toastEl = root.querySelector('.studio-toast');
     const dropEl = root.querySelector('.studio-drop');
+
+    const isFileDrag = (event) => [...(event.dataTransfer?.types || [])].includes('Files');
+
+    const readAsBase64 = (file) =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1]);
+        reader.onerror = () => reject(new Error(`could not read ${file.name}`));
+        reader.readAsDataURL(file);
+      });
 
     const size = (n) =>
       n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
@@ -333,11 +375,29 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
 
     const figures = () => [...document.querySelectorAll('figure[data-studio-index]')];
 
+    // -- home page: fixed slots, not a list -------------------------------
+    //
+    // Every editable image on the home page already carries data-tina-field,
+    // whose value ends in the JSON path ("...---home.aboutSection.photo").
+    // Reusing that meant index.astro needed no new markup at all.
+    const HOME_IMAGE_FIELD = /\.(image|photo|logo|headshot|video)$/;
+    const homeSlots = () =>
+      [...document.querySelectorAll('[data-tina-field*="---home."]')]
+        .map((el) => {
+          const path = (el.getAttribute('data-tina-field') || '').split('---home.')[1] || '';
+          return { el, path };
+        })
+        .filter(({ el, path }) => HOME_IMAGE_FIELD.test(path) && el.querySelector('img, video'));
+
+    /** Focal-point field for a slot, where the schema has one. */
+    const HOME_FOCAL = { 'aboutSection.photo': 'aboutSection.photoFocalPoint' };
+
+
     const label = (id) =>
       (document.getElementById(id)?.textContent || id).trim();
 
     // -- build the per-figure toolbar -------------------------------------
-    for (const figure of figures()) {
+    for (const figure of MODE === 'project' ? figures() : []) {
       const index = Number(figure.dataset.studioIndex);
       const kind = figure.dataset.studioKind;
       const media = figure.querySelector('img, video');
@@ -488,6 +548,122 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       }, true);
     }
 
+    // -- home page: per-slot controls --------------------------------------
+    let homeTarget = null; // which slot the library panel will fill
+
+    for (const slot of MODE === 'home' ? homeSlots() : []) {
+      const { el, path } = slot;
+      const media = el.querySelector('img, video');
+      el.classList.add('studio-slot');
+
+      const tools = document.createElement('div');
+      tools.className = 'studio-tools';
+
+      const replace = document.createElement('button');
+      replace.type = 'button';
+      replace.textContent = 'replace';
+      replace.title = `Pick a new photo for ${path}`;
+      replace.addEventListener('click', () => {
+        homeTarget = path;
+        openLibrary();
+      });
+      tools.appendChild(replace);
+
+      const name = document.createElement('span');
+      name.className = 'studio-slot-path';
+      name.textContent = path.replace(/Section|\.items/g, '');
+      tools.appendChild(name);
+
+      el.appendChild(tools);
+
+      // Drop a file directly on the photo it should replace.
+      el.addEventListener('dragover', (event) => {
+        if (!isFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        el.classList.add('studio-slot-over');
+      });
+      el.addEventListener('dragleave', () => el.classList.remove('studio-slot-over'));
+      el.addEventListener('drop', async (event) => {
+        if (!isFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation(); // don't also fire the page-wide handler
+        el.classList.remove('studio-slot-over');
+        const file = event.dataTransfer.files[0];
+        if (!file) return;
+        toast(`replacing ${path}…`);
+        try {
+          const data = await readAsBase64(file);
+          const result = await post('/home/upload', { path, filename: file.name, data });
+          toast(
+            result.kind === 'image'
+              ? `${path} → ${file.name}  ${size(result.before)} → ${size(result.after)}`
+              : `${path} → ${result.file}`,
+          );
+        } catch (error) {
+          toast(error.message, true);
+        }
+      });
+
+      // Drag to crop, for the one slot whose schema has a focal point.
+      const focalField = HOME_FOCAL[path];
+      if (!focalField || media.tagName !== 'IMG') continue;
+
+      const dot = document.createElement('span');
+      dot.className = 'studio-crosshair';
+      el.appendChild(dot);
+
+      const current = getComputedStyle(media).objectPosition;
+      let [px, py] = (() => {
+        const m = current.match(/(-?[\d.]+)%\s+(-?[\d.]+)%/);
+        return m ? [parseFloat(m[1]), parseFloat(m[2])] : [50, 50];
+      })();
+
+      const placeDot = () => {
+        const box = media.getBoundingClientRect();
+        const frame = el.getBoundingClientRect();
+        dot.style.left = `${box.left - frame.left + (box.width * px) / 100}px`;
+        dot.style.top = `${box.top - frame.top + (box.height * py) / 100}px`;
+      };
+      placeDot();
+      window.addEventListener('resize', placeDot);
+
+      let dragging = false;
+      let moved = false;
+      media.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        dragging = true;
+        moved = false;
+        el.classList.add('is-dragging');
+        media.setPointerCapture(event.pointerId);
+        event.preventDefault();
+      });
+      media.addEventListener('pointermove', (event) => {
+        if (!dragging) return;
+        moved = true;
+        const box = media.getBoundingClientRect();
+        px = Math.round(Math.min(100, Math.max(0, ((event.clientX - box.left) / box.width) * 100)));
+        py = Math.round(Math.min(100, Math.max(0, ((event.clientY - box.top) / box.height) * 100)));
+        media.style.objectPosition = `${px}% ${py}%`;
+        placeDot();
+      });
+      const finishHome = async (event) => {
+        if (!dragging) return;
+        dragging = false;
+        el.classList.remove('is-dragging');
+        media.releasePointerCapture?.(event.pointerId);
+        if (!moved) return;
+        try {
+          await post('/home/patch', { path: focalField, value: `${px}% ${py}%` });
+          toast(`crop → ${px}% ${py}%`);
+        } catch (error) {
+          toast(error.message, true);
+        }
+      };
+      media.addEventListener('pointerup', finishHome);
+      media.addEventListener('pointercancel', finishHome);
+    }
+
     // -- library panel ----------------------------------------------------
     // Browse portfolio-photos/ without leaving the page. Picking copies the
     // file through the same pipeline as a drag-and-drop; the library itself is
@@ -498,8 +674,13 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     const libSection = root.querySelector('.studio-lib-section');
     const libWidth = root.querySelector('.studio-lib-width');
 
-    libSection.appendChild(new Option('↓ bottom of page', ''));
-    for (const id of HEADINGS) libSection.appendChild(new Option(label(id), id));
+    if (MODE === 'home') {
+      // Fixed slots: there's no section to choose or width to set.
+      for (const el of root.querySelectorAll('.studio-library header label')) el.hidden = true;
+    } else {
+      libSection.appendChild(new Option('↓ bottom of page', ''));
+      for (const id of HEADINGS) libSection.appendChild(new Option(label(id), id));
+    }
 
     let libraryData = null;
     let activeKey = null;
@@ -562,14 +743,18 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
               file: file.name,
               section: sectionId ? label(sectionId) : null,
               width: libWidth.value || null,
+              homePath: MODE === 'home' ? homeTarget : null,
             });
             toast(
-              result.reused
-                ? `added ${file.name} (already in the repo — not copied)`
-                : result.kind === 'image'
-                  ? `${file.name}  ${size(result.before)} → ${size(result.after)}`
-                  : `${file.name} → ${result.file}`,
+              result.home
+                ? `${homeTarget} → ${file.name}`
+                : result.reused
+                  ? `added ${file.name} (already in the repo — not copied)`
+                  : result.kind === 'image'
+                    ? `${file.name}  ${size(result.before)} → ${size(result.after)}`
+                    : `${file.name} → ${result.file}`,
             );
+            if (MODE === 'home') libPanel.hidden = true;
           } catch (error) {
             toast(error.message, true);
             tile.disabled = false;
@@ -653,7 +838,6 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
 
     // -- drop files anywhere on the page ----------------------------------
     let dragDepth = 0;
-    const isFileDrag = (event) => [...(event.dataTransfer?.types || [])].includes('Files');
 
     window.addEventListener('dragenter', (event) => {
       if (!isFileDrag(event)) return;
@@ -675,6 +859,13 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       const files = [...event.dataTransfer.files];
       if (files.length === 0) return;
 
+      // Home slots are fixed, so a loose drop has no destination. The per-slot
+      // handlers stop propagation, so reaching here means it missed a photo.
+      if (MODE === 'home') {
+        toast('Drop it directly onto the photo you want to replace', true);
+        return;
+      }
+
       // Which section was it dropped into? Nearest heading above the cursor.
       let section = null;
       const target = document.elementFromPoint(event.clientX, event.clientY);
@@ -689,12 +880,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       for (const file of files) {
         toast(`uploading ${file.name} (${done + 1}/${files.length})…`);
         try {
-          const data = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result).split(',')[1]);
-            reader.onerror = () => reject(new Error(`could not read ${file.name}`));
-            reader.readAsDataURL(file);
-          });
+          const data = await readAsBase64(file);
           const result = await post('/upload', { filename: file.name, data, section });
           done += 1;
           const where = section ? `, in ${section}` : '';

@@ -43,6 +43,9 @@ cd ~/Documents/Projects/portfolio && npm run studio
 Opens the site at **http://localhost:4321** with the page itself editable. Nothing
 here exists on the deployed site — it's dev-only.
 
+Works on **project pages** and the **home page**, which behave differently
+because the home page has fixed photo slots rather than a gallery list.
+
 On any project page:
 
 | Do this | Get this |
@@ -67,6 +70,30 @@ When you're happy:
 ```bash
 cd ~/Documents/Projects/portfolio && npm run publish -- "Ball valve writeup"
 ```
+
+### The home page
+
+Open **http://localhost:4321/** with studio running. All 14 photos are editable
+— headshot, the six showcase tiles, three experience logos, the about photo and
+three interest cards.
+
+| Do this | Get this |
+|---------|----------|
+| **Hover a photo** | Blue outline, a `replace` button, and the field it maps to (`about.photo`) |
+| **Drop a file on a photo** | Replaces *that* photo. Resized and filed into `src/assets/images/home/` |
+| **Click `replace`** | Opens the library panel; pick anything and it fills that slot |
+| **Drag the About photo** | Moves its crop, same as a project gallery |
+
+Only the About photo has a crop handle — it's the one slot the schema gives a
+focal point. The rest are replace-only.
+
+A loose drop that misses a photo does nothing and says so: there's no "add"
+on the home page, only "replace", because the slots are fixed.
+
+Everything else — headings, bio, buttons, contact details — is still text in
+`src/data/home.json`. Edit it in VS Code and the page reloads.
+
+---
 
 ### The library panel
 
