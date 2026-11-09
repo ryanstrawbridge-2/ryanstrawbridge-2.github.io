@@ -301,16 +301,19 @@ content:
       - name: galleryLayout
         label: Gallery layout
         type: select
-        description: How gallery images stack at the bottom of the project page.
+        description: Default width for gallery rows that don't set their own.
         options:
           values: [stacked, two-column, three-column]
 
       - name: gallery
-        label: Gallery photos
+        label: Gallery media
         type: object
         list: true
         default: []
-        description: Photos shown at the bottom of the project page. Drag rows to reorder.
+        description: >
+          Photos and videos for this project. Drag rows to reorder. A row with a
+          Section renders inside that part of the write-up; the rest collect at
+          the bottom of the page.
         fields:
           - name: image
             label: Photo
@@ -318,8 +321,30 @@ content:
             options:
               input: src/assets/images/projects/{primary}
               output: '../../assets/images/projects/{primary}/{name}{extension}'
+          - { name: video, label: "Video instead of a photo", type: string, description: "Filename of an MP4 in public/videos/, e.g. ball-valve-test.mp4. Fill this in INSTEAD of Photo." }
+          - name: poster
+            label: "Video thumbnail (optional)"
+            type: image
+            options:
+              input: src/assets/images/projects/{primary}
+              output: '../../assets/images/projects/{primary}/{name}{extension}'
           - { name: alt, label: Alt text, type: string, description: "Describes the photo for screen readers. Used as the caption unless you set one." }
           - { name: caption, label: "Caption (optional)", type: string, description: "Shown under the photo. Leave blank to use the alt text." }
+          - { name: section, label: "Place under which heading?", type: string, description: "A heading from the body, e.g. Testing. Blank puts it at the bottom. A heading that doesn't exist also falls to the bottom." }
+          - name: width
+            label: Width
+            type: select
+            default: auto
+            description: Full-width photos are never cropped - use it for tall sketches and wide CAD renders.
+            options:
+              values: [auto, full, half, third]
+          - name: focal
+            label: Crop position
+            type: select
+            default: center
+            description: Which part survives the 4:3 crop at half and third width. No effect at full width.
+            options:
+              values: [top-left, top, top-right, left, center, right, bottom-left, bottom, bottom-right]
 
       - { name: tools, label: "Tools / skills", type: string, list: true, default: [], description: "Listed as tags on the project page." }
       - { name: order, label: Display order, type: number, default: 0, description: "Lower numbers appear first. Ties broken by date (newer first)." }

@@ -26,6 +26,9 @@ npm run dev              # localhost:4321, hot reload
 npm run build            # plain Astro build (always works)
 npm run build:tina       # Astro + TinaCMS admin (needs TINA_TOKEN in env)
 npm run preview          # serve the built site
+npm run photos           # intake: resize/strip/file new photos + video
+npm run photos:shrink    # re-encode oversized images already in src/assets
+npm run check:tina       # fragment vs tina-lock.json (catches "Unexpected Error")
 ```
 
 - Pre-commit hook runs `npm run build`. Skip with `--no-verify` only when truly necessary.
@@ -50,6 +53,11 @@ npm run preview          # serve the built site
 | Pages CMS schema | `.pages.yml` |
 | Auto-sync script | `scripts/auto-sync.sh` |
 | CMS thumbnail previews | `scripts/generate-cms-thumbnails.mjs` |
+| Photo/video intake | `scripts/media-intake.mjs` (`npm run photos`) |
+| Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
+| Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
+| Ryan's photo library (gitignored) | `portfolio-photos/` — 262 MB of originals, never write here |
+| Intake queue (gitignored) | `photo-inbox/<slug>/`, processed originals in `photo-inbox/_done/` |
 | SSH key for git | `~/.ssh/id_ed25519_portfolio` |
 | Auto-sync log | `~/Library/Logs/portfolio-sync/sync.log` |
 
@@ -76,6 +84,24 @@ GitHub SSH push from background processes stalls on large payloads.
 9. **CMS thumbnails need `dist/src/assets/images/`.** `mediaRoot` is `src/assets/images`, so every image field requests `/src/assets/images/<path>` — a path Astro never serves (it compiles originals into hashed `/_astro/` files). `scripts/generate-cms-thumbnails.mjs` writes 400px previews there at build time (~0.9 MB). Drop that step and every thumbnail in the editor goes back to a broken-image icon.
 10. **`image()` fields emit their full-size original.** Astro ships the untouched source for every content-collection `image()` field even when only resized variants are used — that's ~18 MB across the gallery, and why `dist` is ~63 MB rather than ~36 MB. Not a leak, and not worth chasing unless deploy time becomes a problem; the escape hatch is storing paths as `z.string()` and resolving them with `import.meta.glob`.
 
+11. **Gallery placement is a body split, not a layout trick.** `[slug].astro`
+    cuts `project.rendered.html` at each `<h2 id=...>` and drops the matching
+    gallery group after each chunk. That only works while the body has no
+    markdown images of its own — those come through as placeholders that
+    `<Content />` resolves and `set:html` would emit raw. The guard is
+    `rendered.metadata.imagePaths.length === 0`; when it trips, every item
+    silently falls back to the bottom of the page. If someone adds a body image
+    and inline photos stop working, that's why.
+12. **`npm run check:tina` is in `publish.sh`, deliberately not in `build`.**
+    A stale `tina-lock.json` would otherwise fail the GitHub Actions deploy and
+    leave the live site silently out of date — the exact failure mode in the
+    memory note. In `publish.sh` it only stops a push Ryan is watching.
+13. **`--shrink` must never change a file's container format.** It rewrites in
+    place under the existing name so no path changes, which means a `.png`
+    holding JPEG bytes would sail past sharp and then trip Astro's own
+    extension-based probe. `encodeKeepingFormat()` exists for that; `--jpeg` is
+    intake-only.
+
 ## macOS gotchas
 
 - `/usr/bin/timeout` doesn't exist. Use the `timeout_cmd` perl wrapper in `scripts/auto-sync.sh`.
@@ -88,6 +114,13 @@ GitHub SSH push from background processes stalls on large payloads.
 1. **Pages CMS** at https://app.pagescms.org/ — form-based, his daily driver for content.
 2. **TinaCMS** at https://ryanstrawbridge-2.github.io/admin/ — click-to-edit visual editor (needs TinaCloud `main` registration + `TINA_TOKEN` GitHub secret).
 3. **Local files via Claude** — for layout, new sections, or anything structural.
+
+## Media handling — the rule
+
+Never add an image to `src/assets/images/` by hand or by CMS upload. Run
+`npm run photos`. CMS uploads land full-size in the directory ROOT with camera
+filenames; that produced a 14 MB PNG commit and 19 loose files before the intake
+existed. Everything new belongs in `src/assets/images/projects/<slug>/`.
 
 ## Per-project content structure
 

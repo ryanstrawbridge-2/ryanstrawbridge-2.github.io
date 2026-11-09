@@ -24,6 +24,8 @@ tina/__generated__/
 
 # local photo staging — full-resolution originals, resized into src/assets before use
 portfolio-photos/
+# intake queue for `npm run photos` (originals, plus _done/ after processing)
+photo-inbox/
 
 # macOS-specific files
 .DS_Store

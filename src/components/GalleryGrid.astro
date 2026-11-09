@@ -1,0 +1,154 @@
+---
+/**
+ * Renders a group of gallery items as a 6-column grid. Items span 6/3/2
+ * columns for full/half/third, so widths can be mixed freely in one group.
+ *
+ * Used twice on a project page: once inline after each body section, once for
+ * the items that didn't name a section. Both live inside the page's single
+ * [data-lightbox-root] so the lightbox treats them as one set.
+ */
+import { Image } from 'astro:assets';
+import { focalCss, videoSrc, type GalleryItem } from '../lib/gallery';
+
+interface Props {
+  items: GalleryItem[];
+  /** Builds the data-tina-field path for a row, e.g. (i) => f('gallery', i, 'image') */
+  field?: (index: number, key: string) => string | undefined;
+  class?: string;
+}
+
+const { items, field, class: className = '' } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <div class:list={['gallery-grid', className]}>
+      {items.map((item) => (
+        <figure
+          class:list={['gallery-figure', `g-${item.width}`]}
+          style={`--focal: ${focalCss(item.focal)};`}
+          data-tina-field={field?.(item.index, item.video ? 'video' : 'image')}
+        >
+          {item.video ? (
+            <video
+              controls
+              preload="metadata"
+              playsinline
+              poster={item.poster?.src}
+              aria-label={item.alt ?? item.caption ?? 'Project video'}
+            >
+              <source src={videoSrc(item.video)} type="video/mp4" />
+            </video>
+          ) : (
+            /* Full-width cells reach ~1100px in the narrow container; half and
+               third cap near 540 and 350. 1200w covers full 1x and half 2x. */
+            <Image
+              src={item.image!}
+              alt={item.alt ?? item.caption ?? ''}
+              widths={item.width === 'full' ? [600, 1200] : [400, 800]}
+              sizes={
+                item.width === 'full'
+                  ? '(min-width: 760px) 760px, 100vw'
+                  : '(min-width: 720px) 50vw, 100vw'
+              }
+              loading="lazy"
+            />
+          )}
+          {(item.caption ?? item.alt) && (
+            <figcaption>{item.caption ?? item.alt}</figcaption>
+          )}
+        </figure>
+      ))}
+    </div>
+  )
+}
+
+<style>
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1.5rem 1.25rem;
+    align-items: start;
+  }
+
+  .g-full {
+    grid-column: span 6;
+  }
+  .g-half {
+    grid-column: span 3;
+  }
+  .g-third {
+    grid-column: span 2;
+  }
+
+  @media (max-width: 720px) {
+    .g-half,
+    .g-third {
+      grid-column: span 6;
+    }
+  }
+
+  .gallery-figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .gallery-figure :global(img),
+  .gallery-figure video {
+    margin: 0;
+    width: 100%;
+    display: block;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+  }
+
+  /* Half and third cells crop to a common 4:3 so the grid stays tidy even when
+     source photos disagree about shape. --focal picks what survives the crop. */
+  .g-half :global(img),
+  .g-third :global(img) {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: var(--focal, center center);
+    cursor: zoom-in;
+  }
+
+  /* Full-width cells are never cropped — this is where a tall sketch or a wide
+     CAD render goes. max-height stops a portrait photo running off the screen;
+     `contain` keeps its proportions while that happens. */
+  .g-full :global(img) {
+    height: auto;
+    max-height: 620px;
+    object-fit: contain;
+    cursor: zoom-in;
+  }
+
+  .gallery-figure video {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: var(--bg-elevated);
+  }
+  .g-full video {
+    max-height: 620px;
+  }
+
+  .gallery-figure figcaption {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.5rem;
+    padding-inline: 0.25rem;
+  }
+</style>
+
+<style>
+  /* Spacing differs by where the group sits: inline groups breathe on both
+     sides, the trailing group only needs room before the page nav. */
+  .gallery-grid.section-gallery {
+    margin-block: 1.75rem;
+  }
+  .gallery-grid.trailing-gallery {
+    margin-block: 0 4rem;
+  }
+</style>

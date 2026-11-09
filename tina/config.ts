@@ -133,13 +133,43 @@ export default defineConfig({
             ui: {
               // Label each row by filename so photos are identifiable even
               // when the thumbnail preview fails to load.
-              itemProps: (item: { image?: string; alt?: string }) => {
-                const file = item?.image?.split('/').pop() ?? 'No photo chosen';
-                return { label: item?.alt ? `${file} — ${item.alt}` : file };
+              itemProps: (item: {
+                image?: string;
+                video?: string;
+                alt?: string;
+                section?: string;
+                width?: string;
+              }) => {
+                const file =
+                  item?.video?.split('/').pop() ??
+                  item?.image?.split('/').pop() ??
+                  'Empty row';
+                // Surface placement in the row label so a long gallery stays
+                // scannable without opening every row.
+                const where = item?.section ? `→ ${item.section}` : '';
+                const size =
+                  item?.width && item.width !== 'auto' ? `[${item.width}]` : '';
+                const label = [file, item?.alt, size, where]
+                  .filter(Boolean)
+                  .join(' · ');
+                return { label };
               },
             },
             fields: [
               { type: 'image', name: 'image', label: 'Photo' },
+              {
+                type: 'string',
+                name: 'video',
+                label: 'Video instead of a photo',
+                description:
+                  'Filename of an MP4 in public/videos/, e.g. ball-valve-test.mp4. Fill this in INSTEAD of Photo. The photos command prints the exact name to paste.',
+              },
+              {
+                type: 'image',
+                name: 'poster',
+                label: 'Video thumbnail (optional)',
+                description: 'Still frame shown before the video plays. Ignored for photos.',
+              },
               {
                 type: 'string',
                 name: 'alt',
@@ -151,6 +181,34 @@ export default defineConfig({
                 name: 'caption',
                 label: 'Caption (optional)',
                 description: 'Shown under the photo. Leave blank to use the alt text.',
+              },
+              {
+                type: 'string',
+                name: 'section',
+                label: 'Place under which heading?',
+                description:
+                  'Type a heading from the body, e.g. Testing. The photo renders at the end of that section. Leave blank to put it at the bottom of the page. A heading that does not exist falls to the bottom rather than vanishing.',
+              },
+              {
+                type: 'string',
+                name: 'width',
+                label: 'Width',
+                description:
+                  'Full-width photos are never cropped — use it for tall sketches and wide CAD renders.',
+                options: [
+                  { value: 'auto', label: 'Match the page layout' },
+                  { value: 'full', label: 'Full width (uncropped)' },
+                  { value: 'half', label: 'Half width' },
+                  { value: 'third', label: 'One third' },
+                ],
+              },
+              {
+                type: 'string',
+                name: 'focal',
+                label: 'Crop position',
+                description:
+                  'Which part survives the 4:3 crop at half and third width. No effect at full width.',
+                options: focalPointOptions,
               },
             ],
           },

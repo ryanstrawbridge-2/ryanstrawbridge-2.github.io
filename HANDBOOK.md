@@ -27,21 +27,88 @@
 | **Pages CMS** | https://app.pagescms.org/ | Form-based fields with image uploads | Quick text/photo swaps, daily driver |
 | **TinaCMS** | https://ryanstrawbridge-2.github.io/admin/ | Click on any element on the live site, edit inline with side panel | Visual edits where you want to see the result |
 | **Local + Claude** | run `scripts/dev-server.sh` → localhost:4321 | Edit code/JSON/markdown directly, see changes in <2s | Layout/structure changes, anything structural |
+| **`npm run photos`** | terminal | Resizes, strips metadata, files and labels new photos/video | Any time you're adding media — see below |
 
 All three commit to the same git repo. Use whichever fits the task.
 
 ---
 
-## Reordering gallery photos
+## Adding photos and video
 
-Project gallery photos live in a **Gallery photos** list on each project's form.
-Each row is labelled with its filename and alt text (`frame-04.jpeg — Lifting frame`),
-so you can tell photos apart at a glance. Grab the handle at the left of a row and
-drag to reorder — the order in that list is the order on the page. Save when done.
+**Don't upload originals through the CMS.** It drops the untouched file into the
+root of `src/assets/images/` — which is how a 14 MB PNG and a 9.2 MB JPEG ended
+up committed, and why files called `IMG_6268.jpeg` are sitting loose in there.
 
-Only photos under the old `## Gallery` heading moved into this list. Images that sit
-inside the write-up itself (swirl-injector, faucet-leak-ring) are still part of the
-body text, where they belong.
+Use the intake instead. Drop files in `photo-inbox/<project-slug>/`, then:
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run photos
+```
+
+For each file it bakes in the EXIF rotation, strips all metadata (GPS included),
+resizes the long edge to 2400 px, re-encodes, files it under
+`src/assets/images/projects/<slug>/` with a readable name, and appends a gallery
+row to the project's markdown. Typical result: 5.6 MB → 0.7 MB.
+
+Originals are never deleted — they move to `photo-inbox/_done/`.
+
+Your 262 MB library in `portfolio-photos/` is left alone, but you can point the
+script straight at it:
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run photos -- --library
+```
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run photos -- lifting-frame "portfolio-photos/3 Point Lifting Frame"
+```
+
+Files named by path are only read, never moved.
+
+**Videos:** drop an `.mp4` in the same place and it lands in `public/videos/`
+with a gallery row using the `video` field. `.mov` needs converting first
+(QuickTime: File → Export As). Anything over 5 MB gets flagged — commit those on
+their own, since big pushes stall.
+
+Useful flags: `--dry-run` (show, change nothing), `--jpeg` (force PNGs to JPEG —
+much smaller, but bad for CAD line art), `--no-append` (print the YAML instead of
+editing the markdown), `--max 1800` (smaller cap).
+
+---
+
+## Where each photo goes on the page
+
+Every gallery row has three placement controls beyond drag-to-reorder:
+
+| Control | What it does |
+|---------|--------------|
+| **Place under which heading?** | Type a heading from the body, e.g. `Testing`. The photo renders at the end of *that section* instead of at the bottom of the page. Blank = bottom. Capitalisation and punctuation don't matter. |
+| **Width** | `Full` spans the column and is **never cropped** — use it for tall sketches and wide CAD renders. `Half` and `Third` crop to 4:3 so rows line up. `Match the page layout` follows the old page-wide setting. |
+| **Crop position** | Which part survives the 4:3 crop at half/third width. No effect at full width. |
+
+Widths mix freely in one section — a full-width render above a third-width detail
+shot and a half-width video is one list, no code.
+
+If you type a heading that doesn't exist, the photo drops to the bottom of the
+page rather than disappearing. On a phone everything stacks full width.
+
+Rows are labelled with filename, alt text, width and section
+(`itd-latch.jpg · Latch detail · [full] · → Testing`), so a long gallery stays
+readable without opening every row.
+
+---
+
+## Shrinking images already in the repo
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run photos:shrink
+```
+
+Re-encodes anything in `src/assets/images/` over 3 MB, in place, under the same
+filename — so no markdown or JSON path changes. File formats are preserved (a
+`.png` stays a PNG), because a file whose bytes disagree with its extension
+builds unpredictably. Add `--dry-run` to see the numbers first, `--over 1` for a
+lower threshold.
 
 ---
 

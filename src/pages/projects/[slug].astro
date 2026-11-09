@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Lightbox from '../../components/Lightbox.astro';
+import GalleryGrid from '../../components/GalleryGrid.astro';
 import TinaEditBridge from '../../components/TinaEditBridge.astro';
 import {
   PROJECT_QUERY,
@@ -10,6 +11,12 @@ import {
   projectField,
   queryId,
 } from '../../lib/tina-visual-editing';
+import {
+  focalCss,
+  groupBySection,
+  normalizeGallery,
+  splitBodySections,
+} from '../../lib/gallery';
 import type { GetStaticPaths } from 'astro';
 
 export const getStaticPaths = (async () => {
@@ -46,21 +53,6 @@ const dateLabel = date.toLocaleDateString('en-US', {
   timeZone: 'UTC',
 });
 
-// Map the 9-way friendly keywords to CSS object-position values.
-// If heroFocalPoint isn't one of these keywords, treat it as a raw CSS value
-// (e.g. "37% 22%" from focal-picker.html).
-const focalKeywordCss: Record<string, string> = {
-  'top-left': 'top left',
-  top: 'top center',
-  'top-right': 'top right',
-  left: 'center left',
-  center: 'center center',
-  right: 'center right',
-  'bottom-left': 'bottom left',
-  bottom: 'bottom center',
-  'bottom-right': 'bottom right',
-};
-const focalCss = (value: string) => focalKeywordCss[value] ?? value;
 const aspectCss: Record<typeof heroAspect, string> = {
   wide: '21 / 9',
   standard: '3 / 2',
@@ -68,6 +60,27 @@ const aspectCss: Record<typeof heroAspect, string> = {
   square: '1 / 1',
 };
 const heroStyle = `--hero-focal: ${focalCss(heroFocalPoint)}; --hero-aspect: ${aspectCss[heroAspect]};`;
+
+// ---------------------------------------------------------------------------
+// Gallery placement
+//
+// Items that name a body heading render at the end of that section; everything
+// else collects at the bottom of the page, which is the old behavior.
+//
+// Splitting works on the pre-rendered HTML, which is only safe when the body
+// has no images of its own: markdown images come through as placeholders that
+// <Content /> resolves, and set:html would emit them raw. If this project ever
+// gains a body image, the split is skipped and every item trails instead — the
+// page still works, the photos just stop being inline.
+// ---------------------------------------------------------------------------
+const rendered = (project as { rendered?: { html?: string; metadata?: { imagePaths?: string[] } } })
+  .rendered;
+const bodyHasImages = (rendered?.metadata?.imagePaths?.length ?? 0) > 0;
+const bodyChunks = bodyHasImages ? [] : splitBodySections(rendered?.html ?? '');
+
+const galleryItems = normalizeGallery(gallery, galleryLayout);
+const { bySection, trailing } = groupBySection(galleryItems, bodyChunks);
+const useInlineBody = bodyChunks.length > 0 && bySection.size > 0;
 
 const all = (await getCollection('projects', ({ data }) => !data.draft)).sort(
   (a, b) =>
@@ -87,6 +100,7 @@ const tinaData = {
   }),
 };
 const f = (...path: (string | number)[]) => projectField(project.id, ...path);
+const galleryField = (index: number, key: string) => f('gallery', index, key);
 ---
 
 <BaseLayout title={`${title} · Ryan Strawbridge`} description={summary}>
@@ -121,30 +135,32 @@ const f = (...path: (string | number)[]) => projectField(project.id, ...path);
       />
     </div>
 
-    {/* One lightbox root wraps both — the lightbox binds to the first root it
-        finds, so body and gallery images have to share it to navigate as one set. */}
+    {/* One lightbox root wraps body and gallery — the lightbox binds to the
+        first root it finds, so they have to share it to navigate as one set. */}
     <div data-lightbox-root>
-      <div class={`container-narrow project-body gallery-${galleryLayout}`} data-tina-field={f('body')}>
-        <Content />
+      <div class="container-narrow project-body" data-tina-field={f('body')}>
+        {
+          useInlineBody ? (
+            bodyChunks.map((chunk) => (
+              <>
+                <Fragment set:html={chunk.html} />
+                <GalleryGrid
+                  items={bySection.get(chunk.id) ?? []}
+                  field={galleryField}
+                  class="section-gallery"
+                />
+              </>
+            ))
+          ) : (
+            <Content />
+          )
+        }
       </div>
 
       {
-        gallery.length > 0 && (
-          <div class={`container-narrow project-gallery gallery-${galleryLayout}`}>
-            {gallery.map((item, i) => (
-              <figure class="gallery-figure" data-tina-field={f('gallery', i, 'image')}>
-                {/* Cells cap out around 350px in the two-column grid and 760px
-                    stacked, so 800w covers stacked 1x and two-column 2x. */}
-                <Image
-                  src={item.image}
-                  alt={item.alt ?? item.caption ?? title}
-                  widths={[400, 800]}
-                  sizes="(min-width: 720px) 50vw, 100vw"
-                  loading="lazy"
-                />
-                {(item.caption ?? item.alt) && <figcaption>{item.caption ?? item.alt}</figcaption>}
-              </figure>
-            ))}
+        trailing.length > 0 && (
+          <div class="container-narrow">
+            <GalleryGrid items={trailing} field={galleryField} class="trailing-gallery" />
           </div>
         )
       }
@@ -247,8 +263,8 @@ const f = (...path: (string | number)[]) => projectField(project.id, ...path);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
     }
-    /* Figures generated by rehype-image-captions: each gallery image is
-       wrapped in <figure> with a <figcaption> built from its alt text. */
+    /* Figures generated by rehype-image-captions: an image written into the
+       body markdown gets wrapped in <figure> with its alt text as a caption. */
     .project-body :global(figure.gallery-figure) {
       margin: 0;
       display: flex;
@@ -282,74 +298,6 @@ const f = (...path: (string | number)[]) => projectField(project.id, ...path);
       margin: 1.5rem 0;
       color: var(--text-muted);
       font-style: italic;
-    }
-
-    /* The gallery frontmatter list renders here. Mirrors the figure styling
-       body images get from rehype-image-captions, so moving a photo between
-       the body and the gallery list looks the same either way. */
-    .project-gallery :global(figure.gallery-figure) {
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-    }
-    .project-gallery :global(figure.gallery-figure) :global(img) {
-      margin: 0;
-      width: 100%;
-      cursor: zoom-in;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-    }
-    .project-gallery :global(figure.gallery-figure) :global(figcaption) {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      text-align: center;
-      margin-top: 0.5rem;
-      padding-inline: 0.25rem;
-    }
-    .project-gallery.gallery-stacked :global(figure.gallery-figure) {
-      margin-block: 1.5rem;
-    }
-
-    /* Gallery layouts: text content spans full width; gallery figures flow
-       into a multi-column grid. */
-    .project-body.gallery-two-column,
-    .project-body.gallery-three-column,
-    .project-gallery.gallery-two-column,
-    .project-gallery.gallery-three-column {
-      display: grid;
-      gap: 1.5rem 1.25rem;
-    }
-    .project-body.gallery-two-column,
-    .project-gallery.gallery-two-column {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .project-body.gallery-three-column,
-    .project-gallery.gallery-three-column {
-      grid-template-columns: repeat(3, 1fr);
-    }
-    @media (max-width: 720px) {
-      .project-body.gallery-two-column,
-      .project-body.gallery-three-column,
-      .project-gallery.gallery-two-column,
-      .project-gallery.gallery-three-column {
-        grid-template-columns: 1fr;
-      }
-    }
-    /* Non-figure top-level elements span the full grid row */
-    .project-body.gallery-two-column > :global(:not(figure)),
-    .project-body.gallery-three-column > :global(:not(figure)) {
-      grid-column: 1 / -1;
-    }
-    /* Constrain figure images to a uniform 4:3 cell — keeps the grid clean
-       even when source photos have different aspect ratios. */
-    .project-body.gallery-two-column :global(figure.gallery-figure) :global(img),
-    .project-body.gallery-three-column :global(figure.gallery-figure) :global(img),
-    .project-gallery.gallery-two-column :global(figure.gallery-figure) :global(img),
-    .project-gallery.gallery-three-column :global(figure.gallery-figure) :global(img) {
-      aspect-ratio: 4 / 3;
-      object-fit: cover;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
     }
 
     .project-nav {

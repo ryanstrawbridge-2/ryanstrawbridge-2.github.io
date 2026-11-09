@@ -4,11 +4,12 @@
 #   npm run publish                 # default commit message
 #   npm run publish -- "your note"  # custom message
 #
-# Does the four things that are easy to forget, in the order that matters:
+# Does the five things that are easy to forget, in the order that matters:
 #   1. normalises the image paths TinaCMS writes in a broken form
-#   2. pulls anything that landed on GitHub while you were editing
-#   3. builds, so a broken site fails here instead of on the deploy
-#   4. commits and pushes over the portfolio SSH key
+#   2. checks the click-to-edit fragments still match the Tina schema
+#   3. pulls anything that landed on GitHub while you were editing
+#   4. builds, so a broken site fails here instead of on the deploy
+#   5. commits and pushes over the portfolio SSH key
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -19,6 +20,18 @@ export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes"
 
 echo "→ normalising CMS image paths"
 node scripts/fix-cms-paths.mjs
+
+# Deliberately NOT in `npm run build`: a stale lock would then fail the GitHub
+# Actions deploy and leave the live site silently out of date. Here it only
+# stops a push you're standing in front of.
+echo "→ checking click-to-edit fragments against the Tina schema"
+if ! node scripts/check-tina-fragment.mjs; then
+  echo
+  echo "Stopped. Publishing this would leave /admin/ showing \"Unexpected Error\"."
+  echo "The site itself would be fine — pass --skip-tina-check to publish anyway."
+  [ "${2:-}" = "--skip-tina-check" ] || exit 1
+  echo "(--skip-tina-check given, carrying on)"
+fi
 
 if [ -z "$(git status --porcelain)" ]; then
   echo "Nothing to publish — no local changes."
