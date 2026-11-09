@@ -27,9 +27,49 @@
 | **Pages CMS** | https://app.pagescms.org/ | Form-based fields with image uploads | Quick text/photo swaps, daily driver |
 | **TinaCMS** | https://ryanstrawbridge-2.github.io/admin/ | Click on any element on the live site, edit inline with side panel | Visual edits where you want to see the result |
 | **Local + Claude** | run `scripts/dev-server.sh` → localhost:4321 | Edit code/JSON/markdown directly, see changes in <2s | Layout/structure changes, anything structural |
-| **`npm run photos`** | terminal | Resizes, strips metadata, files and labels new photos/video | Any time you're adding media — see below |
+| **Live editor** | `npm run studio` → localhost:4321 | Drag to crop, hover for width/section/order, drop files to add | Fastest for photo work — see below |
+| **`npm run photos`** | terminal | Resizes, strips metadata, files and labels new photos/video | Bulk imports from a folder |
 
 All three commit to the same git repo. Use whichever fits the task.
+
+---
+
+## Live editor (the fast way)
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run studio
+```
+
+Opens the site at **http://localhost:4321** with the page itself editable. Nothing
+here exists on the deployed site — it's dev-only.
+
+On any project page:
+
+| Do this | Get this |
+|---------|----------|
+| **Drag a photo** | Moves its crop. The picture reframes under your cursor as you drag — no save-and-look. |
+| **Hover a photo** | Toolbar: `full` / `half` / `third`, a section dropdown, `←` `→` to reorder, `✕` to remove. |
+| **Drop files anywhere on the page** | Resized, metadata stripped, filed, and added to the gallery. Drop below a heading and it lands in that section. |
+
+Every change writes straight into the project's frontmatter and the page reloads
+with the real render, so what you see is what deploys. A one-field edit produces
+a one-line diff — nothing else in the file gets reformatted.
+
+Dropped `.mov` files are converted to `.mp4` automatically (macOS `avconvert`,
+no install needed). Photos go through the same resize as `npm run photos`.
+
+The pill at the bottom of the screen shows status. If its dot is **red**, the
+writer isn't running — quit and start `npm run studio` again.
+
+When you're happy:
+
+```bash
+cd ~/Documents/Projects/portfolio && npm run publish -- "Ball valve writeup"
+```
+
+**Known quirk:** Astro's dev server doesn't notice markdown changed by another
+process, so the studio touches `src/content.config.ts` after each save to force
+the reload. That's why the page refreshes a beat after you let go of a drag.
 
 ---
 

@@ -29,6 +29,7 @@ npm run preview          # serve the built site
 npm run photos           # intake: resize/strip/file new photos + video
 npm run photos:shrink    # re-encode oversized images already in src/assets
 npm run check:tina       # fragment vs tina-lock.json (catches "Unexpected Error")
+npm run studio           # dev server + live editor (drag-to-crop, drop-to-upload)
 ```
 
 - Pre-commit hook runs `npm run build`. Skip with `--no-verify` only when truly necessary.
@@ -54,6 +55,8 @@ npm run check:tina       # fragment vs tina-lock.json (catches "Unexpected Error
 | Auto-sync script | `scripts/auto-sync.sh` |
 | CMS thumbnail previews | `scripts/generate-cms-thumbnails.mjs` |
 | Photo/video intake | `scripts/media-intake.mjs` (`npm run photos`) |
+| Live editor (dev only) | `scripts/studio.sh` (`npm run studio`), `scripts/studio-server.mjs`, `src/components/StudioOverlay.astro` |
+| Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs` |
 | Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
 | Ryan's photo library (gitignored) | `portfolio-photos/` — 262 MB of originals, never write here |
@@ -101,6 +104,26 @@ GitHub SSH push from background processes stalls on large payloads.
     holding JPEG bytes would sail past sharp and then trip Astro's own
     extension-based probe. `encodeKeepingFormat()` exists for that; `--jpeg` is
     intake-only.
+
+14. **Studio must never reach production.** `StudioOverlay.astro` guards on
+    `import.meta.env.DEV`, but a runtime conditional does NOT keep Astro from
+    hoisting and bundling `<script>`/`<style>` — that's static analysis. Both
+    are `is:inline` so they're emitted only where the template puts them.
+    If you touch that component, re-check with:
+    `npm run build && grep -r studio dist/ ; grep -r "gallery/patch" dist/`
+15. **Astro dev does not hot-reload content markdown changed by another
+    process.** The `.astro` watcher fires; the content one doesn't, so the page
+    keeps rendering the old frontmatter and only a restart fixes it. Touching
+    `src/content.config.ts` forces a content re-sync — `nudgeAstro()` in
+    `studio-server.mjs` does that, debounced. Without it every studio edit looks
+    like it silently failed.
+16. **Studio writes frontmatter with `yaml`'s Document API, not gray-matter.**
+    It round-trips byte-identically, so a one-field edit is a one-line diff.
+    A full reserialize would rewrite quoting and key order on a file TinaCMS
+    also writes, and collide with the next CMS commit.
+17. **`/usr/bin/avconvert` handles .mov → .mp4.** Ships with macOS; no ffmpeg or
+    Homebrew needed. `Preset960x540` lands a typical phone clip under the 5 MB
+    that SSH pushes stall on.
 
 ## macOS gotchas
 

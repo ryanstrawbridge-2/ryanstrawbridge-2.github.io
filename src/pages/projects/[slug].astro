@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Lightbox from '../../components/Lightbox.astro';
+import StudioOverlay from '../../components/StudioOverlay.astro';
 import GalleryGrid from '../../components/GalleryGrid.astro';
 import TinaEditBridge from '../../components/TinaEditBridge.astro';
 import {
@@ -137,7 +138,7 @@ const galleryField = (index: number, key: string) => f('gallery', index, key);
 
     {/* One lightbox root wraps body and gallery — the lightbox binds to the
         first root it finds, so they have to share it to navigate as one set. */}
-    <div data-lightbox-root>
+    <div data-lightbox-root data-studio-slug={import.meta.env.DEV ? project.id : undefined}>
       <div class="container-narrow project-body" data-tina-field={f('body')}>
         {
           useInlineBody ? (
@@ -169,6 +170,9 @@ const galleryField = (index: number, key: string) => f('gallery', index, key);
     <TinaEditBridge query={PROJECT_QUERY} variables={tinaVariables} data={tinaData} id={tinaId} />
 
     <Lightbox />
+
+    {/* Dev only. Renders nothing in a production build. */}
+    <StudioOverlay headings={bodyChunks.map((c) => c.id).filter(Boolean)} />
 
     <nav class="project-nav container" aria-label="Project navigation">
       <a href="/projects/" class="all">← All projects</a>

@@ -1,0 +1,432 @@
+---
+/**
+ * Live editor overlay. Renders ONLY in `astro dev`, so nothing here reaches the
+ * deployed site — the production build emits an empty string.
+ *
+ * Pairs with scripts/studio-server.mjs: this is the UI, that is the writer.
+ * Every control changes the page immediately and saves in the background, so
+ * you see the real crop while you drag it instead of after a save-and-look.
+ */
+interface Props {
+  /** Heading ids on this page, for the "move to section" menu. */
+  headings?: string[];
+}
+const { headings = [] } = Astro.props;
+const enabled = import.meta.env.DEV;
+const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
+---
+
+{
+  enabled && (
+    <div
+      id="studio"
+      data-port={studioPort}
+      data-headings={JSON.stringify(headings)}
+      hidden
+    >
+      <div class="studio-bar">
+        <span class="studio-dot" />
+        <strong>Studio</strong>
+        <span class="studio-hint">drag a photo to crop · hover for controls · drop files anywhere</span>
+        <button type="button" class="studio-off" title="Hide until reload">hide</button>
+      </div>
+      <div class="studio-toast" hidden />
+      <div class="studio-drop" hidden><span>Drop to add to this project</span></div>
+    </div>
+  )
+}
+
+{enabled && (
+<style is:global is:inline>
+  #studio[hidden] { display: none; }
+
+  .studio-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 1rem;
+    transform: translateX(-50%);
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    background: rgb(17 17 17 / 0.92);
+    color: white;
+    font-size: 0.8rem;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.5);
+    backdrop-filter: blur(8px);
+  }
+  .studio-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 0 3px rgb(74 222 128 / 0.2);
+  }
+  .studio-bar.is-offline .studio-dot { background: #f87171; box-shadow: 0 0 0 3px rgb(248 113 113 / 0.2); }
+  .studio-hint { color: rgb(255 255 255 / 0.55); }
+  .studio-off {
+    background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
+    border-radius: 999px; padding: 0.15rem 0.55rem; cursor: pointer; font-size: 0.75rem;
+  }
+  .studio-off:hover { background: rgb(255 255 255 / 0.2); }
+
+  .studio-toast {
+    position: fixed; left: 50%; bottom: 3.6rem; transform: translateX(-50%);
+    z-index: 901; padding: 0.45rem 0.8rem; border-radius: 8px;
+    background: rgb(17 17 17 / 0.92); color: white;
+    font: 0.78rem ui-sans-serif, system-ui, sans-serif;
+    box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.5);
+    max-width: min(90vw, 640px);
+  }
+  .studio-toast[hidden] { display: none; }
+  .studio-toast.is-error { background: #b91c1c; }
+
+  .studio-drop {
+    position: fixed; inset: 0; z-index: 899;
+    display: grid; place-items: center;
+    background: rgb(37 99 235 / 0.12);
+    border: 3px dashed rgb(37 99 235 / 0.7);
+    font: 600 1.1rem ui-sans-serif, system-ui, sans-serif;
+    color: #1d4ed8;
+    pointer-events: none;
+  }
+  .studio-drop[hidden] { display: none; }
+
+  /* --- per-figure editing ------------------------------------------------ */
+
+  figure[data-studio-index] { position: relative; }
+
+  figure[data-studio-index]:hover > img,
+  figure[data-studio-index]:hover > video {
+    outline: 2px solid rgb(37 99 235 / 0.9);
+    outline-offset: 2px;
+  }
+
+  figure[data-studio-index][data-studio-kind='image'] > img { cursor: grab; }
+  figure[data-studio-index].is-dragging > img { cursor: grabbing; }
+  /* The lightbox binds click on any img in the root; suppress it mid-drag. */
+  figure[data-studio-index].is-dragging { pointer-events: auto; }
+
+  .studio-tools {
+    position: absolute;
+    top: 0.4rem; left: 0.4rem; right: 0.4rem;
+    z-index: 5;
+    display: flex; flex-wrap: wrap; gap: 0.25rem;
+    opacity: 0; transition: opacity 120ms ease;
+    pointer-events: none;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  figure[data-studio-index]:hover .studio-tools,
+  .studio-tools:focus-within { opacity: 1; pointer-events: auto; }
+
+  .studio-tools button,
+  .studio-tools select {
+    font-size: 0.68rem; line-height: 1;
+    padding: 0.3rem 0.45rem;
+    border: 0; border-radius: 5px;
+    background: rgb(17 17 17 / 0.86); color: white;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .studio-tools button:hover,
+  .studio-tools select:hover { background: rgb(17 17 17 / 0.98); }
+  .studio-tools button[aria-pressed='true'] { background: #2563eb; }
+  .studio-tools .studio-danger:hover { background: #b91c1c; }
+
+  .studio-crosshair {
+    position: absolute; z-index: 4;
+    width: 18px; height: 18px; margin: -9px 0 0 -9px;
+    border: 2px solid white; border-radius: 50%;
+    box-shadow: 0 0 0 2px rgb(0 0 0 / 0.5);
+    pointer-events: none;
+    opacity: 0; transition: opacity 120ms ease;
+  }
+  figure[data-studio-index]:hover .studio-crosshair,
+  figure[data-studio-index].is-dragging .studio-crosshair { opacity: 1; }
+  figure.g-full .studio-crosshair { display: none; }
+</style>
+)}
+
+{enabled && (
+<script is:inline>
+  const root = document.getElementById('studio');
+  if (root) {
+    const PORT = root.dataset.port || '4322';
+    const API = `http://127.0.0.1:${PORT}`;
+    const HEADINGS = JSON.parse(root.dataset.headings || '[]');
+    const slug = document.querySelector('[data-studio-slug]')?.getAttribute('data-studio-slug');
+
+    const bar = root.querySelector('.studio-bar');
+    const toastEl = root.querySelector('.studio-toast');
+    const dropEl = root.querySelector('.studio-drop');
+
+    const size = (n) =>
+      n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
+
+    let toastTimer;
+    const toast = (message, isError = false) => {
+      toastEl.textContent = message;
+      toastEl.classList.toggle('is-error', isError);
+      toastEl.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toastEl.hidden = true; }, isError ? 6000 : 2600);
+    };
+
+    const post = async (path, payload) => {
+      const response = await fetch(API + path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ slug, ...payload }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `save failed (${response.status})`);
+      return data;
+    };
+
+    // Is the writer running? Without it the overlay would look live and do
+    // nothing, which is worse than not appearing at all.
+    fetch(`${API}/health`)
+      .then((r) => r.json())
+      .then(() => { root.hidden = false; })
+      .catch(() => {
+        root.hidden = false;
+        bar.classList.add('is-offline');
+        bar.querySelector('.studio-hint').textContent =
+          'writer not running — restart with: npm run studio';
+      });
+
+    root.querySelector('.studio-off').addEventListener('click', () => { root.hidden = true; });
+
+    // -- focal keyword <-> percentage -------------------------------------
+    const KEYWORD_PCT = {
+      'top-left': [0, 0], top: [50, 0], 'top-right': [100, 0],
+      left: [0, 50], center: [50, 50], right: [100, 50],
+      'bottom-left': [0, 100], bottom: [50, 100], 'bottom-right': [100, 100],
+    };
+    const toPct = (value) => {
+      if (!value) return [50, 50];
+      if (KEYWORD_PCT[value]) return KEYWORD_PCT[value];
+      const m = String(value).match(/(-?[\d.]+)%\s+(-?[\d.]+)%/);
+      return m ? [parseFloat(m[1]), parseFloat(m[2])] : [50, 50];
+    };
+
+    const figures = () => [...document.querySelectorAll('figure[data-studio-index]')];
+
+    const label = (id) =>
+      (document.getElementById(id)?.textContent || id).trim();
+
+    // -- build the per-figure toolbar -------------------------------------
+    for (const figure of figures()) {
+      const index = Number(figure.dataset.studioIndex);
+      const kind = figure.dataset.studioKind;
+      const media = figure.querySelector('img, video');
+      if (!media) continue;
+
+      const tools = document.createElement('div');
+      tools.className = 'studio-tools';
+
+      const widths = ['full', 'half', 'third'];
+      for (const width of widths) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = width;
+        button.setAttribute('aria-pressed', String(figure.dataset.studioWidth === width));
+        button.addEventListener('click', async () => {
+          // Change the page first so the new layout is on screen immediately;
+          // the save and HMR reload only confirm it.
+          for (const w of widths) figure.classList.toggle(`g-${w}`, w === width);
+          figure.dataset.studioWidth = width;
+          for (const sibling of tools.querySelectorAll('button[aria-pressed]')) {
+            sibling.setAttribute('aria-pressed', String(sibling.textContent === width));
+          }
+          try {
+            await post('/gallery/patch', { index, patch: { width } });
+            toast(`width → ${width}`);
+          } catch (error) { toast(error.message, true); }
+        });
+        tools.appendChild(button);
+      }
+
+      if (HEADINGS.length > 0) {
+        const select = document.createElement('select');
+        select.title = 'Which section this sits in';
+        const bottom = new Option('↓ bottom of page', '');
+        select.appendChild(bottom);
+        for (const id of HEADINGS) select.appendChild(new Option(`in: ${label(id)}`, id));
+        select.value = figure.dataset.studioSection || '';
+        select.addEventListener('change', async () => {
+          try {
+            await post('/gallery/patch', {
+              index,
+              patch: { section: select.value ? label(select.value) : null },
+            });
+            toast(select.value ? `moved into ${label(select.value)}` : 'moved to the bottom');
+          } catch (error) { toast(error.message, true); }
+        });
+        tools.appendChild(select);
+      }
+
+      const mover = (text, delta, title) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = text;
+        button.title = title;
+        button.addEventListener('click', async () => {
+          try {
+            await post('/gallery/move', { from: index, to: Math.max(0, index + delta) });
+            toast('reordered');
+          } catch (error) { toast(error.message, true); }
+        });
+        return button;
+      };
+      tools.appendChild(mover('←', -1, 'Move earlier'));
+      tools.appendChild(mover('→', 1, 'Move later'));
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'studio-danger';
+      remove.textContent = '✕';
+      remove.title = 'Remove from the gallery (the file stays on disk)';
+      remove.addEventListener('click', async () => {
+        if (!confirm('Remove this from the gallery? The file stays on disk.')) return;
+        try {
+          await post('/gallery/delete', { index });
+          toast('removed');
+        } catch (error) { toast(error.message, true); }
+      });
+      tools.appendChild(remove);
+
+      figure.appendChild(tools);
+
+      // -- drag to crop ---------------------------------------------------
+      if (kind !== 'image') continue;
+
+      const dot = document.createElement('span');
+      dot.className = 'studio-crosshair';
+      figure.appendChild(dot);
+
+      let [px, py] = toPct(figure.dataset.studioFocal);
+      const placeDot = () => {
+        const box = media.getBoundingClientRect();
+        const frame = figure.getBoundingClientRect();
+        dot.style.left = `${box.left - frame.left + (box.width * px) / 100}px`;
+        dot.style.top = `${box.top - frame.top + (box.height * py) / 100}px`;
+      };
+      placeDot();
+      window.addEventListener('resize', placeDot);
+
+      let dragging = false;
+      let moved = false;
+
+      const apply = (event) => {
+        const box = media.getBoundingClientRect();
+        px = Math.round(Math.min(100, Math.max(0, ((event.clientX - box.left) / box.width) * 100)));
+        py = Math.round(Math.min(100, Math.max(0, ((event.clientY - box.top) / box.height) * 100)));
+        figure.style.setProperty('--focal', `${px}% ${py}%`);
+        placeDot();
+      };
+
+      media.addEventListener('pointerdown', (event) => {
+        if (figure.classList.contains('g-full')) return; // nothing to crop
+        if (event.button !== 0) return;
+        dragging = true;
+        moved = false;
+        figure.classList.add('is-dragging');
+        media.setPointerCapture(event.pointerId);
+        event.preventDefault();
+      });
+
+      media.addEventListener('pointermove', (event) => {
+        if (!dragging) return;
+        moved = true;
+        apply(event);
+      });
+
+      const finish = async (event) => {
+        if (!dragging) return;
+        dragging = false;
+        figure.classList.remove('is-dragging');
+        media.releasePointerCapture?.(event.pointerId);
+        if (!moved) return;
+        const focal = `${px}% ${py}%`;
+        figure.dataset.studioFocal = focal;
+        try {
+          await post('/gallery/patch', { index, patch: { focal } });
+          toast(`crop → ${focal}`);
+        } catch (error) { toast(error.message, true); }
+      };
+      media.addEventListener('pointerup', finish);
+      media.addEventListener('pointercancel', finish);
+
+      // A drag ends in a click, which the lightbox listens for. Swallow it.
+      media.addEventListener('click', (event) => {
+        if (!moved) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        moved = false;
+      }, true);
+    }
+
+    // -- drop files anywhere on the page ----------------------------------
+    let dragDepth = 0;
+    const isFileDrag = (event) => [...(event.dataTransfer?.types || [])].includes('Files');
+
+    window.addEventListener('dragenter', (event) => {
+      if (!isFileDrag(event)) return;
+      dragDepth += 1;
+      dropEl.hidden = false;
+    });
+    window.addEventListener('dragover', (event) => { if (isFileDrag(event)) event.preventDefault(); });
+    window.addEventListener('dragleave', () => {
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) dropEl.hidden = true;
+    });
+
+    window.addEventListener('drop', async (event) => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      dragDepth = 0;
+      dropEl.hidden = true;
+
+      const files = [...event.dataTransfer.files];
+      if (files.length === 0) return;
+
+      // Which section was it dropped into? Nearest heading above the cursor.
+      let section = null;
+      const target = document.elementFromPoint(event.clientX, event.clientY);
+      const heading = target?.closest('.project-body')
+        ? [...document.querySelectorAll('.project-body h2')]
+            .filter((h) => h.getBoundingClientRect().top <= event.clientY)
+            .pop()
+        : null;
+      if (heading) section = heading.textContent.trim();
+
+      let done = 0;
+      for (const file of files) {
+        toast(`uploading ${file.name} (${done + 1}/${files.length})…`);
+        try {
+          const data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result).split(',')[1]);
+            reader.onerror = () => reject(new Error(`could not read ${file.name}`));
+            reader.readAsDataURL(file);
+          });
+          const result = await post('/upload', { filename: file.name, data, section });
+          done += 1;
+          const where = section ? `, in ${section}` : '';
+          toast(
+            result.kind === 'image'
+              ? `${file.name}  ${size(result.before)} → ${size(result.after)}${where}`
+              : `${file.name} → ${result.file}${where}`,
+          );
+        } catch (error) {
+          toast(`${file.name}: ${error.message}`, true);
+          return;
+        }
+      }
+      if (done > 1) toast(`added ${done} files`);
+    });
+  }
+</script>
+)}

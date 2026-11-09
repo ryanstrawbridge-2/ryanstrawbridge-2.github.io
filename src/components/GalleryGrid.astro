@@ -18,6 +18,10 @@ interface Props {
 }
 
 const { items, field, class: className = '' } = Astro.props;
+
+// The live editor (npm run studio) reads these to know which row it's editing.
+// Dev only — they must not reach the deployed HTML.
+const studio = import.meta.env.DEV;
 ---
 
 {
@@ -28,6 +32,13 @@ const { items, field, class: className = '' } = Astro.props;
           class:list={['gallery-figure', `g-${item.width}`]}
           style={`--focal: ${focalCss(item.focal)};`}
           data-tina-field={field?.(item.index, item.video ? 'video' : 'image')}
+          {...studio && {
+            'data-studio-index': String(item.index),
+            'data-studio-width': item.width,
+            'data-studio-focal': item.focal,
+            'data-studio-section': item.sectionId,
+            'data-studio-kind': item.video ? 'video' : 'image',
+          }}
         >
           {item.video ? (
             <video
