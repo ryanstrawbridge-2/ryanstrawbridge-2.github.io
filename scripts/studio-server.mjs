@@ -94,14 +94,22 @@ const readBody = (req) =>
 const astroPath = (slug, filename) => `../../assets/images/projects/${slug}/${filename}`;
 
 /**
- * Astro's dev server does not hot-reload content-collection markdown that was
- * changed by another process — the .astro watcher fires, the content one
- * doesn't, so the page keeps rendering the previous frontmatter. Touching
- * src/content.config.ts does force a content re-sync and a page reload, so
- * that's the nudge.
+ * Forces Astro to re-sync content after a write.
  *
- * Debounced: a crop drag ends in one save, but a burst of uploads shouldn't
- * reload the page once per file.
+ * Normally it doesn't need to: Astro picks up markdown changed by another
+ * process on its own. But when Vite restarts mid-session — which it does the
+ * moment package.json or astro.config.mjs is touched — the content watcher does
+ * not come back, and from then on every save returns ok while the page keeps
+ * rendering the previous frontmatter. That failure is silent and looks exactly
+ * like the editor being broken.
+ *
+ * Touching src/content.config.ts forces the re-sync even in that state, so it
+ * runs after every write rather than trying to detect the bad one. The cost is
+ * a page reload the editor was going to do anyway for uploads, reorders and
+ * section moves; for a crop drag the new framing is already on screen locally,
+ * so the reload only confirms it.
+ *
+ * Debounced, so a burst of uploads reloads once rather than once per file.
  */
 const CONTENT_CONFIG = join(ROOT, 'src/content.config.ts');
 let nudgeTimer;

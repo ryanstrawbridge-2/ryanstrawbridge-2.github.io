@@ -111,12 +111,16 @@ GitHub SSH push from background processes stalls on large payloads.
     are `is:inline` so they're emitted only where the template puts them.
     If you touch that component, re-check with:
     `npm run build && grep -r studio dist/ ; grep -r "gallery/patch" dist/`
-15. **Astro dev does not hot-reload content markdown changed by another
-    process.** The `.astro` watcher fires; the content one doesn't, so the page
-    keeps rendering the old frontmatter and only a restart fixes it. Touching
-    `src/content.config.ts` forces a content re-sync — `nudgeAstro()` in
-    `studio-server.mjs` does that, debounced. Without it every studio edit looks
-    like it silently failed.
+15. **A Vite restart kills content watching for the rest of the session.**
+    Astro normally hot-reloads markdown changed by another process just fine.
+    But touching `package.json` or `astro.config.mjs` restarts Vite, and the
+    content watcher does not come back: writes still succeed, the page keeps
+    rendering the previous frontmatter, and only restarting `npm run studio`
+    fixes it. Measured, not guessed — a write before the restart reloads, the
+    same write after it does not. `nudgeAstro()` in `studio-server.mjs` touches
+    `src/content.config.ts` after each write, which forces the re-sync even in
+    that state. If you edit npm scripts or the Astro config while studio is up,
+    restart it.
 16. **Studio writes frontmatter with `yaml`'s Document API, not gray-matter.**
     It round-trips byte-identically, so a one-field edit is a one-line diff.
     A full reserialize would rewrite quoting and key order on a file TinaCMS

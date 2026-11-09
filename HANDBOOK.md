@@ -67,9 +67,12 @@ When you're happy:
 cd ~/Documents/Projects/portfolio && npm run publish -- "Ball valve writeup"
 ```
 
-**Known quirk:** Astro's dev server doesn't notice markdown changed by another
-process, so the studio touches `src/content.config.ts` after each save to force
-the reload. That's why the page refreshes a beat after you let go of a drag.
+**Why the page refreshes a beat after each change:** the studio forces Astro to
+re-read the file so you're looking at the real render, not a preview of it.
+
+**If edits stop showing up:** quit and run `npm run studio` again. Editing
+`package.json` or `astro.config.mjs` while it's running restarts the dev server
+and breaks its content watching for the rest of the session.
 
 ---
 
