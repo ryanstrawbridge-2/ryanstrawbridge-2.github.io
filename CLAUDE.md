@@ -56,7 +56,7 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | CMS thumbnail previews | `scripts/generate-cms-thumbnails.mjs` |
 | Photo/video intake | `scripts/media-intake.mjs` (`npm run photos`) |
 | Live editor (dev only) | `scripts/studio.sh` (`npm run studio`), `scripts/studio-server.mjs`, `src/components/StudioOverlay.astro` |
-| Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs`, `scripts/lib/homejson.mjs` |
+| Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs`, `scripts/lib/homejson.mjs`, `scripts/lib/orphans.mjs` |
 | Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
 | Ryan's photo library (gitignored) | `portfolio-photos/` — 132 originals, READ-ONLY; studio browses and copies from it, never writes |
@@ -153,6 +153,15 @@ GitHub SSH push from background processes stalls on large payloads.
     ships as raw CSS, so a rule containing `:global(...)` is invalid and the
     browser drops it silently — the overlay just appears not to respond to
     hover. Write plain selectors there.
+
+23. **`scripts/lib/orphans.mjs` deletes files, so its scanner has to be exact.**
+    It parses `src/data/*.json` and project frontmatter with real JSON/YAML
+    parsers, never a regex: a field a regex misses is a photo that's still on
+    the page getting deleted. If it can't parse something it returns null and
+    deletes nothing. The rule is unreferenced AND untracked -> delete;
+    unreferenced AND tracked -> report only, because git still has it and
+    removing it saves nothing in history. Verified against an independent parse:
+    48 referenced files, zero missed.
 
 ## macOS gotchas
 

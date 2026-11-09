@@ -90,6 +90,12 @@ focal point. The rest are replace-only.
 A loose drop that misses a photo does nothing and says so: there's no "add"
 on the home page, only "replace", because the slots are fixed.
 
+**Replacing cleans up after itself.** The photo you pushed out is deleted if
+nothing else uses it and it was never committed — so swapping the same slot
+three times doesn't leave two dead uploads behind. If the old photo *was*
+committed, it's kept and the toast says it's now unused, since deleting it
+wouldn't shrink git history anyway. Same when you remove a gallery row with `✕`.
+
 Everything else — headings, bio, buttons, contact details — is still text in
 `src/data/home.json`. Edit it in VS Code and the page reloads.
 

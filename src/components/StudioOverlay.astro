@@ -323,6 +323,10 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         reader.readAsDataURL(file);
       });
 
+    /** What happened to the file a replacement pushed out. */
+    const displacedNote = (d) =>
+      !d ? '' : d.deleted ? ` · removed ${d.file}` : ` · ${d.file} is now unused`;
+
     const size = (n) =>
       n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
 
@@ -467,12 +471,12 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       remove.type = 'button';
       remove.className = 'studio-danger';
       remove.textContent = '✕';
-      remove.title = 'Remove from the gallery (the file stays on disk)';
+      remove.title = 'Remove from the gallery';
       remove.addEventListener('click', async () => {
-        if (!confirm('Remove this from the gallery? The file stays on disk.')) return;
+        if (!confirm('Remove this from the gallery?\n\nIf nothing else uses the file and it was never committed, it is deleted too.')) return;
         try {
-          await post('/gallery/delete', { index });
-          toast('removed');
+          const result = await post('/gallery/delete', { index });
+          toast(`removed from the gallery${displacedNote(result.displaced)}`);
         } catch (error) { toast(error.message, true); }
       });
       tools.appendChild(remove);
@@ -596,9 +600,9 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           const data = await readAsBase64(file);
           const result = await post('/home/upload', { path, filename: file.name, data });
           toast(
-            result.kind === 'image'
+            (result.kind === 'image'
               ? `${path} → ${file.name}  ${size(result.before)} → ${size(result.after)}`
-              : `${path} → ${result.file}`,
+              : `${path} → ${result.file}`) + displacedNote(result.displaced),
           );
         } catch (error) {
           toast(error.message, true);
@@ -747,7 +751,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
             });
             toast(
               result.home
-                ? `${homeTarget} → ${file.name}`
+                ? `${homeTarget} → ${file.name}${displacedNote(result.displaced)}`
                 : result.reused
                   ? `added ${file.name} (already in the repo — not copied)`
                   : result.kind === 'image'

@@ -37,7 +37,8 @@ import {
   VIDEO_EXT,
   mb,
 } from './lib/media.mjs';
-import { readHome, writeHome, setPath } from './lib/homejson.mjs';
+import { readHome, writeHome, setPath, getPath } from './lib/homejson.mjs';
+import { cleanupDisplaced } from './lib/orphans.mjs';
 import {
   readProject,
   writeProject,
@@ -356,22 +357,22 @@ const pickFromLibrary = async ({ slug, source = 'library', folder, file, section
   // Targeting a home-page slot: set that one field instead of adding a row.
   if (homePath) {
     if (source === 'videos') {
-      await withHome((home) => setPath(home, homePath, homeVideoRef(file)));
-      return { kind: 'video', file, reused: true, home: true };
+      const swap = await replaceHomeSlot(homePath, homeVideoRef(file));
+      return { kind: 'video', file, reused: true, home: true, ...swap };
     }
     if (source !== 'library') {
       // Already committed — point at it where it sits.
       const ref = `/src/assets/images/${[folder, file].filter(Boolean).join('/')}`;
-      await withHome((home) => setPath(home, homePath, ref));
-      return { kind: 'image', file, reused: true, home: true };
+      const swap = await replaceHomeSlot(homePath, ref);
+      return { kind: 'image', file, reused: true, home: true, ...swap };
     }
     await mkdir(HOME_IMAGES, { recursive: true });
     const input = await readFile(src);
     const encoded = await encode(input, ext);
     const outName = await uniqueName(HOME_IMAGES, stem, encoded.ext);
     await writeFile(join(HOME_IMAGES, outName), encoded.data);
-    await withHome((home) => setPath(home, homePath, homeRef(outName)));
-    return { kind: 'image', file: outName, before: input.length, after: encoded.data.length, home: true };
+    const swap = await replaceHomeSlot(homePath, homeRef(outName));
+    return { kind: 'image', file: outName, before: input.length, after: encoded.data.length, home: true, ...swap };
   }
 
   // Already committed — just reference it. Copying would duplicate the bytes
@@ -451,6 +452,21 @@ const withHome = async (mutate) => {
 const patchHome = async ({ path, value }) =>
   withHome((data) => setPath(data, path, value));
 
+/**
+ * Swap one home slot and tidy up whatever it was pointing at.
+ *
+ * Replacing the same slot twice used to strand the first upload in
+ * src/assets/ forever — the build's pruner only cleans dist. cleanupDisplaced
+ * deletes it only when nothing else references it AND git has no copy, so a
+ * file that was committed deliberately is reported rather than removed.
+ */
+const replaceHomeSlot = async (path, value) => {
+  const before = getPath(await readHome(HOME_JSON), path);
+  await withHome((home) => setPath(home, path, value));
+  const displaced = before === value ? null : await cleanupDisplaced(ROOT, before);
+  return displaced ? { displaced } : {};
+};
+
 /** Replace the photo in one home slot with an uploaded file. */
 const uploadHome = async ({ path, filename, data }) => {
   const ext = extname(filename || '').toLowerCase();
@@ -470,8 +486,8 @@ const uploadHome = async ({ path, filename, data }) => {
     } else {
       await writeFile(target, input);
     }
-    await withHome((home) => setPath(home, path, homeVideoRef(outName)));
-    return { kind: 'video', file: `public/videos/${outName}` };
+    const swap = await replaceHomeSlot(path, homeVideoRef(outName));
+    return { kind: 'video', file: `public/videos/${outName}`, ...swap };
   }
 
   if (!IMAGE_EXT.has(ext)) throw new Error(`${ext || 'that file'} isn't an image or a video`);
@@ -480,15 +496,24 @@ const uploadHome = async ({ path, filename, data }) => {
   const encoded = await encode(input, ext);
   const outName = await uniqueName(HOME_IMAGES, stem, encoded.ext);
   await writeFile(join(HOME_IMAGES, outName), encoded.data);
-  await withHome((home) => setPath(home, path, homeRef(outName)));
-  return { kind: 'image', file: outName, before: input.length, after: encoded.data.length };
+  const swap = await replaceHomeSlot(path, homeRef(outName));
+  return { kind: 'image', file: outName, before: input.length, after: encoded.data.length, ...swap };
 };
 
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
     withProject(slug, (file) => patchGalleryItem(file.doc, index, patch)),
-  '/gallery/delete': ({ slug, index }) =>
-    withProject(slug, (file) => removeGalleryItem(file.doc, index)),
+  '/gallery/delete': async ({ slug, index }) => {
+    // Grab what the row pointed at before it's gone, then tidy up after.
+    let before = null;
+    await withProject(slug, (file) => {
+      const item = file.doc.get('gallery')?.get(index);
+      before = String(item?.get?.('image') ?? item?.get?.('video') ?? '') || null;
+      removeGalleryItem(file.doc, index);
+    });
+    const displaced = await cleanupDisplaced(ROOT, before);
+    return displaced ? { displaced } : {};
+  },
   '/gallery/move': ({ slug, from, to }) =>
     withProject(slug, (file) => moveGalleryItem(file.doc, from, to)),
   '/project/patch': ({ slug, patch }) => withProject(slug, (file) => patchTopLevel(file.doc, patch)),
