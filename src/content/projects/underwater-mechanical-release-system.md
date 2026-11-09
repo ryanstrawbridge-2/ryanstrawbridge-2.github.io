@@ -13,9 +13,10 @@ gallery:
     caption: Size study for motor
   - image: ../../assets/images/11/9/ITD_assembly1.jpeg
     caption: Prototype
-  - image: ../../assets/images/release-system-sketches.png
-    alt: Initial concepts
-    caption: Pelican Hook design concept
+  - image: ../../assets/images/projects/underwater-mechanical-release-system/underwater-mechanical-release-system-itd-cross-section.png
+    alt: itd cross section
+  - image: ../../assets/images/projects/underwater-mechanical-release-system/underwater-mechanical-release-system-itd-housingdrawing.png
+    alt: itd housingdrawing
 tools:
   - Mechanical design
 order: 4

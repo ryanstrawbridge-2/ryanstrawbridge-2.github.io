@@ -36,8 +36,8 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
 
       <div class="studio-library" hidden>
         <header>
-          <strong>Your photo library</strong>
-          <span class="studio-lib-path">portfolio-photos/</span>
+          <strong>Photos &amp; video</strong>
+          <span class="studio-lib-path">portfolio-photos/ + what is already on the site</span>
           <label>into <select class="studio-lib-section"></select></label>
           <label>as <select class="studio-lib-width">
             <option value="">page default</option>
@@ -172,6 +172,12 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   }
   .studio-lib-folders button:hover { background: rgb(255 255 255 / 0.08); color: white; }
   .studio-lib-folders button[aria-current='true'] { background: #2563eb; color: white; }
+  .studio-lib-heading {
+    margin: 0.7rem 0 0.25rem; padding: 0 0.55rem;
+    font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: rgb(255 255 255 / 0.35);
+  }
+  .studio-lib-heading:first-child { margin-top: 0.2rem; }
   .studio-lib-folders .count { opacity: 0.5; }
 
   .studio-lib-grid {
@@ -496,14 +502,21 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     for (const id of HEADINGS) libSection.appendChild(new Option(label(id), id));
 
     let libraryData = null;
-    let activeFolder = null;
+    let activeKey = null;
+    const keyOf = (group) => `${group.source}::${group.folder}`;
+
+    const SOURCE_LABEL = {
+      library: 'On this Mac',
+      site: 'Already on the site',
+      videos: 'Already on the site',
+    };
 
     const renderGrid = () => {
-      const folder = libraryData?.folders.find((f) => f.folder === activeFolder);
+      const group = libraryData?.groups.find((g) => keyOf(g) === activeKey);
       libGrid.replaceChildren();
-      if (!folder) return;
+      if (!group) return;
 
-      for (const file of folder.files) {
+      for (const file of group.files) {
         const tile = document.createElement('button');
         tile.type = 'button';
         tile.className = 'studio-lib-tile';
@@ -512,7 +525,8 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         img.loading = 'lazy';
         img.alt = '';
         img.src =
-          `${API}/library/thumb?folder=${encodeURIComponent(folder.folder)}` +
+          `${API}/library/thumb?source=${encodeURIComponent(group.source)}` +
+          `&folder=${encodeURIComponent(group.folder)}` +
           `&file=${encodeURIComponent(file.name)}`;
         // Videos and anything sharp can't read still get a tile, just no preview.
         img.addEventListener('error', () => { img.style.visibility = 'hidden'; });
@@ -527,7 +541,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         if (file.used) {
           const used = document.createElement('span');
           used.className = 'badge';
-          used.textContent = 'added';
+          used.textContent = group.source === 'library' ? 'added' : 'on this page';
           tile.appendChild(used);
         }
 
@@ -543,15 +557,18 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           const sectionId = libSection.value;
           try {
             const result = await post('/library/pick', {
-              folder: folder.folder,
+              source: group.source,
+              folder: group.folder,
               file: file.name,
               section: sectionId ? label(sectionId) : null,
               width: libWidth.value || null,
             });
             toast(
-              result.kind === 'image'
-                ? `${file.name}  ${size(result.before)} → ${size(result.after)}`
-                : `${file.name} → ${result.file}`,
+              result.reused
+                ? `added ${file.name} (already in the repo — not copied)`
+                : result.kind === 'image'
+                  ? `${file.name}  ${size(result.before)} → ${size(result.after)}`
+                  : `${file.name} → ${result.file}`,
             );
           } catch (error) {
             toast(error.message, true);
@@ -585,27 +602,39 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       }
 
       libFolders.replaceChildren();
-      if (!libraryData.folders?.length) {
+      if (!libraryData.groups?.length) {
         libGrid.replaceChildren(
           Object.assign(document.createElement('p'), {
             className: 'studio-lib-empty',
-            textContent: 'No photos found in portfolio-photos/.',
+            textContent: 'No media found.',
           }),
         );
         return;
       }
 
-      for (const folder of libraryData.folders) {
+      // Group the sidebar by source so "on this Mac" and "already on the site"
+      // read as two different things rather than one long folder list.
+      let lastHeading = null;
+      for (const group of libraryData.groups) {
+        const heading = SOURCE_LABEL[group.source];
+        if (heading !== lastHeading) {
+          const h = document.createElement('p');
+          h.className = 'studio-lib-heading';
+          h.textContent = heading;
+          libFolders.appendChild(h);
+          lastHeading = heading;
+        }
+
         const button = document.createElement('button');
         button.type = 'button';
         const name = document.createElement('span');
-        name.textContent = folder.folder || '(loose files)';
+        name.textContent = group.label;
         const count = document.createElement('span');
         count.className = 'count';
-        count.textContent = String(folder.files.length);
+        count.textContent = String(group.files.length);
         button.append(name, count);
         button.addEventListener('click', () => {
-          activeFolder = folder.folder;
+          activeKey = keyOf(group);
           for (const sibling of libFolders.querySelectorAll('button')) {
             sibling.setAttribute('aria-current', String(sibling === button));
           }

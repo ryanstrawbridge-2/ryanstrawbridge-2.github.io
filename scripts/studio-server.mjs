@@ -198,90 +198,145 @@ const handleUpload = async ({ slug, filename, data, section, width }) => {
 
 const LIBRARY_EXT = new Set([...IMAGE_EXT, ...VIDEO_EXT]);
 
-/** Resolve a folder/file pair inside the library, refusing anything outside. */
-const libraryPath = (folder, file) => {
-  const full = resolve(LIBRARY, folder ?? '', file ?? '');
-  // A folder name like "../../.ssh" would otherwise read anything on disk.
-  if (full !== LIBRARY && !full.startsWith(LIBRARY + sep)) throw new Error('outside the library');
+/**
+ * Two sources feed the picker:
+ *
+ *   library — portfolio-photos/, Ryan's local archive of originals. Read-only;
+ *             picking COPIES through encode() into the project folder.
+ *   site    — media already committed: src/assets/images/ and public/videos/.
+ *             Picking only adds a gallery row pointing at the existing file.
+ *             No copy, no re-encode, no second version of the same photo — this
+ *             is how a CMS upload that landed in src/assets/images/11/9/ gets
+ *             used without being duplicated.
+ */
+const SOURCES = {
+  library: { root: LIBRARY, label: 'portfolio-photos/' },
+  site: { root: join(ROOT, 'src/assets/images'), label: 'src/assets/images/' },
+  videos: { root: VIDEOS, label: 'public/videos/' },
+};
+
+/** Resolve inside one source, refusing anything that escapes it. */
+const sourcePath = (source, folder, file) => {
+  const base = SOURCES[source]?.root;
+  if (!base) throw new Error(`unknown source "${source}"`);
+  const full = resolve(base, folder ?? '', file ?? '');
+  // Without this a folder of "../../.ssh" would read anything on disk.
+  if (full !== base && !full.startsWith(base + sep)) throw new Error('outside the media folder');
   return full;
 };
 
-/** The name this file would get if picked into a project. */
+/** The name a library pick would produce, used to mark what's already in. */
 const pickedName = (slug, file) =>
   `${slug}-${slugify(basename(file, extname(file))) || 'photo'}`;
 
-const listLibrary = async (slug) => {
-  if (!existsSync(LIBRARY)) return { folders: [] };
+/** Path as the project markdown must reference it. */
+const siteRef = (source, folder, file) =>
+  source === 'videos'
+    ? file
+    : `../../assets/images/${[folder, file].filter(Boolean).join('/')}`;
 
-  // Which stems this project already has, so the grid can mark them.
+/** Walk a directory tree, returning [relativeFolder, [filenames]] pairs. */
+const walkFolders = async (root, rel = '') => {
+  const dir = join(root, rel);
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const files = [];
+  let out = [];
+  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    if (entry.name.startsWith('.')) continue;
+    if (entry.isDirectory()) {
+      out = out.concat(await walkFolders(root, rel ? `${rel}/${entry.name}` : entry.name));
+    } else if (LIBRARY_EXT.has(extname(entry.name).toLowerCase())) {
+      files.push(entry.name);
+    }
+  }
+  if (files.length > 0) out.unshift([rel, files]);
+  return out;
+};
+
+const listLibrary = async (slug) => {
+  // Stems this project already holds, for the "added" badge on library picks.
   const projectDir = join(IMAGES, slug ?? '');
-  const existing = new Set(
+  const existingStems = new Set(
     slug && existsSync(projectDir)
       ? (await readdir(projectDir)).map((f) => basename(f, extname(f)))
       : [],
   );
 
-  const entries = await readdir(LIBRARY, { withFileTypes: true });
-  const folders = [];
-  for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
-    const isRoot = !entry.isDirectory();
-    const dir = isRoot ? LIBRARY : join(LIBRARY, entry.name);
-    const folderName = isRoot ? '' : entry.name;
-    if (isRoot) continue; // loose files handled below, in one pseudo-folder
-
-    const files = [];
-    for (const name of (await readdir(dir)).sort()) {
-      if (name.startsWith('.')) continue;
-      const ext = extname(name).toLowerCase();
-      if (!LIBRARY_EXT.has(ext)) continue;
-      let size = 0;
-      try { ({ size } = await stat(join(dir, name))); } catch { continue; }
-      files.push({
-        name,
-        size,
-        kind: VIDEO_EXT.has(ext) ? 'video' : 'image',
-        used: existing.has(pickedName(slug, name)),
-      });
+  // Paths this project's gallery already references, for the site source.
+  const referenced = new Set();
+  if (slug) {
+    try {
+      const file = await readProject(CONTENT, slug);
+      const gallery = file.doc.get('gallery');
+      if (gallery?.items) {
+        for (const item of gallery.items) {
+          const image = item.get?.('image');
+          const video = item.get?.('video');
+          if (image) referenced.add(String(image));
+          if (video) referenced.add(String(video));
+        }
+      }
+    } catch {
+      // A project without frontmatter just gets no badges.
     }
-    if (files.length > 0) folders.push({ folder: folderName, files });
   }
 
-  // Loose files at the top level of the library.
-  const loose = [];
-  for (const entry of entries) {
-    if (entry.isDirectory() || entry.name.startsWith('.')) continue;
-    const ext = extname(entry.name).toLowerCase();
-    if (!LIBRARY_EXT.has(ext)) continue;
-    let size = 0;
-    try { ({ size } = await stat(join(LIBRARY, entry.name))); } catch { continue; }
-    loose.push({
-      name: entry.name,
-      size,
-      kind: VIDEO_EXT.has(ext) ? 'video' : 'image',
-      used: existing.has(pickedName(slug, entry.name)),
-    });
+  const groups = [];
+  for (const [source, { root, label }] of Object.entries(SOURCES)) {
+    if (!existsSync(root)) continue;
+    for (const [folder, names] of await walkFolders(root)) {
+      const files = [];
+      for (const name of names) {
+        let size = 0;
+        try {
+          ({ size } = await stat(join(root, folder, name)));
+        } catch {
+          continue;
+        }
+        const ref = siteRef(source, folder, name);
+        files.push({
+          name,
+          size,
+          kind: VIDEO_EXT.has(extname(name).toLowerCase()) ? 'video' : 'image',
+          used:
+            source === 'library'
+              ? existingStems.has(pickedName(slug, name))
+              : referenced.has(ref),
+        });
+      }
+      if (files.length === 0) continue;
+      groups.push({
+        source,
+        folder,
+        label: folder || (source === 'library' ? '(loose files)' : label),
+        root: label,
+      });
+      groups[groups.length - 1].files = files;
+    }
   }
-  if (loose.length > 0) folders.unshift({ folder: '', files: loose.sort((a, b) => a.name.localeCompare(b.name)) });
-
-  return { folders };
+  return { groups };
 };
 
 /**
- * 240px preview, cached under .astro/ (already gitignored). Keyed by size and
- * mtime so replacing a library file invalidates its thumbnail.
+ * 240px preview, cached under .astro/ (gitignored). Keyed by size and mtime so
+ * replacing a file invalidates its thumbnail.
  */
-const libraryThumb = async (folder, file) => {
-  const source = libraryPath(folder, file);
-  const info = await stat(source);
+const libraryThumb = async (source, folder, file) => {
+  const src = sourcePath(source, folder, file);
+  const info = await stat(src);
   const key = createHash('sha1')
-    .update(`${folder}/${file}/${info.size}/${info.mtimeMs}`)
+    .update(`${source}/${folder}/${file}/${info.size}/${info.mtimeMs}`)
     .digest('hex');
   const cached = join(THUMBS, `${key}.jpg`);
   if (existsSync(cached)) return readFile(cached);
 
   await mkdir(THUMBS, { recursive: true });
-  const data = await sharp(source, { failOn: 'none' })
+  const data = await sharp(src, { failOn: 'none' })
     .rotate()
     .resize({ width: 240, height: 240, fit: 'cover' })
     .jpeg({ quality: 72 })
@@ -290,11 +345,22 @@ const libraryThumb = async (folder, file) => {
   return data;
 };
 
-/** Copy one library file into a project, through the normal pipeline. */
-const pickFromLibrary = async ({ slug, folder, file, section, width }) => {
-  const source = libraryPath(folder, file);
+const pickFromLibrary = async ({ slug, source = 'library', folder, file, section, width }) => {
+  const src = sourcePath(source, folder, file);
   const ext = extname(file).toLowerCase();
   const stem = slugify(basename(file, extname(file))) || 'photo';
+
+  // Already committed — just reference it. Copying would duplicate the bytes
+  // and leave two paths to keep in step.
+  if (source !== 'library') {
+    const alt = stem.replace(/-/g, ' ');
+    const row =
+      source === 'videos'
+        ? { video: file, alt, section, width }
+        : { image: siteRef(source, folder, file), alt, section, width };
+    const index = await withProject(slug, (f) => appendGalleryItem(f.doc, row));
+    return { index, kind: source === 'videos' ? 'video' : 'image', file, reused: true };
+  }
 
   if (VIDEO_EXT.has(ext)) {
     await mkdir(VIDEOS, { recursive: true });
@@ -302,9 +368,9 @@ const pickFromLibrary = async ({ slug, folder, file, section, width }) => {
     const target = join(VIDEOS, outName);
     if (ext === '.mov') {
       if (!hasVideoConverter()) throw new Error('.mov needs /usr/bin/avconvert, which is missing');
-      await convertVideo(source, target);
+      await convertVideo(src, target);
     } else {
-      await writeFile(target, await readFile(source));
+      await writeFile(target, await readFile(src));
     }
     const { size } = await stat(target);
     const index = await withProject(slug, (f) =>
@@ -315,7 +381,7 @@ const pickFromLibrary = async ({ slug, folder, file, section, width }) => {
 
   const outDir = join(IMAGES, slug);
   await mkdir(outDir, { recursive: true });
-  const input = await readFile(source);
+  const input = await readFile(src);
   const encoded = await encode(input, ext);
   const outName = await uniqueName(outDir, `${slug}-${stem}`, encoded.ext);
   await writeFile(join(outDir, outName), encoded.data);
@@ -379,6 +445,7 @@ const server = createServer(async (req, res) => {
   if (url.pathname === '/library/thumb') {
     try {
       const data = await libraryThumb(
+        url.searchParams.get('source') ?? 'library',
         url.searchParams.get('folder') ?? '',
         url.searchParams.get('file') ?? '',
       );

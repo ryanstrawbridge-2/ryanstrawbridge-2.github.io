@@ -70,18 +70,21 @@ cd ~/Documents/Projects/portfolio && npm run publish -- "Ball valve writeup"
 
 ### The library panel
 
-Click **library** in the studio pill. Your `portfolio-photos/` folders appear
-down the left, thumbnails on the right. Pick the section and width at the top,
-then click a photo — it's copied, optimised, filed and added to the gallery.
+Click **library** in the studio pill. Pick the section and width at the top,
+then click a photo. The sidebar has two groups:
 
-**Your library is never written to.** Nothing is moved, renamed or deleted;
-picking takes a copy. Keep organising it however you like — the folder names
-don't have to match anything.
+**On this Mac** — your `portfolio-photos/` folders. Picking makes an optimised
+copy in the project folder. **Your library is never written to**: nothing is
+moved, renamed or deleted. Keep organising it however you like — the folder
+names don't have to match anything. Already-used photos are badged **added**.
 
-Photos already pulled into the open project are marked **added**, so you can
-tell at a glance what you've used.
+**Already on the site** — everything committed to the repo: `src/assets/images/`
+(including anything the CMS uploaded, like the `11/9` folder) and
+`public/videos/`. Picking here only adds a gallery row pointing at the existing
+file — no copy, no second version of the same photo. Photos already on the open
+page are badged **on this page**.
 
-`.mov` files show with a ▶ badge and get converted to `.mp4` on the way in.
+`.mov` files show a ▶ badge and convert to `.mp4` on the way in.
 
 ---
 
