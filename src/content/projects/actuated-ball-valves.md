@@ -18,14 +18,11 @@ order: 3
 * Pressure regulators are too heavy to fly
 * Previous needle valve/stepper motor design had too low Cv and high breaking torque.
 
-## What I did (so far…)
-
-* Selected and specified a high-pressure stainless ball valve, cross-referencing reseller and OEM catalog data and identifying a Cv discrepancy that required direct manufacturer follow-up
+## What I did
 * Derived a required torque from differential pressure, seat friction, and port geometry, and identified the need for additional margin to account for seat creep and breakaway torque not captured by the simplified model
-* Selected and evaluated a high-torque programmable RC servo as the actuator, analyzing power delivery, signal control, and position-feedback limitations
-* Began mechanical design of the servo-to-valve-stem coupling for bench testing, including interface strategy to avoid printing directly onto the servo's output spline
+* Evaluating a high-torque RC servo under pressure to determine signal control, and position-feedback limitations in pressurized state before waterflow testing
+* Designed 3D printed test jig mechanical design for bench testing and water flow
 
 ## Outcome
-
-* Awaiting parts
-* To be used in water flow testing this fall!
+* Successful actuation under 2300 psi delta
+* Commanded postion vs current at range of pressures to be tested and plotted to inform intial parameters

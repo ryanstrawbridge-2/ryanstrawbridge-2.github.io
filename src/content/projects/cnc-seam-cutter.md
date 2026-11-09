@@ -30,9 +30,10 @@ The previous end-prep operation was performed by hand. This operation took an en
 
 * Developed a modular CNC seam-cutting fixture that radially conforms **11 configurations** of a new cable type
 * Enabled qualification testing ahead of new production line
-* Applied GD\&T — position and symmetry controls on dowel-pin datums — for repeatable alignment to the CNC head.
+* Applied AMSE Y14.5 GD\&T — position and symmetry controls on dowel-pin datums — for repeatable alignment to the CNC head.
 
 ## Outcome
 
 * Cut anticipated prep time per assembly from 2 hours to 30 minutes.
+* De-risked critical operation for new magnet production line.
 * Cut-to-cut variation dropped, and operator error eliminated, reducing non-conformances.
