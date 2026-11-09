@@ -34,7 +34,22 @@ if ! node scripts/check-tina-fragment.mjs; then
 fi
 
 if [ -z "$(git status --porcelain)" ]; then
-  echo "Nothing to publish — no local changes."
+  # A clean tree isn't the same as "nothing to publish": commits made outside
+  # this script (VS Code, or a previous run that committed but failed to push)
+  # still need sending. Bailing here left them sitting unpushed and silent.
+  git fetch origin --quiet 2>/dev/null || true
+  AHEAD=$(git rev-list --count '@{upstream}..HEAD' 2>/dev/null || echo 0)
+  if [ "$AHEAD" -gt 0 ]; then
+    echo "No uncommitted changes, but $AHEAD commit(s) haven't been pushed:"
+    git log --oneline '@{upstream}..HEAD'
+    echo
+    echo "→ pushing"
+    git push --progress
+    echo
+    echo "✓ Pushed. GitHub Actions is deploying — live in ~2 minutes."
+    exit 0
+  fi
+  echo "Nothing to publish — no local changes, nothing unpushed."
   exit 0
 fi
 
