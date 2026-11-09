@@ -9,7 +9,7 @@ heroAspect: standard
 gallery:
   - image: /src/assets/images../../assets/images/sizecompITD.png
     caption: Size study for motor
-  - image: /src/assets/images../../assets/images/vessel-body.jpg
+  - image: /src/assets/images/11/9/ITD_assembly1.jpeg
     caption: Prototype
   - image: /src/assets/images../../assets/images/release-system-sketches.png
     alt: Initial concepts
@@ -39,5 +39,5 @@ order: 4
 
 * Version 1, vessel pressure-tested to 470 psi with no leaks!
 * Successfully released a 20 lbs weight at 60 ft depth after 5 days in the ocean, proving adequate sealing and initial release reliability
-* Achieved 2.25 FS on release arm with 80 lbs weight 
+* Achieved 2.25 FS on release arm with 80 lbs weight
 * Additional testing to be carried out to prove maximum weight release at depth and duration underwater.
