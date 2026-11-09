@@ -5,7 +5,8 @@ date: 2026-06-24T20:30:15.114Z
 summary: 'Designed the mechanical release for a resettable, low-cost underwater retrieval system rated to 300 m, targeting under $400 against $2,000+ commercial systems.'
 hero: /src/assets/images/11/9/ITD_CAD.png
 heroAlt: CAD mockup
-heroAspect: standard
+heroAspect: tall
+galleryLayout: stacked
 gallery:
   - image: /src/assets/images../../assets/images/sizecompITD.png
     caption: Size study for motor
