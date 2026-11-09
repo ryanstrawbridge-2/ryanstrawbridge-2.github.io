@@ -19,12 +19,12 @@
     "show": true,
     "items": [
       {
-        "image": "/src/assets/images/home/weld-in-action.jpeg",
+        "image": "/src/assets/images/home/itd-testphot-3.jpg",
         "alt": "Welding in action on the manufacturing floor",
         "size": "large"
       },
       {
-        "image": "/src/assets/images/home/bandsaw.jpeg",
+        "image": "/src/assets/images/home/weldinaction.jpg",
         "alt": "Working at the bandsaw",
         "size": "regular"
       },
@@ -39,7 +39,7 @@
         "size": "video"
       },
       {
-        "image": "/src/assets/images/home/welding.jpeg",
+        "image": "/src/assets/images/home/cfs-bolt-cut-edited-2.jpg",
         "alt": "Welding work at Commonwealth Fusion Systems",
         "size": "regular"
       },
