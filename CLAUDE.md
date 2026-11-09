@@ -163,6 +163,16 @@ GitHub SSH push from background processes stalls on large payloads.
     removing it saves nothing in history. Verified against an independent parse:
     48 referenced files, zero missed.
 
+24. **Alt field names differ per home section.** `hero.headshot` pairs with
+    `hero.headshotAlt`, `aboutSection.photo` with `aboutSection.photoAlt`, while
+    showcase and interest items use a sibling `alt`; experience logos have none
+    (index.astro uses `item.org`). `homeAltPath()` tries both shapes and keeps
+    whichever exists rather than hardcoding the table.
+25. **A studio save reloads the page, so UI opened in the same tick dies.**
+    The alt prompt after a replace has to be parked in sessionStorage and
+    reopened on the next load — opening it inline looked like it worked and then
+    vanished. Anything else that needs to outlive a save needs the same trick.
+
 ## macOS gotchas
 
 - `/usr/bin/timeout` doesn't exist. Use the `timeout_cmd` perl wrapper in `scripts/auto-sync.sh`.

@@ -283,6 +283,30 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-tools button[aria-pressed='true'] { background: #2563eb; }
   .studio-tools .studio-danger:hover { background: #b91c1c; }
 
+  .studio-alt-edit {
+    position: absolute;
+    left: 0.4rem; right: 0.4rem; bottom: 0.4rem;
+    z-index: 6;
+    display: flex; gap: 0.3rem;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  .studio-alt-edit input {
+    flex: 1; min-width: 0;
+    font: inherit; font-size: 0.72rem;
+    padding: 0.35rem 0.45rem;
+    border: 1px solid rgb(255 255 255 / 0.2);
+    border-radius: 5px;
+    background: rgb(17 17 17 / 0.95);
+    color: white;
+  }
+  .studio-alt-edit input:focus { outline: 2px solid #2563eb; outline-offset: 0; }
+  .studio-alt-edit button {
+    font: inherit; font-size: 0.7rem;
+    padding: 0.35rem 0.55rem;
+    border: 0; border-radius: 5px;
+    background: #2563eb; color: white; cursor: pointer;
+  }
+
   .studio-crosshair {
     position: absolute; z-index: 4;
     width: 18px; height: 18px; margin: -9px 0 0 -9px;
@@ -377,6 +401,69 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       return m ? [parseFloat(m[1]), parseFloat(m[2])] : [50, 50];
     };
 
+    /**
+     * A replace triggers a save, which reloads the page so you see the real
+     * render — and that reload wipes any alt editor opened in the same tick.
+     * Park the request across the reload instead. sessionStorage is per-tab and
+     * dev-only; if it's unavailable the prompt is simply skipped rather than
+     * the whole replace failing.
+     */
+    const PENDING_ALT = 'studio:pending-alt';
+    const parkAltPrompt = (payload) => {
+      try { sessionStorage.setItem(PENDING_ALT, JSON.stringify(payload)); } catch {}
+    };
+    const takeAltPrompt = () => {
+      try {
+        const raw = sessionStorage.getItem(PENDING_ALT);
+        sessionStorage.removeItem(PENDING_ALT);
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    };
+
+    /**
+     * Inline description editor. Replacing a photo leaves the old alt behind,
+     * which is invisible on screen — it only shows up to screen readers and
+     * image search — so the editor has to put it in front of you.
+     *
+     * `save` gets the new text; `current` seeds the box.
+     */
+    const editAlt = (host, current, save) => {
+      host.querySelector('.studio-alt-edit')?.remove();
+      const box = document.createElement('form');
+      box.className = 'studio-alt-edit';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = current ?? '';
+      input.placeholder = 'Describe this photo…';
+      input.setAttribute('aria-label', 'Image description');
+      const ok = document.createElement('button');
+      ok.type = 'submit';
+      ok.textContent = 'save';
+      box.append(input, ok);
+      host.appendChild(box);
+      input.focus();
+      input.select();
+
+      const close = () => box.remove();
+      box.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const value = input.value.trim();
+        close();
+        try {
+          await save(value);
+          toast(value ? `description → "${value}"` : 'description cleared');
+        } catch (error) { toast(error.message, true); }
+      });
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { event.preventDefault(); close(); }
+      });
+      // Pointer events on the photo would otherwise start a crop drag.
+      for (const type of ['pointerdown', 'click']) {
+        box.addEventListener(type, (event) => event.stopPropagation());
+      }
+      return input;
+    };
+
     const figures = () => [...document.querySelectorAll('figure[data-studio-index]')];
 
     // -- home page: fixed slots, not a list -------------------------------
@@ -450,6 +537,18 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         });
         tools.appendChild(select);
       }
+
+      const altBtn = document.createElement('button');
+      altBtn.type = 'button';
+      altBtn.textContent = 'alt';
+      altBtn.title = 'Edit the description screen readers announce';
+      altBtn.addEventListener('click', () => {
+        editAlt(figure, figure.dataset.studioAlt ?? '', async (value) => {
+          await post('/gallery/patch', { index, patch: { alt: value } });
+          figure.dataset.studioAlt = value;
+        });
+      });
+      tools.appendChild(altBtn);
 
       const mover = (text, delta, title) => {
         const button = document.createElement('button');
@@ -573,6 +672,26 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       });
       tools.appendChild(replace);
 
+      // Experience logos have no alt field — index.astro uses the org name as
+      // the description — so offering the button there would only ever error.
+      const hasAlt = !path.endsWith('.logo');
+
+      const altBtn = document.createElement('button');
+      altBtn.type = 'button';
+      altBtn.textContent = 'alt';
+      altBtn.title = 'Edit the description screen readers announce';
+      const openAlt = async (seed) => {
+        let current = seed;
+        if (current === undefined) {
+          try {
+            current = (await post('/home/alt', { imagePath: path })).value;
+          } catch (error) { toast(error.message, true); return; }
+        }
+        editAlt(el, current, (value) => post('/home/alt', { imagePath: path, value }));
+      };
+      altBtn.addEventListener('click', () => openAlt());
+      if (hasAlt) tools.appendChild(altBtn);
+
       const name = document.createElement('span');
       name.className = 'studio-slot-path';
       name.textContent = path.replace(/Section|\.items/g, '');
@@ -604,6 +723,9 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
               ? `${path} → ${file.name}  ${size(result.before)} → ${size(result.after)}`
               : `${path} → ${result.file}`) + displacedNote(result.displaced),
           );
+          // The description still describes the photo that just left. The
+          // reload is about to land, so hand the prompt to the next page load.
+          if (result.altPath) parkAltPrompt({ path, staleAlt: result.staleAlt });
         } catch (error) {
           toast(error.message, true);
         }
@@ -666,6 +788,21 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       };
       media.addEventListener('pointerup', finishHome);
       media.addEventListener('pointercancel', finishHome);
+    }
+
+    // A replace on the previous page load asked for a new description.
+    if (MODE === 'home') {
+      const pending = takeAltPrompt();
+      if (pending) {
+        const slot = homeSlots().find((x) => x.path === pending.path);
+        if (slot?.el) {
+          slot.el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          toast('Photo replaced — update the description');
+          editAlt(slot.el, pending.staleAlt, (value) =>
+            post('/home/alt', { imagePath: pending.path, value }),
+          );
+        }
+      }
     }
 
     // -- library panel ----------------------------------------------------
@@ -758,7 +895,10 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
                     ? `${file.name}  ${size(result.before)} → ${size(result.after)}`
                     : `${file.name} → ${result.file}`,
             );
-            if (MODE === 'home') libPanel.hidden = true;
+            if (MODE === 'home') {
+              libPanel.hidden = true;
+              if (result.altPath) parkAltPrompt({ path: homeTarget, staleAlt: result.staleAlt });
+            }
           } catch (error) {
             toast(error.message, true);
             tile.disabled = false;

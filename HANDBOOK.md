@@ -90,6 +90,16 @@ focal point. The rest are replace-only.
 A loose drop that misses a photo does nothing and says so: there's no "add"
 on the home page, only "replace", because the slots are fixed.
 
+**Replacing asks for a new description.** The alt text belonged to the photo you
+just pushed out, and a stale one is invisible — it only shows up to screen
+readers and image search. After a replace the page reloads and a description box
+opens on that photo, pre-filled with the old text. Type over it and hit save, or
+press Esc to leave it. There's also an `alt` button on every photo's hover
+toolbar, on project pages too, for fixing one any time.
+
+Experience logos have no `alt` button: the template uses the company name as the
+description.
+
 **Replacing cleans up after itself.** The photo you pushed out is deleted if
 nothing else uses it and it was never committed — so swapping the same slot
 three times doesn't leave two dead uploads behind. If the old photo *was*

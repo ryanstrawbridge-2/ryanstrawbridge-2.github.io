@@ -38,6 +38,7 @@ const studio = import.meta.env.DEV;
             'data-studio-focal': item.focal,
             'data-studio-section': item.sectionId,
             'data-studio-kind': item.video ? 'video' : 'image',
+            'data-studio-alt': item.alt ?? '',
           }}
         >
           {item.video ? (

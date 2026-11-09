@@ -461,10 +461,20 @@ const patchHome = async ({ path, value }) =>
  * file that was committed deliberately is reported rather than removed.
  */
 const replaceHomeSlot = async (path, value) => {
-  const before = getPath(await readHome(HOME_JSON), path);
+  const data = await readHome(HOME_JSON);
+  const before = getPath(data, path);
+  // The description belonged to the OLD photo. Hand it back so the editor can
+  // prompt for a new one — a stale alt is invisible on screen and only shows up
+  // to screen readers and image search, so nothing else would ever catch it.
+  const altPath = homeAltPath(data, path);
+  const staleAlt = altPath ? (getPath(data, altPath) ?? '') : null;
+
   await withHome((home) => setPath(home, path, value));
   const displaced = before === value ? null : await cleanupDisplaced(ROOT, before);
-  return displaced ? { displaced } : {};
+  return {
+    ...(displaced ? { displaced } : {}),
+    ...(altPath ? { altPath, staleAlt } : {}),
+  };
 };
 
 /** Replace the photo in one home slot with an uploaded file. */
@@ -500,6 +510,34 @@ const uploadHome = async ({ path, filename, data }) => {
   return { kind: 'image', file: outName, before: input.length, after: encoded.data.length, ...swap };
 };
 
+
+/**
+ * Find the alt field that goes with a home image slot.
+ *
+ * The naming isn't consistent across sections — hero.headshot pairs with
+ * hero.headshotAlt, aboutSection.photo with aboutSection.photoAlt, while
+ * showcase and interest items use a sibling `alt`. Experience logos have none
+ * (the template uses item.org). Rather than hardcode that table twice, try
+ * both shapes and keep whichever actually exists in the data.
+ */
+const homeAltPath = (data, imagePath) => {
+  const suffixed = `${imagePath}Alt`;
+  if (getPath(data, suffixed) !== undefined) return suffixed;
+  const sibling = `${imagePath.split('.').slice(0, -1).join('.')}.alt`;
+  if (getPath(data, sibling) !== undefined) return sibling;
+  return null;
+};
+
+/** Read or write the description for a home slot. */
+const homeAlt = async ({ imagePath, value }) => {
+  const data = await readHome(HOME_JSON);
+  const path = homeAltPath(data, imagePath);
+  if (!path) throw new Error(`${imagePath} has no description field`);
+  if (value === undefined) return { path, value: getPath(data, path) ?? '' };
+  await withHome((home) => setPath(home, path, value));
+  return { path, value };
+};
+
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
     withProject(slug, (file) => patchGalleryItem(file.doc, index, patch)),
@@ -521,6 +559,7 @@ const ROUTES = {
   '/library/pick': pickFromLibrary,
   '/home/patch': patchHome,
   '/home/upload': uploadHome,
+  '/home/alt': homeAlt,
 };
 
 const server = createServer(async (req, res) => {

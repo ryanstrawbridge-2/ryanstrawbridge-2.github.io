@@ -20,12 +20,12 @@
     "items": [
       {
         "image": "/src/assets/images/home/itd-testphot-3.jpg",
-        "alt": "Welding in action on the manufacturing floor",
+        "alt": "Deploying the underwater acoustic release system from a dock in Boston Harbor",
         "size": "large"
       },
       {
         "image": "/src/assets/images/home/weldinaction.jpg",
-        "alt": "Working at the bandsaw",
+        "alt": "Welding a steel joint",
         "size": "regular"
       },
       {
@@ -40,7 +40,7 @@
       },
       {
         "image": "/src/assets/images/home/cfs-bolt-cut-edited-2.jpg",
-        "alt": "Welding work at Commonwealth Fusion Systems",
+        "alt": "Cutting steel with an angle grinder on the manufacturing floor",
         "size": "regular"
       },
       {
