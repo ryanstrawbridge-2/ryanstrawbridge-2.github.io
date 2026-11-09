@@ -28,10 +28,30 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         <span class="studio-dot" />
         <strong>Studio</strong>
         <span class="studio-hint">drag a photo to crop · hover for controls · drop files anywhere</span>
+        <button type="button" class="studio-library-open">library</button>
         <button type="button" class="studio-off" title="Hide until reload">hide</button>
       </div>
       <div class="studio-toast" hidden />
       <div class="studio-drop" hidden><span>Drop to add to this project</span></div>
+
+      <div class="studio-library" hidden>
+        <header>
+          <strong>Your photo library</strong>
+          <span class="studio-lib-path">portfolio-photos/</span>
+          <label>into <select class="studio-lib-section"></select></label>
+          <label>as <select class="studio-lib-width">
+            <option value="">page default</option>
+            <option value="full">full</option>
+            <option value="half">half</option>
+            <option value="third">third</option>
+          </select></label>
+          <button type="button" class="studio-lib-close">close</button>
+        </header>
+        <div class="studio-lib-body">
+          <nav class="studio-lib-folders" />
+          <div class="studio-lib-grid" />
+        </div>
+      </div>
     </div>
   )
 }
@@ -65,11 +85,16 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   }
   .studio-bar.is-offline .studio-dot { background: #f87171; box-shadow: 0 0 0 3px rgb(248 113 113 / 0.2); }
   .studio-hint { color: rgb(255 255 255 / 0.55); }
-  .studio-off {
+  .studio-off,
+  .studio-library-open {
     background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
     border-radius: 999px; padding: 0.15rem 0.55rem; cursor: pointer; font-size: 0.75rem;
+    font-family: inherit;
   }
-  .studio-off:hover { background: rgb(255 255 255 / 0.2); }
+  .studio-off:hover,
+  .studio-library-open:hover { background: rgb(255 255 255 / 0.2); }
+  .studio-library-open { background: #2563eb; }
+  .studio-library-open:hover { background: #1d4ed8; }
 
   .studio-toast {
     position: fixed; left: 50%; bottom: 3.6rem; transform: translateX(-50%);
@@ -92,6 +117,95 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     pointer-events: none;
   }
   .studio-drop[hidden] { display: none; }
+
+  /* --- library panel ------------------------------------------------------ */
+
+  .studio-library {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: min(62vh, 560px);
+    z-index: 902;
+    display: flex; flex-direction: column;
+    background: rgb(20 20 20 / 0.97);
+    color: white;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    box-shadow: 0 -18px 50px -12px rgb(0 0 0 / 0.6);
+    backdrop-filter: blur(10px);
+  }
+  .studio-library[hidden] { display: none; }
+
+  .studio-library header {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.12);
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+  }
+  .studio-lib-path { color: rgb(255 255 255 / 0.4); font-family: ui-monospace, monospace; font-size: 0.75rem; }
+  .studio-library header label { display: flex; align-items: center; gap: 0.3rem; color: rgb(255 255 255 / 0.6); }
+  .studio-library select {
+    background: rgb(255 255 255 / 0.1); color: white;
+    border: 1px solid rgb(255 255 255 / 0.15); border-radius: 5px;
+    padding: 0.2rem 0.35rem; font: inherit; font-size: 0.78rem;
+  }
+  .studio-library select option { background: #1a1a1a; }
+  .studio-lib-close {
+    margin-left: auto;
+    background: rgb(255 255 255 / 0.1); color: white; border: 0;
+    border-radius: 999px; padding: 0.25rem 0.7rem; cursor: pointer; font: inherit; font-size: 0.78rem;
+  }
+  .studio-lib-close:hover { background: rgb(255 255 255 / 0.2); }
+
+  .studio-lib-body { display: flex; min-height: 0; flex: 1; }
+
+  .studio-lib-folders {
+    width: 230px; flex: none; overflow-y: auto;
+    border-right: 1px solid rgb(255 255 255 / 0.12);
+    padding: 0.5rem;
+  }
+  .studio-lib-folders button {
+    display: flex; justify-content: space-between; gap: 0.5rem;
+    width: 100%; text-align: left;
+    background: transparent; color: rgb(255 255 255 / 0.75); border: 0;
+    border-radius: 6px; padding: 0.4rem 0.55rem; cursor: pointer;
+    font: inherit; font-size: 0.78rem;
+  }
+  .studio-lib-folders button:hover { background: rgb(255 255 255 / 0.08); color: white; }
+  .studio-lib-folders button[aria-current='true'] { background: #2563eb; color: white; }
+  .studio-lib-folders .count { opacity: 0.5; }
+
+  .studio-lib-grid {
+    flex: 1; overflow-y: auto; padding: 0.75rem;
+    display: grid; gap: 0.6rem;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    align-content: start;
+  }
+  .studio-lib-tile {
+    position: relative; padding: 0; border: 0; cursor: pointer;
+    background: rgb(255 255 255 / 0.06); border-radius: 8px; overflow: hidden;
+    display: flex; flex-direction: column; text-align: left;
+    font: inherit;
+  }
+  .studio-lib-tile:hover { outline: 2px solid #2563eb; outline-offset: 1px; }
+  .studio-lib-tile img {
+    width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
+    background: rgb(255 255 255 / 0.05);
+  }
+  .studio-lib-tile .meta {
+    padding: 0.3rem 0.4rem 0.4rem;
+    font-size: 0.66rem; line-height: 1.25;
+    color: rgb(255 255 255 / 0.65);
+    word-break: break-word;
+  }
+  .studio-lib-tile .meta b { display: block; color: white; font-weight: 500; }
+  .studio-lib-tile .badge {
+    position: absolute; top: 0.3rem; right: 0.3rem;
+    padding: 0.1rem 0.35rem; border-radius: 999px;
+    font-size: 0.6rem; background: #16a34a; color: white;
+  }
+  .studio-lib-tile .badge.kind { background: rgb(0 0 0 / 0.7); left: 0.3rem; right: auto; }
+  .studio-lib-tile[disabled] { opacity: 0.5; cursor: progress; }
+  .studio-lib-empty { color: rgb(255 255 255 / 0.5); font-size: 0.82rem; padding: 1rem; }
 
   /* --- per-figure editing ------------------------------------------------ */
 
@@ -367,6 +481,146 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         moved = false;
       }, true);
     }
+
+    // -- library panel ----------------------------------------------------
+    // Browse portfolio-photos/ without leaving the page. Picking copies the
+    // file through the same pipeline as a drag-and-drop; the library itself is
+    // never written to.
+    const libPanel = root.querySelector('.studio-library');
+    const libFolders = root.querySelector('.studio-lib-folders');
+    const libGrid = root.querySelector('.studio-lib-grid');
+    const libSection = root.querySelector('.studio-lib-section');
+    const libWidth = root.querySelector('.studio-lib-width');
+
+    libSection.appendChild(new Option('↓ bottom of page', ''));
+    for (const id of HEADINGS) libSection.appendChild(new Option(label(id), id));
+
+    let libraryData = null;
+    let activeFolder = null;
+
+    const renderGrid = () => {
+      const folder = libraryData?.folders.find((f) => f.folder === activeFolder);
+      libGrid.replaceChildren();
+      if (!folder) return;
+
+      for (const file of folder.files) {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'studio-lib-tile';
+
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.alt = '';
+        img.src =
+          `${API}/library/thumb?folder=${encodeURIComponent(folder.folder)}` +
+          `&file=${encodeURIComponent(file.name)}`;
+        // Videos and anything sharp can't read still get a tile, just no preview.
+        img.addEventListener('error', () => { img.style.visibility = 'hidden'; });
+        tile.appendChild(img);
+
+        if (file.kind === 'video') {
+          const kind = document.createElement('span');
+          kind.className = 'badge kind';
+          kind.textContent = '▶ video';
+          tile.appendChild(kind);
+        }
+        if (file.used) {
+          const used = document.createElement('span');
+          used.className = 'badge';
+          used.textContent = 'added';
+          tile.appendChild(used);
+        }
+
+        const meta = document.createElement('span');
+        meta.className = 'meta';
+        meta.innerHTML = '<b></b>';
+        meta.querySelector('b').textContent = file.name;
+        meta.append(size(file.size));
+        tile.appendChild(meta);
+
+        tile.addEventListener('click', async () => {
+          tile.disabled = true;
+          const sectionId = libSection.value;
+          try {
+            const result = await post('/library/pick', {
+              folder: folder.folder,
+              file: file.name,
+              section: sectionId ? label(sectionId) : null,
+              width: libWidth.value || null,
+            });
+            toast(
+              result.kind === 'image'
+                ? `${file.name}  ${size(result.before)} → ${size(result.after)}`
+                : `${file.name} → ${result.file}`,
+            );
+          } catch (error) {
+            toast(error.message, true);
+            tile.disabled = false;
+          }
+        });
+
+        libGrid.appendChild(tile);
+      }
+    };
+
+    const openLibrary = async () => {
+      libPanel.hidden = false;
+      libGrid.replaceChildren(
+        Object.assign(document.createElement('p'), {
+          className: 'studio-lib-empty',
+          textContent: 'Reading portfolio-photos/…',
+        }),
+      );
+      try {
+        const response = await fetch(`${API}/library?slug=${encodeURIComponent(slug)}`);
+        libraryData = await response.json();
+      } catch {
+        libGrid.replaceChildren(
+          Object.assign(document.createElement('p'), {
+            className: 'studio-lib-empty',
+            textContent: 'Could not read the library — is npm run studio still running?',
+          }),
+        );
+        return;
+      }
+
+      libFolders.replaceChildren();
+      if (!libraryData.folders?.length) {
+        libGrid.replaceChildren(
+          Object.assign(document.createElement('p'), {
+            className: 'studio-lib-empty',
+            textContent: 'No photos found in portfolio-photos/.',
+          }),
+        );
+        return;
+      }
+
+      for (const folder of libraryData.folders) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        const name = document.createElement('span');
+        name.textContent = folder.folder || '(loose files)';
+        const count = document.createElement('span');
+        count.className = 'count';
+        count.textContent = String(folder.files.length);
+        button.append(name, count);
+        button.addEventListener('click', () => {
+          activeFolder = folder.folder;
+          for (const sibling of libFolders.querySelectorAll('button')) {
+            sibling.setAttribute('aria-current', String(sibling === button));
+          }
+          renderGrid();
+        });
+        libFolders.appendChild(button);
+      }
+      libFolders.querySelector('button').click();
+    };
+
+    root.querySelector('.studio-library-open').addEventListener('click', openLibrary);
+    root.querySelector('.studio-lib-close').addEventListener('click', () => { libPanel.hidden = true; });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !libPanel.hidden) libPanel.hidden = true;
+    });
 
     // -- drop files anywhere on the page ----------------------------------
     let dragDepth = 0;

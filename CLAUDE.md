@@ -59,7 +59,7 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs` |
 | Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
-| Ryan's photo library (gitignored) | `portfolio-photos/` — 262 MB of originals, never write here |
+| Ryan's photo library (gitignored) | `portfolio-photos/` — 132 originals, READ-ONLY; studio browses and copies from it, never writes |
 | Intake queue (gitignored) | `photo-inbox/<slug>/`, processed originals in `photo-inbox/_done/` |
 | SSH key for git | `~/.ssh/id_ed25519_portfolio` |
 | Auto-sync log | `~/Library/Logs/portfolio-sync/sync.log` |
@@ -128,6 +128,17 @@ GitHub SSH push from background processes stalls on large payloads.
 17. **`/usr/bin/avconvert` handles .mov → .mp4.** Ships with macOS; no ffmpeg or
     Homebrew needed. `Preset960x540` lands a typical phone clip under the 5 MB
     that SSH pushes stall on.
+
+18. **The library browser is read-only by contract.** `/library`, `/library/thumb`
+    and `/library/pick` in `studio-server.mjs` only ever read `portfolio-photos/`;
+    picking copies through the same `encode()` as every other path. Keep it that
+    way — that folder is Ryan's organised archive of originals and is not backed
+    up by git. `libraryPath()` resolves and rejects anything escaping the
+    library root, so a crafted `folder=../../.ssh` can't read the filesystem.
+19. **A deployed static site cannot read files off Ryan's Mac.** This comes up:
+    anything a visitor sees must be committed. The library panel exists so the
+    originals can STAY local while only the picked, optimised copies enter the
+    repo — that's the closest thing to "pull from my machine" that works.
 
 ## macOS gotchas
 

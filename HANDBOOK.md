@@ -50,6 +50,7 @@ On any project page:
 | **Drag a photo** | Moves its crop. The picture reframes under your cursor as you drag — no save-and-look. |
 | **Hover a photo** | Toolbar: `full` / `half` / `third`, a section dropdown, `←` `→` to reorder, `✕` to remove. |
 | **Drop files anywhere on the page** | Resized, metadata stripped, filed, and added to the gallery. Drop below a heading and it lands in that section. |
+| **Click `library`** | Browse `portfolio-photos/` as thumbnails and click one to add it. No Finder, no folder matching. |
 
 Every change writes straight into the project's frontmatter and the page reloads
 with the real render, so what you see is what deploys. A one-field edit produces
@@ -66,6 +67,23 @@ When you're happy:
 ```bash
 cd ~/Documents/Projects/portfolio && npm run publish -- "Ball valve writeup"
 ```
+
+### The library panel
+
+Click **library** in the studio pill. Your `portfolio-photos/` folders appear
+down the left, thumbnails on the right. Pick the section and width at the top,
+then click a photo — it's copied, optimised, filed and added to the gallery.
+
+**Your library is never written to.** Nothing is moved, renamed or deleted;
+picking takes a copy. Keep organising it however you like — the folder names
+don't have to match anything.
+
+Photos already pulled into the open project are marked **added**, so you can
+tell at a glance what you've used.
+
+`.mov` files show with a ▶ badge and get converted to `.mp4` on the way in.
+
+---
 
 **Why the page refreshes a beat after each change:** the studio forces Astro to
 re-read the file so you're looking at the real render, not a preview of it.

@@ -19,10 +19,12 @@
  */
 
 import { createServer } from 'node:http';
-import { writeFile, mkdir, unlink, utimes } from 'node:fs/promises';
+import { writeFile, readFile, mkdir, unlink, utimes, readdir, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, extname, basename } from 'node:path';
+import { dirname, join, extname, basename, resolve, sep } from 'node:path';
+import { createHash } from 'node:crypto';
+import sharp from 'sharp';
 import { tmpdir } from 'node:os';
 import {
   encode,
@@ -49,6 +51,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CONTENT = join(ROOT, 'src/content/projects');
 const IMAGES = join(ROOT, 'src/assets/images/projects');
 const VIDEOS = join(ROOT, 'public/videos');
+const LIBRARY = join(ROOT, 'portfolio-photos');
+const THUMBS = join(ROOT, '.astro/studio-thumbs');
 
 const PORT = Number(process.env.STUDIO_PORT || 4322);
 const DEV_ORIGINS = new Set([
@@ -183,6 +187,149 @@ const handleUpload = async ({ slug, filename, data, section, width }) => {
   };
 };
 
+
+// ---------------------------------------------------------------------------
+// Library: browse portfolio-photos/ from the page.
+//
+// Read-only. The library is Ryan's 262 MB folder of originals, organised his
+// way and gitignored; picking from it COPIES through the same encode pipeline
+// as everything else. Nothing in there is renamed, moved or deleted.
+// ---------------------------------------------------------------------------
+
+const LIBRARY_EXT = new Set([...IMAGE_EXT, ...VIDEO_EXT]);
+
+/** Resolve a folder/file pair inside the library, refusing anything outside. */
+const libraryPath = (folder, file) => {
+  const full = resolve(LIBRARY, folder ?? '', file ?? '');
+  // A folder name like "../../.ssh" would otherwise read anything on disk.
+  if (full !== LIBRARY && !full.startsWith(LIBRARY + sep)) throw new Error('outside the library');
+  return full;
+};
+
+/** The name this file would get if picked into a project. */
+const pickedName = (slug, file) =>
+  `${slug}-${slugify(basename(file, extname(file))) || 'photo'}`;
+
+const listLibrary = async (slug) => {
+  if (!existsSync(LIBRARY)) return { folders: [] };
+
+  // Which stems this project already has, so the grid can mark them.
+  const projectDir = join(IMAGES, slug ?? '');
+  const existing = new Set(
+    slug && existsSync(projectDir)
+      ? (await readdir(projectDir)).map((f) => basename(f, extname(f)))
+      : [],
+  );
+
+  const entries = await readdir(LIBRARY, { withFileTypes: true });
+  const folders = [];
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue;
+    const isRoot = !entry.isDirectory();
+    const dir = isRoot ? LIBRARY : join(LIBRARY, entry.name);
+    const folderName = isRoot ? '' : entry.name;
+    if (isRoot) continue; // loose files handled below, in one pseudo-folder
+
+    const files = [];
+    for (const name of (await readdir(dir)).sort()) {
+      if (name.startsWith('.')) continue;
+      const ext = extname(name).toLowerCase();
+      if (!LIBRARY_EXT.has(ext)) continue;
+      let size = 0;
+      try { ({ size } = await stat(join(dir, name))); } catch { continue; }
+      files.push({
+        name,
+        size,
+        kind: VIDEO_EXT.has(ext) ? 'video' : 'image',
+        used: existing.has(pickedName(slug, name)),
+      });
+    }
+    if (files.length > 0) folders.push({ folder: folderName, files });
+  }
+
+  // Loose files at the top level of the library.
+  const loose = [];
+  for (const entry of entries) {
+    if (entry.isDirectory() || entry.name.startsWith('.')) continue;
+    const ext = extname(entry.name).toLowerCase();
+    if (!LIBRARY_EXT.has(ext)) continue;
+    let size = 0;
+    try { ({ size } = await stat(join(LIBRARY, entry.name))); } catch { continue; }
+    loose.push({
+      name: entry.name,
+      size,
+      kind: VIDEO_EXT.has(ext) ? 'video' : 'image',
+      used: existing.has(pickedName(slug, entry.name)),
+    });
+  }
+  if (loose.length > 0) folders.unshift({ folder: '', files: loose.sort((a, b) => a.name.localeCompare(b.name)) });
+
+  return { folders };
+};
+
+/**
+ * 240px preview, cached under .astro/ (already gitignored). Keyed by size and
+ * mtime so replacing a library file invalidates its thumbnail.
+ */
+const libraryThumb = async (folder, file) => {
+  const source = libraryPath(folder, file);
+  const info = await stat(source);
+  const key = createHash('sha1')
+    .update(`${folder}/${file}/${info.size}/${info.mtimeMs}`)
+    .digest('hex');
+  const cached = join(THUMBS, `${key}.jpg`);
+  if (existsSync(cached)) return readFile(cached);
+
+  await mkdir(THUMBS, { recursive: true });
+  const data = await sharp(source, { failOn: 'none' })
+    .rotate()
+    .resize({ width: 240, height: 240, fit: 'cover' })
+    .jpeg({ quality: 72 })
+    .toBuffer();
+  await writeFile(cached, data);
+  return data;
+};
+
+/** Copy one library file into a project, through the normal pipeline. */
+const pickFromLibrary = async ({ slug, folder, file, section, width }) => {
+  const source = libraryPath(folder, file);
+  const ext = extname(file).toLowerCase();
+  const stem = slugify(basename(file, extname(file))) || 'photo';
+
+  if (VIDEO_EXT.has(ext)) {
+    await mkdir(VIDEOS, { recursive: true });
+    const outName = await uniqueName(VIDEOS, `${slug}-${stem}`, '.mp4');
+    const target = join(VIDEOS, outName);
+    if (ext === '.mov') {
+      if (!hasVideoConverter()) throw new Error('.mov needs /usr/bin/avconvert, which is missing');
+      await convertVideo(source, target);
+    } else {
+      await writeFile(target, await readFile(source));
+    }
+    const { size } = await stat(target);
+    const index = await withProject(slug, (f) =>
+      appendGalleryItem(f.doc, { video: outName, alt: stem.replace(/-/g, ' '), section, width }),
+    );
+    return { index, kind: 'video', file: `public/videos/${outName}`, after: size };
+  }
+
+  const outDir = join(IMAGES, slug);
+  await mkdir(outDir, { recursive: true });
+  const input = await readFile(source);
+  const encoded = await encode(input, ext);
+  const outName = await uniqueName(outDir, `${slug}-${stem}`, encoded.ext);
+  await writeFile(join(outDir, outName), encoded.data);
+  const index = await withProject(slug, (f) =>
+    appendGalleryItem(f.doc, {
+      image: astroPath(slug, outName),
+      alt: stem.replace(/-/g, ' '),
+      section,
+      width,
+    }),
+  );
+  return { index, kind: 'image', file: outName, before: input.length, after: encoded.data.length };
+};
+
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
     withProject(slug, (file) => patchGalleryItem(file.doc, index, patch)),
@@ -192,6 +339,7 @@ const ROUTES = {
     withProject(slug, (file) => moveGalleryItem(file.doc, from, to)),
   '/project/patch': ({ slug, patch }) => withProject(slug, (file) => patchTopLevel(file.doc, patch)),
   '/upload': handleUpload,
+  '/library/pick': pickFromLibrary,
 };
 
 const server = createServer(async (req, res) => {
@@ -210,7 +358,42 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
 
   if (url.pathname === '/health') {
-    json(res, 200, { ok: true, projects: await projectSlugs(CONTENT), video: hasVideoConverter() });
+    json(res, 200, {
+      ok: true,
+      projects: await projectSlugs(CONTENT),
+      video: hasVideoConverter(),
+      library: existsSync(LIBRARY),
+    });
+    return;
+  }
+
+  if (url.pathname === '/library') {
+    try {
+      json(res, 200, { ok: true, ...(await listLibrary(url.searchParams.get('slug'))) });
+    } catch (error) {
+      json(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (url.pathname === '/library/thumb') {
+    try {
+      const data = await libraryThumb(
+        url.searchParams.get('folder') ?? '',
+        url.searchParams.get('file') ?? '',
+      );
+      res.writeHead(200, {
+        'content-type': 'image/jpeg',
+        'content-length': data.length,
+        // Keyed by size+mtime on disk, so a long cache is safe.
+        'cache-control': 'max-age=3600',
+      });
+      res.end(data);
+    } catch (error) {
+      // A tile that can't be previewed still has to render, so answer with a
+      // status the grid can show rather than a broken image.
+      json(res, 415, { error: error.message });
+    }
     return;
   }
 
