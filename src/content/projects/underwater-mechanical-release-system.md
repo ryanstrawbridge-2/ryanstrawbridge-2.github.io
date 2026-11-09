@@ -9,14 +9,20 @@ heroFocalPoint: ''
 heroAspect: wide
 galleryLayout: stacked
 gallery:
-  - image: ../../assets/images/sizecompITD.png
-    caption: Size study for motor
   - image: ../../assets/images/11/9/ITD_assembly1.jpeg
     caption: Prototype
   - image: ../../assets/images/projects/underwater-mechanical-release-system/underwater-mechanical-release-system-itd-cross-section.png
     alt: itd cross section
   - image: ../../assets/images/projects/underwater-mechanical-release-system/underwater-mechanical-release-system-itd-housingdrawing.png
     alt: itd housingdrawing
+  - video: ITD_resettinglatch.mp4
+    alt: itd resettinglatch
+  - image: ../../assets/images/11/9/ITD_FEAsheath.png
+    alt: itd feasheath
+  - image: ../../assets/images/11/9/ITD_300mpressure test.jpeg
+    alt: itd 300mpressure test
+  - image: ../../assets/images/11/9/ITD_v1testing.png
+    alt: itd v1testing
 tools:
   - Mechanical design
 order: 4

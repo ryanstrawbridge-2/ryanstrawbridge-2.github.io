@@ -11,6 +11,12 @@ tools:
   - PID Controls
   - Fluid System Design
 order: 3
+gallery:
+  - image: ../../assets/images/11/9/ABV_printedfixture.jpeg
+    alt: abv printedfixture
+  - image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-abv-pumptest.png
+    alt: abv pumptest
+    section: Outcome
 ---
 
 ## Problem
