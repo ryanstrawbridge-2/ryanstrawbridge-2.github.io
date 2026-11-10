@@ -30,7 +30,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       <div class="studio-bar">
         <span class="studio-dot" />
         <strong>Studio</strong>
-        <span class="studio-hint">{mode === 'home' ? 'hover a photo to replace it · drop a file on any photo' : 'drag a photo to crop · hover for controls · drop files anywhere'}</span>
+        <span class="studio-hint">{mode === 'home' ? 'hover a photo to replace it · drop a file on any photo' : 'drag to crop · pinch or ⌥scroll to zoom · drop files anywhere'}</span>
         <button type="button" class="studio-undo" title="Undo the last edit (⌘Z)" disabled>undo</button>
         <button type="button" class="studio-library-open">library</button>
         <button type="button" class="studio-off" title="Hide until reload">hide</button>
@@ -104,6 +104,15 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-undo[disabled] { opacity: 0.35; cursor: default; }
   .studio-library-open { background: #2563eb; }
   .studio-library-open:hover { background: #1d4ed8; }
+
+  .studio-zoom-badge {
+    position: absolute; right: 0.5rem; bottom: 0.5rem; z-index: 3;
+    background: rgb(17 17 17 / 0.82); color: white;
+    font-size: 0.7rem; font-variant-numeric: tabular-nums;
+    padding: 0.1rem 0.4rem; border-radius: 999px; cursor: pointer;
+    pointer-events: auto;
+  }
+  .studio-zoom-badge:hover { background: rgb(37 99 235 / 0.95); }
 
   .studio-toast {
     position: fixed; left: 50%; bottom: 3.6rem; transform: translateX(-50%);
@@ -570,6 +579,37 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         tools.appendChild(button);
       }
 
+      // Frame shape. 'auto' is 4:3 for half/third and natural height for full,
+      // which is how every existing row already renders — so leaving this
+      // alone changes nothing.
+      if (kind === 'image') {
+        const shapes = [
+          ['auto', 'shape: auto'], ['1/1', 'square'], ['4/3', '4:3'], ['3/2', '3:2'],
+          ['16/9', '16:9'], ['3/4', '3:4 tall'], ['2/3', '2:3 tall'], ['9/16', '9:16 tall'],
+        ];
+        const shape = document.createElement('select');
+        shape.title = 'Crop this photo to a fixed shape';
+        for (const [value, text] of shapes) shape.appendChild(new Option(text, value));
+        shape.value = figure.dataset.studioAspect || 'auto';
+        shape.addEventListener('change', async () => {
+          const value = shape.value;
+          // Reflect it immediately; the reload only confirms.
+          figure.classList.toggle('is-framed', value !== 'auto' || !figure.classList.contains('g-full'));
+          if (value === 'auto') {
+            figure.style.removeProperty('--ratio');
+            figure.classList.toggle('is-framed', !figure.classList.contains('g-full'));
+          } else {
+            figure.style.setProperty('--ratio', value.replace('/', ' / '));
+          }
+          figure.dataset.studioAspect = value;
+          try {
+            await post('/gallery/patch', { index, patch: { aspect: value } });
+            toast(`shape → ${value === 'auto' ? 'auto' : value}`);
+          } catch (error) { toast(error.message, true); }
+        });
+        tools.appendChild(shape);
+      }
+
       if (HEADINGS.length > 0) {
         const select = document.createElement('select');
         select.title = 'Which section this sits in';
@@ -662,7 +702,10 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       };
 
       media.addEventListener('pointerdown', (event) => {
-        if (figure.classList.contains('g-full')) return; // nothing to crop
+        // An unframed full-width photo fills its own box, so panning it does
+        // nothing — until zoom pushes it past the edges.
+        if (figure.classList.contains('g-full') && !figure.classList.contains('is-framed')
+            && Number(figure.dataset.studioZoom || 1) <= 1) return;
         if (event.button !== 0) return;
         dragging = true;
         moved = false;
@@ -692,6 +735,58 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       };
       media.addEventListener('pointerup', finish);
       media.addEventListener('pointercancel', finish);
+
+      // -- zoom -----------------------------------------------------------
+      // Pinch on a trackpad arrives as a wheel event with ctrlKey set; that
+      // and alt+scroll are the two gestures claimed. Plain scrolling is left
+      // alone, because hijacking it over every photo would make the page
+      // itself hard to read.
+      let zoom = Number(figure.dataset.studioZoom || 1) || 1;
+      let zoomTimer;
+
+      const badge = document.createElement('span');
+      badge.className = 'studio-zoom-badge';
+      badge.hidden = zoom <= 1;
+      badge.textContent = `${zoom.toFixed(2)}x`;
+      figure.appendChild(badge);
+
+      const showZoom = () => {
+        figure.style.setProperty('--zoom', String(zoom));
+        badge.textContent = `${zoom.toFixed(2)}x`;
+        badge.hidden = zoom <= 1.001;
+        placeDot();
+      };
+
+      const saveZoom = () => {
+        clearTimeout(zoomTimer);
+        zoomTimer = setTimeout(async () => {
+          const value = Number(zoom.toFixed(2));
+          figure.dataset.studioZoom = String(value);
+          try {
+            await post('/gallery/patch', { index, patch: { zoom: value } });
+          } catch (error) { toast(error.message, true); }
+        }, 400);
+      };
+
+      media.addEventListener('wheel', (event) => {
+        if (!event.ctrlKey && !event.altKey) return; // let the page scroll
+        event.preventDefault();
+        // deltaY is pixels on a trackpad and notches on a mouse; the
+        // exponential keeps both feeling proportional rather than one of them
+        // jumping the whole range in a flick.
+        zoom = Math.min(4, Math.max(1, zoom * Math.exp(-event.deltaY / 400)));
+        showZoom();
+        saveZoom();
+      }, { passive: false });
+
+      // Zooming out to 1 is fiddly with a trackpad, so give it a target.
+      badge.addEventListener('click', () => {
+        zoom = 1;
+        showZoom();
+        saveZoom();
+        toast('zoom reset');
+      });
+      badge.title = 'Click to reset zoom';
 
       // A drag ends in a click, which the lightbox listens for. Swallow it.
       media.addEventListener('click', (event) => {

@@ -5,6 +5,7 @@
  */
 
 export type GalleryWidth = 'full' | 'half' | 'third';
+export type GalleryAspect = 'auto' | '1/1' | '4/3' | '3/2' | '16/9' | '3/4' | '2/3' | '9/16';
 
 /** Raw frontmatter shape (see src/content.config.ts). */
 export interface RawGalleryItem {
@@ -16,6 +17,8 @@ export interface RawGalleryItem {
   section?: string;
   width?: 'auto' | GalleryWidth;
   focal?: string;
+  zoom?: number;
+  aspect?: GalleryAspect;
 }
 
 /** Normalized shape the template renders. */
@@ -30,6 +33,10 @@ export interface GalleryItem {
   sectionId: string;
   width: GalleryWidth;
   focal: string;
+  zoom: number;
+  aspect: GalleryAspect;
+  /** The CSS aspect-ratio for this item's frame, or '' for natural height. */
+  ratio: string;
 }
 
 export interface BodyChunk {
@@ -64,6 +71,29 @@ const FOCAL_KEYWORDS: Record<string, string> = {
  */
 export const focalCss = (value: string | undefined): string =>
   (value && (FOCAL_KEYWORDS[value] ?? value)) || 'center center';
+
+/**
+ * Zoom is written by a scroll wheel, so it arrives as whatever the wheel
+ * produced. Clamp it here rather than trusting the file: a bad value would
+ * render as a silently enormous or inverted image.
+ */
+export const clampZoom = (value: number | undefined): number => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 1;
+  return Math.min(4, Math.max(1, n));
+};
+
+/**
+ * The frame's aspect-ratio.
+ *
+ * 'auto' preserves the original behaviour exactly: half and third crop to 4:3
+ * so a row of mismatched photos still lines up, full keeps its natural height
+ * so a tall sketch isn't guillotined. An explicit ratio overrides both.
+ */
+export const frameRatio = (aspect: GalleryAspect, width: GalleryWidth): string => {
+  if (aspect && aspect !== 'auto') return aspect.replace('/', ' / ');
+  return width === 'full' ? '' : '4 / 3';
+};
 
 const LAYOUT_WIDTH: Record<string, GalleryWidth> = {
   stacked: 'full',
@@ -103,6 +133,12 @@ export const normalizeGallery = (
           ? fallback
           : (item.width as GalleryWidth),
       focal: item.focal ?? 'center',
+      zoom: clampZoom(item.zoom),
+      aspect: item.aspect ?? 'auto',
+      ratio: frameRatio(
+        item.aspect ?? 'auto',
+        !item.width || item.width === 'auto' ? fallback : (item.width as GalleryWidth),
+      ),
     }));
 };
 

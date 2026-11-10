@@ -52,10 +52,21 @@ const projects = defineCollection({
             width: z
               .enum(['auto', 'full', 'half', 'third'])
               .default('auto'),
-            // Crop anchor for half/third items, which crop to 4:3.
-            // Same vocabulary as heroFocalPoint. Full-width items are never
-            // cropped, so this has no effect on them.
+            // Crop anchor. Same vocabulary as heroFocalPoint. On an item
+            // that isn't cropped (full width at its natural shape) this only
+            // matters once zoom is above 1.
             focal: z.string().default('center'),
+            // Scale inside the frame, 1 = fit. Studio's scroll-to-zoom writes
+            // this; it anchors on `focal`, so the two are a pair.
+            zoom: z.number().min(1).max(4).default(1),
+            // Frame shape. 'auto' keeps the old behaviour — 4:3 for half and
+            // third, natural height for full — so every existing row renders
+            // exactly as before. Anything else crops to that ratio at any
+            // width. Mixed ratios in one row stop lining up; that's the
+            // trade the control exists to let you make.
+            aspect: z
+              .enum(['auto', '1/1', '4/3', '3/2', '16/9', '3/4', '2/3', '9/16'])
+              .default('auto'),
           }),
         )
         .default([]),
