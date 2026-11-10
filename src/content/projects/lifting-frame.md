@@ -7,17 +7,17 @@ summary: 'Designed and FEA-verified a 3-point lifting frame for safe crane handl
 hero: ../../assets/images/projects/lifting-frame/frame-07.jpeg
 heroAlt: 3-point lifting frame on the manufacturing floor
 gallery:
-  - image: ../../assets/images/Rev1LiftJoint.jpg
+  - image: ../../assets/images/projects/lifting-frame/joint-rev1.jpg
     alt: Rev 1 Joint
     caption: First revision joint with weldments
-  - image: ../../assets/images/Picture1.jpg
+  - image: ../../assets/images/projects/lifting-frame/joint-rev2.jpg
     alt: Rev 2 joint
     caption: 'Second Revision Joint '
-  - image: ../../assets/images/projects/lifting-frame/lifttestblurred.jpg
-  - image: ../../assets/images/beforefloor.jpg
+  - image: ../../assets/images/projects/lifting-frame/lift-test.jpg
+  - image: ../../assets/images/projects/lifting-frame/floor-space-before.jpg
     alt: beforefloor
     caption: Previous Frame
-  - image: ../../assets/images/afterfloor.jpg
+  - image: ../../assets/images/projects/lifting-frame/floor-space-after.jpg
     alt: afterfloor
     caption: New Design Floor Space
 tools:

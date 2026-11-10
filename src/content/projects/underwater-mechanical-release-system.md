@@ -3,25 +3,25 @@ title: Underwater Mechanical Release System
 organization: 'Capstone Project - Underwater Acoustic Release System - It''s That Deep '
 date: 2026-06-24T20:30:15.114Z
 summary: 'Designed the mechanical release for a resettable, low-cost underwater retrieval system rated to 300 m, targeting under $400 against $2,000+ commercial systems.'
-hero: ../../assets/images/ITD_overview.png
+hero: ../../assets/images/projects/underwater-mechanical-release-system/hero-overview.png
 heroAlt: CAD mockup
 heroFocalPoint: ''
 heroAspect: wide
 galleryLayout: stacked
 gallery:
-  - image: ../../assets/images/11/9/ITD_assembly1.jpeg
+  - image: ../../assets/images/projects/underwater-mechanical-release-system/prototype-assembly.jpeg
     caption: Prototype
-  - image: ../../assets/images/projects/underwater-mechanical-release-system/underwater-mechanical-release-system-itd-cross-section.png
+  - image: ../../assets/images/projects/underwater-mechanical-release-system/cross-section.png
     alt: itd cross section
-  - image: ../../assets/images/projects/underwater-mechanical-release-system/underwater-mechanical-release-system-itd-housingdrawing.png
+  - image: ../../assets/images/projects/underwater-mechanical-release-system/housing-drawing.png
     alt: itd housingdrawing
   - video: ITD_resettinglatch.mp4
     alt: itd resettinglatch
-  - image: ../../assets/images/11/9/ITD_FEAsheath.png
+  - image: ../../assets/images/projects/underwater-mechanical-release-system/fea-sheath.png
     alt: itd feasheath
-  - image: ../../assets/images/11/9/ITD_300mpressure test.jpeg
+  - image: ../../assets/images/projects/underwater-mechanical-release-system/pressure-test-300m.jpeg
     alt: itd 300mpressure test
-  - image: ../../assets/images/11/9/ITD_v1testing.png
+  - image: ../../assets/images/projects/underwater-mechanical-release-system/v1-testing.png
     alt: itd v1testing
 tools:
   - Mechanical design

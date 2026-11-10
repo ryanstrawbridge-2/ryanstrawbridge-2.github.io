@@ -3,7 +3,7 @@ title: Actuated Ball Valves
 organization: AerospaceNU - Propulsion Feed System Team
 date: 2026-07-01T20:33:39.914Z
 summary: Designing an actuated ball-valve pressurant regulation system for a liquid rocket engine test stand to replace an oversized pressure-regulator architecture and improve upon a previous needle-valve/stepper-motor design limited by low flow capacity and high breakaway torque.
-hero: ../../assets/images/ballvalveinital.png
+hero: ../../assets/images/projects/actuated-ball-valves/hero-valve-torque-coupling.png
 heroAlt: Ball Valve and torque coupling
 tools:
   - Mechanical design
@@ -12,9 +12,9 @@ tools:
   - Fluid System Design
 order: 3
 gallery:
-  - image: ../../assets/images/11/9/ABV_printedfixture.jpeg
+  - image: ../../assets/images/projects/actuated-ball-valves/printed-fixture.jpeg
     alt: abv printedfixture
-  - image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-abv-pumptest.png
+  - image: ../../assets/images/projects/actuated-ball-valves/pump-test.png
     alt: abv pumptest
     section: Outcome
 ---

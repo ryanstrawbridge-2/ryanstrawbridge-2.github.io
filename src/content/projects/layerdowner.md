@@ -8,7 +8,7 @@ hero: ../../assets/images/projects/layerdowner/layerdowner-04.jpeg
 heroAlt: Layerdowner tool on the magnet winding floor
 galleryLayout: stacked
 gallery:
-  - image: ../../assets/images/blurred-layerdowner.png
+  - image: ../../assets/images/projects/layerdowner/carriage-blurred.png
     caption: ''
 tools:
   - NX
