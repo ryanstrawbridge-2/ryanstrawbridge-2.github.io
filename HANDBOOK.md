@@ -205,6 +205,51 @@ readable without opening every row.
 
 ---
 
+## How your photos are filed
+
+Two separate places, and they are not duplicates of each other:
+
+**`portfolio-photos/`** — your masters. Full-resolution originals, on this Mac
+only, never pushed. One folder per project, named exactly like the project's URL
+slug, so the library panel lines up with the site:
+
+```
+portfolio-photos/
+  actuated-ball-valves/        cnc-seam-cutter/       coaxial-injector/
+  engineering-portraits/       faucet-leak-ring/      hydraulic-bender/
+  layerdowner/                 lifting-frame/         logos/
+  personal/{guitar,interior-design,running}/          qfn-fixture/
+  swirl-injector/              underwater-mechanical-release-system/
+  _wix-archive/                ← the old Wix export, unsorted, left alone
+```
+
+**`src/assets/images/`** — the web copies that actually ship. Four folders, and
+nothing loose at the root:
+
+```
+src/assets/images/
+  about/        your portrait, headshot, interest photos
+  experience/   employer logos
+  home/         home-page showcase tiles
+  projects/<slug>/   everything on a project page
+```
+
+The same photo appearing in both is **by design** — one is the 5712x4284
+original, the other the 2400px copy the site serves. What was cleaned up is the
+same file appearing twice *within* one of them.
+
+Filenames say what the picture is: `joint-rev2.jpg`, `pressure-test-300m.jpeg`,
+`edge-finder-testing.jpeg` — not `Picture1.jpg` or `IMG_6268.jpeg`.
+
+`npm run check:media` tells you if anything has drifted. It runs automatically
+on `npm run publish`, so you will hear about a stray upload before it ships:
+
+```bash
+npm run check:media
+```
+
+---
+
 ## Shrinking images already in the repo
 
 ```bash

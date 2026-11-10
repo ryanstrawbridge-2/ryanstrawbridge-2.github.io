@@ -15,7 +15,7 @@ gallery:
     alt: itd cross section
   - image: ../../assets/images/projects/underwater-mechanical-release-system/housing-drawing.png
     alt: itd housingdrawing
-  - video: ITD_resettinglatch.mp4
+  - video: resetting-latch.mp4
     alt: itd resettinglatch
   - image: ../../assets/images/projects/underwater-mechanical-release-system/fea-sheath.png
     alt: itd feasheath

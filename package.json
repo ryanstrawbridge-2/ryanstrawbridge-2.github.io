@@ -15,6 +15,7 @@
     "photos": "node scripts/media-intake.mjs",
     "photos:shrink": "node scripts/media-intake.mjs --shrink",
     "check:tina": "node scripts/check-tina-fragment.mjs",
+    "check:media": "node scripts/check-media-layout.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "tina": "tinacms",

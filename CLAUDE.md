@@ -29,6 +29,7 @@ npm run preview          # serve the built site
 npm run photos           # intake: resize/strip/file new photos + video
 npm run photos:shrink    # re-encode oversized images already in src/assets
 npm run check:tina       # fragment vs tina-lock.json (catches "Unexpected Error")
+npm run check:media      # src/assets/images layout (no loose/camera-named uploads)
 npm run studio           # dev server + live editor (drag-to-crop, drop-to-upload)
 ```
 
@@ -59,7 +60,8 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs`, `scripts/lib/homejson.mjs`, `scripts/lib/orphans.mjs` |
 | Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
-| Ryan's photo library (gitignored) | `portfolio-photos/` — 132 originals, READ-ONLY; studio browses and copies from it, never writes |
+| Media layout guard | `scripts/check-media-layout.mjs` (`npm run check:media`) |
+| Ryan's photo library (gitignored) | `portfolio-photos/<project-slug>/` — 138 originals, folders named for the site's project slugs; READ-ONLY, studio browses and copies from it, never writes. `_wix-archive/` is the unsorted legacy Wix export. |
 | Intake queue (gitignored) | `photo-inbox/<slug>/`, processed originals in `photo-inbox/_done/` |
 | SSH key for git | `~/.ssh/id_ed25519_portfolio` |
 | Auto-sync log | `~/Library/Logs/portfolio-sync/sync.log` |
@@ -182,6 +184,27 @@ GitHub SSH push from background processes stalls on large payloads.
     deleting and recreating any of them. `publish.sh` refuses to publish while
     a `* [0-9].*` file sits in `src/`, `public/` or `resume/`.
 
+27. **Pages CMS wrote every home-page image to the ROOT of `src/assets/images`.**
+    Six fields in `.pages.yml` (hero headshot, showcase image, experience logo,
+    about photo, interest image, interest extraImages) had
+    `output: /src/assets/images/{name}{extension}`. That is where
+    `IMG_5594.jpeg`, `IMG_5595.jpeg` and `lifttestblurred.png` came from. They
+    now write to `home/`, which is also where studio writes. If a new image
+    field is added, give it a subfolder or `check:media` will reject the upload.
+28. **macOS screenshot filenames contain U+202F, not a space.** "Screenshot
+    2026-09-02 at 5.01.37 PM.png" has a NARROW NO-BREAK SPACE before "PM". A
+    literal `'… 5.01.37 PM.png'` in a script does not match it, and
+    `existsSync` returns false with no error — a move loop skips the file and
+    reports nothing. Glob it (`Screenshot*PM.png`) or match on the prefix.
+29. **A case-only rename needs two steps on APFS.** `Layerdowner` ->
+    `layerdowner` is a no-op for `existsSync` and silently does nothing through
+    a plain rename-into-target loop. Go via a temp name.
+30. **`home/weld-in-action.jpeg` and `home/weldinaction.jpg` are different
+    photographs.** They look like a duplicate pair and are not — mean per-pixel
+    difference 47/255 against 1.17 for the files that genuinely were duplicates.
+    Don't "clean up" one of them. Compare pixels before calling anything a
+    duplicate; filenames and file sizes both lie.
+
 ## macOS gotchas
 
 - `/usr/bin/timeout` doesn't exist. Use the `timeout_cmd` perl wrapper in `scripts/auto-sync.sh`.
@@ -201,6 +224,18 @@ Never add an image to `src/assets/images/` by hand or by CMS upload. Run
 `npm run photos`. CMS uploads land full-size in the directory ROOT with camera
 filenames; that produced a 14 MB PNG commit and 19 loose files before the intake
 existed. Everything new belongs in `src/assets/images/projects/<slug>/`.
+
+**The layout is now enforced.** `src/assets/images/` has exactly four top-level
+folders — `about/`, `experience/`, `home/`, `projects/<slug>/` — and nothing
+loose at the root. `npm run check:media` fails on a root-level file, an
+unexpected top folder, a space in a filename, an iCloud conflict copy, or a name
+that says nothing about the photo (`IMG_1234`, `Picture1`, `Screenshot…`, a bare
+UUID). `publish.sh` runs it with `--strict`; the script itself is warn-only so a
+CMS commit can never fail the GitHub Actions deploy and leave the site silently
+stale — same reasoning as `check:tina`.
+
+Name files for what they show. The names in the repo came from each gallery
+item's own `alt`/`caption`, which is where to look when you need one.
 
 ## Per-project content structure
 

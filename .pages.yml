@@ -87,7 +87,7 @@ content:
             type: image
             options:
               input: src/assets/images
-              output: /src/assets/images/{name}{extension}
+              output: /src/assets/images/home/{name}{extension}
           - { name: headshotAlt, label: Headshot alt text, type: string }
           - name: headshotShape
             label: Headshot shape
@@ -112,7 +112,7 @@ content:
                 type: image
                 options:
                   input: src/assets/images
-                  output: /src/assets/images/{name}{extension}
+                  output: /src/assets/images/home/{name}{extension}
               - { name: video, label: Video path (optional), type: string, description: "e.g. /videos/aero-testing.mp4 — set instead of a photo for a video cell." }
               - { name: alt, label: Alt text, type: string }
               - name: size
@@ -155,7 +155,7 @@ content:
                 type: image
                 options:
                   input: src/assets/images
-                  output: /src/assets/images/{name}{extension}
+                  output: /src/assets/images/home/{name}{extension}
 
       - name: aboutSection
         label: About section
@@ -167,7 +167,7 @@ content:
             type: image
             options:
               input: src/assets/images
-              output: /src/assets/images/{name}{extension}
+              output: /src/assets/images/home/{name}{extension}
           - { name: photoAlt, label: Portrait alt text, type: string }
           - name: photoPosition
             label: Photo position
@@ -218,7 +218,7 @@ content:
                 type: image
                 options:
                   input: src/assets/images
-                  output: /src/assets/images/{name}{extension}
+                  output: /src/assets/images/home/{name}{extension}
               - name: extraImages
                 label: Extra thumbnail images
                 type: image
@@ -226,7 +226,7 @@ content:
                 description: Optional smaller photos shown below the main one.
                 options:
                   input: src/assets/images
-                  output: /src/assets/images/{name}{extension}
+                  output: /src/assets/images/home/{name}{extension}
               - { name: alt, label: Alt text, type: string }
               - { name: body, label: Body, type: text }
 

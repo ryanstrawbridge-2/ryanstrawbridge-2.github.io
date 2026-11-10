@@ -85,6 +85,13 @@ if [ -n "$CONFLICTS" ]; then
   exit 1
 fi
 
+# Keep src/assets/images tidy: no loose uploads at the root, no camera names,
+# no stray date folders. Warn-only in the script itself; --strict here so it
+# stops a push Ryan is watching rather than a GitHub Actions deploy he isn't.
+if ! node scripts/check-media-layout.mjs --strict; then
+  exit 1
+fi
+
 echo "→ pulling anything new from GitHub"
 git pull --rebase --autostash
 
