@@ -13,6 +13,7 @@
     "build:tina": "tinacms build && node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs && node scripts/generate-cms-thumbnails.mjs",
     "fix:paths": "node scripts/fix-cms-paths.mjs",
     "photos": "node scripts/media-intake.mjs",
+    "model": "node scripts/model-intake.mjs",
     "photos:shrink": "node scripts/media-intake.mjs --shrink",
     "check:tina": "node scripts/check-tina-fragment.mjs",
     "check:media": "node scripts/check-media-layout.mjs",
@@ -25,8 +26,15 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",
+    "@google/model-viewer": "^4.4.0",
     "@tinacms/cli": "^2.2.6",
     "astro": "^6.3.1",
     "tinacms": "^3.7.6"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
+    "draco3dgltf": "^1.5.9"
   }
 }

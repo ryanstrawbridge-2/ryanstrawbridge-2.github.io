@@ -183,6 +183,34 @@ editing the markdown), `--max 1800` (smaller cap).
 
 ---
 
+## Putting a 3D model on a project page
+
+```bash
+npm run model ~/Desktop/itd-assembly.glb itd-release
+```
+
+Then add it to the project's gallery like any other item:
+
+```yaml
+  - model: itd-release.glb
+    alt: Release mechanism, exploded
+```
+
+**Getting a .glb out of NX:** export STL or OBJ, open it in Blender (free),
+then File → Export → glTF 2.0. Blender is the reliable step here; the script
+handles the compression after.
+
+The script welds the geometry, shrinks any textures, Draco-compresses the mesh
+and tells you what it saved. If the result is still over 4 MB it refuses to
+write it and tells you to decimate upstream — a bigger file would stall the
+push to GitHub.
+
+Visitors see a still frame and a "View in 3D" button. Nothing downloads until
+they press it: the viewer alone is 283 KB and the model is megabytes on top, so
+spending that on someone who scrolled past would be rude.
+
+---
+
 ## The studio toolbar
 
 `npm run studio`, then the bar at the bottom of the page:

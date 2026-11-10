@@ -27,6 +27,7 @@ npm run build            # plain Astro build (always works)
 npm run build:tina       # Astro + TinaCMS admin (needs TINA_TOKEN in env)
 npm run preview          # serve the built site
 npm run photos           # intake: resize/strip/file new photos + video
+npm run model <f.glb>    # compress a CAD model into public/models/ (4 MB budget)
 npm run photos:shrink    # re-encode oversized images already in src/assets
 npm run check:tina       # fragment vs tina-lock.json (catches "Unexpected Error")
 npm run check:media      # src/assets/images layout (no loose/camera-named uploads)
@@ -57,6 +58,7 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | Auto-sync script | `scripts/auto-sync.sh` |
 | CMS thumbnail previews | `scripts/generate-cms-thumbnails.mjs` |
 | Photo/video intake | `scripts/media-intake.mjs` (`npm run photos`) |
+| 3D model intake | `scripts/model-intake.mjs` (`npm run model`), `src/components/Model3D.astro`, models in `public/models/` |
 | Live editor (dev only) | `scripts/studio.sh` (`npm run studio`), `scripts/studio-server.mjs`, `src/components/StudioOverlay.astro` |
 | Undo journal + trash | `scripts/lib/journal.mjs`, `.photo-trash/` (gitignored) |
 | Career roadmap | `src/pages/roadmap.astro` + `src/data/roadmap.json` |
@@ -240,6 +242,23 @@ GitHub SSH push from background processes stalls on large payloads.
 37. **`setPath` takes `{ create: true }` for optional leaves.** Crop fields
     don't exist until something is cropped. The parent must still exist, so a
     typo'd section name is still refused.
+
+38. **The 3D viewer runtime is 283 KB gzipped — bigger than the whole first
+    page load — so nothing about it may be eager.** `Model3D.astro` ships a
+    4 KB stub; `await import('@google/model-viewer')` inside the click handler
+    is what makes Vite split the 1 MB chunk out. Verified: the ITD page's HTML
+    references only the stub. If that import is ever hoisted to the top of the
+    module, every visitor pays for it. Re-check with:
+    `grep -o 'src="/_astro/[^"]*\.js"' dist/projects/<slug>/index.html`
+39. **`npm run model` takes glTF only, and says so.** STEP/STL/OBJ go through
+    Blender first. Chaining npm converters for those was considered and
+    rejected: more dependencies, worse results. The script also refuses to
+    write a file over 4 MB rather than let it reach a commit, because >5 MB of
+    new binary in one push stalls the SSH transfer.
+40. **gltf-transform brings its own sharp.** Importing sharp at the top of
+    model-intake as well made macOS warn about two libvips in one process.
+    It's imported lazily now, and only when the model actually has textures —
+    most CAD exports have none.
 
 ## macOS gotchas
 

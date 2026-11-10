@@ -40,6 +40,10 @@ const projects = defineCollection({
             // Video filename in public/videos/, e.g. "ball-valve-test.mp4".
             // A leading "/videos/" is tolerated and stripped at render.
             video: z.string().optional(),
+            // Interactive 3D model: a .glb in public/models/, produced by
+            // `npm run model`. Loads only when a visitor asks for it — the
+            // viewer runtime alone is bigger than the whole first page load.
+            model: z.string().optional(),
             // Still frame shown before a video plays.
             poster: image().optional(),
             alt: z.string().optional(),

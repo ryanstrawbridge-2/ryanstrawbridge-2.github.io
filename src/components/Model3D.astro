@@ -1,0 +1,151 @@
+---
+/**
+ * Interactive 3D model in a gallery cell.
+ *
+ * Nothing loads until it's asked for. The viewer runtime is 283 KB gzipped —
+ * more than this site's entire first load — and the model itself is megabytes
+ * on top. Spending that on someone who scrolled past would be worse than not
+ * offering it, so the cell shows a still frame and a button, and the script
+ * and the model are fetched on the click.
+ *
+ * That also means it degrades honestly: with no JavaScript, you get the poster
+ * and the caption, which is what a plain photo would have given you anyway.
+ */
+import { Image } from 'astro:assets';
+
+interface Props {
+  /** Filename in public/models/, e.g. "itd-release.glb". */
+  src: string;
+  alt: string;
+  /** Still frame shown before it loads. */
+  poster?: ImageMetadata;
+  /** Shown on the button so the cost is visible before the click. */
+  sizeLabel?: string;
+}
+
+const { src, alt, poster, sizeLabel } = Astro.props;
+const modelSrc = `/models/${src.replace(/^\/?models\//, '')}`;
+---
+
+<div class="model3d" data-model-src={modelSrc} data-model-alt={alt}>
+  {poster && <Image src={poster} alt={alt} widths={[600, 1200]} sizes="(min-width: 760px) 760px, 100vw" loading="lazy" />}
+  <div class="model3d-overlay">
+    <button type="button" class="model3d-load">
+      View in 3D{sizeLabel ? ` · ${sizeLabel}` : ''}
+    </button>
+    <p class="model3d-note">Drag to rotate · scroll to zoom</p>
+  </div>
+  <noscript>
+    <p class="model3d-note">The 3D viewer needs JavaScript.</p>
+  </noscript>
+</div>
+
+<style>
+  .model3d {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    min-height: 240px;
+    display: grid;
+  }
+  .model3d :global(img),
+  .model3d :global(model-viewer) {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
+    display: block;
+    min-height: 240px;
+  }
+  .model3d :global(model-viewer) {
+    /* The viewer takes the pointer once it exists, so the page can't be
+       scrolled by dragging over it — this keeps one-finger scroll working and
+       asks for two fingers to orbit, which is model-viewer's own convention. */
+    --poster-color: transparent;
+    background: var(--bg-subtle);
+  }
+  .model3d-overlay {
+    grid-area: 1 / 1;
+    place-self: center;
+    display: grid;
+    gap: 0.4rem;
+    justify-items: center;
+    z-index: 1;
+    padding: 1rem;
+    text-align: center;
+  }
+  .model3d.is-loaded .model3d-overlay {
+    display: none;
+  }
+  .model3d-load {
+    background: var(--accent);
+    color: white;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.5rem 1.1rem;
+    font: inherit;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: background var(--transition);
+  }
+  .model3d-load:hover {
+    background: var(--accent-hover);
+  }
+  .model3d-load[disabled] {
+    opacity: 0.7;
+    cursor: default;
+  }
+  .model3d-note {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    background: var(--bg);
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+  }
+</style>
+
+<script>
+  for (const host of document.querySelectorAll<HTMLElement>('.model3d')) {
+    const button = host.querySelector('button.model3d-load') as HTMLButtonElement | null;
+    if (!button) continue;
+
+    button.addEventListener(
+      'click',
+      async () => {
+        button.disabled = true;
+        button.textContent = 'loading…';
+        try {
+          // Dynamic import: the 283 KB runtime is fetched here and nowhere
+          // else, so a page with a model on it costs nothing until this runs.
+          await import('@google/model-viewer');
+
+          const viewer = document.createElement('model-viewer');
+          viewer.setAttribute('src', host.dataset.modelSrc ?? '');
+          viewer.setAttribute('alt', host.dataset.modelAlt ?? '');
+          viewer.setAttribute('camera-controls', '');
+          viewer.setAttribute('touch-action', 'pan-y');
+          viewer.setAttribute('shadow-intensity', '1');
+          viewer.setAttribute('exposure', '1');
+          viewer.setAttribute('ar', '');
+          host.appendChild(viewer);
+
+          viewer.addEventListener('load', () => host.classList.add('is-loaded'), { once: true });
+          viewer.addEventListener(
+            'error',
+            () => {
+              host.classList.remove('is-loaded');
+              button.disabled = false;
+              button.textContent = 'could not load the model';
+            },
+            { once: true },
+          );
+        } catch {
+          button.disabled = false;
+          button.textContent = 'could not load the viewer';
+        }
+      },
+      { once: false },
+    );
+  }
+</script>

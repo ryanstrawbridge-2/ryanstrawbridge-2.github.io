@@ -11,6 +11,7 @@ export type GalleryAspect = 'auto' | '1/1' | '4/3' | '3/2' | '16/9' | '3/4' | '2
 export interface RawGalleryItem {
   image?: ImageMetadata;
   video?: string;
+  model?: string;
   poster?: ImageMetadata;
   alt?: string;
   caption?: string;
@@ -26,6 +27,7 @@ export interface GalleryItem {
   index: number;
   image?: ImageMetadata;
   video?: string;
+  model?: string;
   poster?: ImageMetadata;
   alt?: string;
   caption?: string;
@@ -119,11 +121,12 @@ export const normalizeGallery = (
   const fallback = LAYOUT_WIDTH[galleryLayout] ?? 'half';
   return gallery
     .map((item, index) => ({ item, index }))
-    .filter(({ item }) => Boolean(item.image || item.video))
+    .filter(({ item }) => Boolean(item.image || item.video || item.model))
     .map(({ item, index }) => ({
       index,
       image: item.image,
       video: item.video,
+      model: item.model,
       poster: item.poster,
       alt: item.alt,
       caption: item.caption,
