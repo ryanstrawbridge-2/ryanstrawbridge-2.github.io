@@ -260,6 +260,20 @@ GitHub SSH push from background processes stalls on large payloads.
     It's imported lazily now, and only when the model actually has textures —
     most CAD exports have none.
 
+41. **A CMS schema that doesn't list a field DROPS it on save.** Pages CMS and
+    Tina write back only the fields they know about, so a crop, a zoom or a
+    3D model set in studio would silently vanish the next time that row was
+    saved in the CMS. `.pages.yml` has been brought in step (gallery now
+    lists model/zoom/aspect, site settings list accentSoft/cornerStyle/
+    headingFont).
+    **`tina/config.ts` has NOT** — it is still missing `model`, `zoom` and
+    `aspect` on gallery rows, because adding them means regenerating
+    `tina-lock.json` against TinaCloud (gotcha 2) and that shouldn't be done
+    without someone able to check `/admin/` afterwards. Until then, editing a
+    gallery row in TinaCMS will discard those three fields. Pages CMS and
+    studio are both safe. Whenever a field is added to
+    `src/content.config.ts`, add it to BOTH CMS schemas in the same change.
+
 ## macOS gotchas
 
 - `/usr/bin/timeout` doesn't exist. Use the `timeout_cmd` perl wrapper in `scripts/auto-sync.sh`.

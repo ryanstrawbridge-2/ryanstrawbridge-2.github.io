@@ -183,6 +183,12 @@ editing the markdown), `--max 1800` (smaller cap).
 
 ---
 
+> **One thing to know before using TinaCMS on a gallery row.** Tina's schema
+> doesn't yet list the zoom, shape and 3D-model fields, so saving a gallery row
+> in TinaCMS will drop them. Pages CMS and studio are both fine. Updating Tina
+> needs its lock file regenerated — ask Claude to do it when you can check
+> `/admin/` afterwards.
+
 ## Putting a 3D model on a project page
 
 ```bash

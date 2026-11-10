@@ -387,6 +387,17 @@ content:
           - { name: alt, label: Alt text, type: string, description: "Describes the photo for screen readers. Used as the caption unless you set one." }
           - { name: caption, label: "Caption (optional)", type: string, description: "Shown under the photo. Leave blank to use the alt text." }
           - { name: section, label: "Place under which heading?", type: string, description: "A heading from the body, e.g. Testing. Blank puts it at the bottom. A heading that doesn't exist also falls to the bottom." }
+          # Written by studio. Listed here so editing a gallery row in Pages
+          # CMS doesn't drop fields it doesn't know about — a crop and a 3D
+          # model would both vanish on the next CMS save.
+          - { name: model, label: "3D model instead of a photo", type: string, description: "Filename of a .glb in public/models/, from npm run model. Fill this in INSTEAD of Photo." }
+          - { name: zoom, label: Zoom, type: number, description: "1 is fit. Set by pinching the photo in studio; anchors on the crop point." }
+          - name: aspect
+            label: Shape
+            type: select
+            description: Crops the photo to a fixed shape. auto is 4:3 for half/third and natural height for full.
+            options:
+              values: [auto, "1/1", "4/3", "3/2", "16/9", "3/4", "2/3", "9/16"]
           - name: width
             label: Width
             type: select
