@@ -183,6 +183,51 @@ editing the markdown), `--max 1800` (smaller cap).
 
 ---
 
+## The studio toolbar
+
+`npm run studio`, then the bar at the bottom of the page:
+
+| Button | What it does |
+|--------|--------------|
+| **theme** | Accent colour, corner style, heading font, page width. Previews instantly, saves as you go, applies site-wide. |
+| **text** | Turns every editable string on the page purple. Click one and type. Enter saves a short field, ⌘↵ a long one, Esc cancels. |
+| **phone** | Opens the same page in a real 390px frame beside it, so you can see the phone layout without resizing anything. |
+| **publish** | Runs the publish script and shows its output. Two clicks, on purpose. |
+| **undo** | Undoes the last edit, and says which one. ⌘Z does the same. |
+| **library** | Browse `portfolio-photos/` and what is already on the site. |
+
+### Cropping
+
+Drag any photo to move the crop. **Pinch, or hold ⌥ and scroll, to zoom** —
+plain scrolling still scrolls the page. The number in the corner is the zoom;
+click it to go back to 1.
+
+This works on project galleries *and* on every photo on the home page,
+including the six collage tiles. Each gallery photo also has a **shape** menu —
+square, 16:9, 3:4 and so on. `auto` is the default and behaves exactly as
+before: 4:3 for half and third tiles, natural height for full width.
+
+> A photo cropped to an unusual shape stops lining up with its neighbours in a
+> row. That is the trade; the control exists so you can choose it deliberately.
+
+### Home tiles
+
+Hover a tile for its controls: **⠿** to drag it somewhere else in the grid,
+**◀ ▶** to nudge it, a menu for how much of the collage it fills, **+** to add
+an empty tile beside it and **✕** to remove it. Interests and experience rows
+have the same controls.
+
+A new tile starts empty — drop a photo on it.
+
+### Undo
+
+Every edit writes to disk the moment you let go, so the page you see is the
+real thing. **⌘Z takes any of it back**, including a photo you removed: deleted
+files move to `.photo-trash/` rather than being deleted, and undo puts them
+back. The button names what it will undo, so you can tell it is the right one.
+
+---
+
 ## Where each photo goes on the page
 
 Every gallery row has three placement controls beyond drag-to-reorder:

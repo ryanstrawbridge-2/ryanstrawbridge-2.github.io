@@ -30,6 +30,7 @@ npm run photos           # intake: resize/strip/file new photos + video
 npm run photos:shrink    # re-encode oversized images already in src/assets
 npm run check:tina       # fragment vs tina-lock.json (catches "Unexpected Error")
 npm run check:media      # src/assets/images layout (no loose/camera-named uploads)
+# studio: theme / text / phone preview / publish / undo (⌘Z) — see HANDBOOK.md
 npm run studio           # dev server + live editor (drag-to-crop, drop-to-upload)
 ```
 
@@ -57,6 +58,8 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | CMS thumbnail previews | `scripts/generate-cms-thumbnails.mjs` |
 | Photo/video intake | `scripts/media-intake.mjs` (`npm run photos`) |
 | Live editor (dev only) | `scripts/studio.sh` (`npm run studio`), `scripts/studio-server.mjs`, `src/components/StudioOverlay.astro` |
+| Undo journal + trash | `scripts/lib/journal.mjs`, `.photo-trash/` (gitignored) |
+| Career roadmap | `src/pages/roadmap.astro` + `src/data/roadmap.json` |
 | Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs`, `scripts/lib/homejson.mjs`, `scripts/lib/orphans.mjs` |
 | Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
@@ -204,6 +207,39 @@ GitHub SSH push from background processes stalls on large payloads.
     difference 47/255 against 1.17 for the files that genuinely were duplicates.
     Don't "clean up" one of them. Compare pixels before calling anything a
     duplicate; filenames and file sizes both lie.
+
+31. **The undo journal snapshots every text file, deliberately.** It does not
+    try to work out which file a route touches — it photographs all eight
+    project markdown files plus the three `src/data/*.json` (about 30 KB) and
+    diffs the media tree around the write. Guessing wrong would silently fail
+    to restore something, and an undo that is only usually right is worse than
+    none. A new write endpoint is undoable without registering anything.
+32. **Deletes are moves now.** `cleanupDisplaced` relocates a displaced file to
+    `.photo-trash/<its original path>` instead of unlinking it, because undo
+    can only restore bytes that still exist. If you add a path that removes
+    media, go through `trashFile` or undo will report `missing`.
+33. **A debounced save can be eaten by the HMR reload.** Any write nudges
+    Astro; the reload lands ~250ms later and takes pending timers with it. The
+    zoom gesture hit this — it looked applied, then came back at its old value.
+    `queueSave` flushes with `sendBeacon` on `pagehide`. Anything else
+    debounced must go through it.
+34. **`releasePointerCapture` throws if the pointer is already gone.** It sat
+    outside the try in both drag handlers, so losing capture mid-drag silently
+    discarded the save the drag was for. Both calls are wrapped now.
+35. **A `display` declaration beats the `hidden` attribute.** `.flight-controls
+    { display: flex }` kept the roadmap's flight toggle on screen at phone
+    width even with `hidden` set, because the UA's `[hidden] { display: none }`
+    loses on specificity. Any element that is both `display:`-styled and
+    toggled with `hidden` needs its own `[hidden] { display: none }`.
+36. **Inline text editing reads the SOURCE, never the screen.** `hero.tagline`
+    renders `*bridge*` as italics; writing back `el.textContent` would eat the
+    asterisks. `/home/value` and `/project/value` return the raw string, and
+    the editor only goes contenteditable when source and rendered text match.
+    `body` and `gallery` are excluded — the body field is a whole rendered
+    document, not a value, and needs real source mapping.
+37. **`setPath` takes `{ create: true }` for optional leaves.** Crop fields
+    don't exist until something is cropped. The parent must still exist, so a
+    typo'd section name is still refused.
 
 ## macOS gotchas
 
