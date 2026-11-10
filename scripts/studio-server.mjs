@@ -529,6 +529,44 @@ const homeAltPath = (data, imagePath) => {
   return null;
 };
 
+/**
+ * Find the crop fields that go with a home image slot.
+ *
+ * Same problem as the alt fields: the naming isn't consistent. aboutSection
+ * already had `photoFocalPoint` next to `photo`, while showcase and interest
+ * items are list rows where a sibling `focal` is the natural place. Try the
+ * suffixed form first so the existing aboutSection field keeps being used
+ * rather than being shadowed by a second one that means the same thing.
+ */
+const homeCropPaths = (data, imagePath) => {
+  const stem = imagePath.replace(/\.(image|photo|video)$/, '');
+  const parent = imagePath.split('.').slice(0, -1).join('.');
+  const suffixed = `${stem}FocalPoint`;
+  const focal = getPath(data, suffixed) !== undefined ? suffixed : `${parent}.focal`;
+  const zoomSuffixed = `${stem}Zoom`;
+  const zoom = getPath(data, zoomSuffixed) !== undefined ? zoomSuffixed : `${parent}.zoom`;
+  return { focal, zoom };
+};
+
+/**
+ * Crop one home slot. Both fields are optional in home.json — a tile that has
+ * never been cropped has no keys at all — so these are created on first write.
+ */
+const homeCrop = async ({ imagePath, focal, zoom }) => {
+  const data = await readHome(HOME_JSON);
+  if (getPath(data, imagePath) === undefined) throw new Error(`no such slot: ${imagePath}`);
+  const paths = homeCropPaths(data, imagePath);
+  await withHome((home) => {
+    if (focal !== undefined) setPath(home, paths.focal, focal, { create: true });
+    if (zoom !== undefined) {
+      const n = Math.min(4, Math.max(1, Number(zoom) || 1));
+      // 1 is the default; storing it would put a no-op key in every tile.
+      setPath(home, paths.zoom, n > 1.001 ? Number(n.toFixed(2)) : null, { create: true });
+    }
+  });
+  return { ...paths, focal, zoom };
+};
+
 /** Read or write the description for a home slot. */
 const homeAlt = async ({ imagePath, value }) => {
   const data = await readHome(HOME_JSON);
@@ -560,6 +598,7 @@ const undoLabel = (pathname, payload = {}) => {
     case '/home/patch': return `home ${String(payload.path ?? '').split('.').pop()}`;
     case '/home/upload': return 'home photo';
     case '/home/alt': return 'home description';
+    case '/home/crop': return payload.zoom !== undefined && payload.focal === undefined ? 'home zoom' : 'home crop';
     case '/home/move': return 'reorder tiles';
     case '/home/add': return 'add tile';
     case '/home/remove': return 'remove tile';
@@ -590,6 +629,7 @@ const ROUTES = {
   '/home/patch': patchHome,
   '/home/upload': uploadHome,
   '/home/alt': homeAlt,
+  '/home/crop': homeCrop,
 };
 
 const server = createServer(async (req, res) => {

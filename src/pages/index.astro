@@ -7,6 +7,7 @@ import TinaEditBridge from '../components/TinaEditBridge.astro';
 import home from '../data/home.json';
 import { inlineEmphasis } from '../lib/inline-emphasis';
 import { resolveSiteImage } from '../lib/site-images';
+import { focalCss, clampZoom } from '../lib/gallery';
 import StudioOverlay from '../components/StudioOverlay.astro';
 import {
   HOME_QUERY,
@@ -19,18 +20,10 @@ import {
 const tinaId = queryId(HOME_QUERY, HOME_VARIABLES);
 const tinaData = { home: asTinaDocument('Home', 'home.json', 'src/data', home) };
 
-// Lookup tables for the new layout knobs.
-const focalCss: Record<string, string> = {
-  'top-left': 'top left',
-  top: 'top center',
-  'top-right': 'top right',
-  left: 'center left',
-  center: 'center center',
-  right: 'center right',
-  'bottom-left': 'bottom left',
-  bottom: 'bottom center',
-  'bottom-right': 'bottom right',
-};
+// Lookup tables for the new layout knobs. The focal keyword table lives in
+// lib/gallery.ts and is imported above — it was duplicated here, which meant
+// the project gallery and the home page could drift apart on what "top-left"
+// means.
 const headshotShapeCss: Record<string, string> = {
   circle: '50%',
   square: '0.25rem',
@@ -41,12 +34,10 @@ const logoSizeHeight: Record<string, string> = {
   medium: '150px',
   large: '200px',
 };
-// Accepts the 9-way keywords or a CSS object-position string like "37% 22%".
-const focalCssOf = (value: string) => focalCss[value] ?? value;
 
 const photoShape = home.hero.headshotShape ?? 'circle';
 const photoPosition = home.aboutSection.photoPosition ?? 'left';
-const aboutFocal = focalCssOf(home.aboutSection.photoFocalPoint ?? 'center');
+const aboutFocal = focalCss(home.aboutSection.photoFocalPoint ?? 'center');
 const logoH = logoSizeHeight[home.experienceSection.logoSize ?? 'medium'];
 const heroHeadshot = resolveSiteImage(home.hero.headshot);
 const aboutPhoto = resolveSiteImage(home.aboutSection.photo);
@@ -67,6 +58,13 @@ const projects = (await getCollection('projects', ({ data }) => !data.draft)).so
 // each spanning rows 1-2; everything else is a 1x1 cell. Work out how many rows
 // that needs so the CSS can scale its aspect ratio to match — a fixed 21/9 with
 // fixed rows meant an added photo landed in a collapsed row and disappeared.
+/**
+ * Crop for a home tile. Both fields are optional — a tile that has never been
+ * cropped renders exactly as it did before these existed.
+ */
+const homeFocal = (value?: string) => focalCss(value);
+const homeZoom = (value?: number) => clampZoom(value);
+
 const showcaseItems = home.showcase?.items ?? [];
 const hasLarge = showcaseItems.some((x) => x.size === 'large');
 const hasVideo = showcaseItems.some((x) => x.size === 'video');
@@ -145,7 +143,11 @@ const aboutBioParagraphs = home.aboutSection.bio
               const cls = dominant ? `collage-item ${dominant}` : 'collage-item';
               const wide = dominant === 'collage-large';
               return (
-                <div class={cls} data-tina-field={f('showcase', 'items', i, item.video ? 'video' : 'image')}>
+                <div
+                  class={cls}
+                  style={`--focal: ${homeFocal(item.focal)}; --zoom: ${homeZoom(item.zoom)};`}
+                  data-tina-field={f('showcase', 'items', i, item.video ? 'video' : 'image')}
+                >
                   {item.video ? (
                     /* data-src, not src: an autoplaying <video> downloads the
                        whole file immediately regardless of preload="metadata",
@@ -687,11 +689,18 @@ const aboutBioParagraphs = home.aboutSection.bio
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: var(--focal, center center);
       display: block;
+      /* Anchored on the focal point so zoom pushes away from what you
+         centred, matching how the project gallery behaves. */
+      transform: scale(var(--zoom, 1));
+      transform-origin: var(--focal, center center);
       transition: transform 600ms ease;
     }
+    /* Multiplied, not replaced: a tile zoomed to 1.6 should still lift on
+       hover rather than snapping back down to 1.04. */
     .collage-item:hover :global(img) {
-      transform: scale(1.04);
+      transform: scale(calc(var(--zoom, 1) * 1.04));
     }
 
     .section-head {

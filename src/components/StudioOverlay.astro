@@ -30,7 +30,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       <div class="studio-bar">
         <span class="studio-dot" />
         <strong>Studio</strong>
-        <span class="studio-hint">{mode === 'home' ? 'hover a photo to replace it · drop a file on any photo' : 'drag to crop · pinch or ⌥scroll to zoom · drop files anywhere'}</span>
+        <span class="studio-hint">{mode === 'home' ? 'drag to crop · pinch or ⌥scroll to zoom · hover to replace' : 'drag to crop · pinch or ⌥scroll to zoom · drop files anywhere'}</span>
         <button type="button" class="studio-undo" title="Undo the last edit (⌘Z)" disabled>undo</button>
         <button type="button" class="studio-library-open">library</button>
         <button type="button" class="studio-off" title="Hide until reload">hide</button>
@@ -408,6 +408,44 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       return data;
     };
 
+    /**
+     * Debounced save that can't be lost to a reload.
+     *
+     * A zoom gesture fires continuously, so the save waits for it to settle.
+     * But any save nudges Astro, and the resulting HMR reload can land inside
+     * that window and take the pending write with it — the zoom looked
+     * applied, then came back at its old value. Pending writes are flushed
+     * with sendBeacon on the way out, which survives teardown.
+     */
+    const pending = new Map();
+
+    const queueSave = (key, path, payload, delay = 400) => {
+      const existing = pending.get(key);
+      if (existing) clearTimeout(existing.timer);
+      const entry = { path, payload };
+      entry.timer = setTimeout(async () => {
+        pending.delete(key);
+        try {
+          await post(path, payload);
+        } catch (error) { toast(error.message, true); }
+      }, delay);
+      pending.set(key, entry);
+    };
+
+    const flushPending = () => {
+      for (const [, { timer, path, payload }] of pending) {
+        clearTimeout(timer);
+        try {
+          navigator.sendBeacon(
+            API + path,
+            new Blob([JSON.stringify({ slug, ...payload })], { type: 'application/json' }),
+          );
+        } catch { /* leaving the page anyway */ }
+      }
+      pending.clear();
+    };
+    window.addEventListener('pagehide', flushPending);
+
     let undoing = false;
     const doUndo = async () => {
       if (undoing || undoBtn?.disabled) return;
@@ -539,9 +577,6 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           return { el, path };
         })
         .filter(({ el, path }) => HOME_IMAGE_FIELD.test(path) && el.querySelector('img, video'));
-
-    /** Focal-point field for a slot, where the schema has one. */
-    const HOME_FOCAL = { 'aboutSection.photo': 'aboutSection.photoFocalPoint' };
 
 
     const label = (id) =>
@@ -710,7 +745,9 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         dragging = true;
         moved = false;
         figure.classList.add('is-dragging');
-        media.setPointerCapture(event.pointerId);
+        // Best effort: if the pointer is already gone the drag still works,
+        // and throwing here would abort before anything is saved.
+        try { media.setPointerCapture(event.pointerId); } catch {}
         event.preventDefault();
       });
 
@@ -724,7 +761,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         if (!dragging) return;
         dragging = false;
         figure.classList.remove('is-dragging');
-        media.releasePointerCapture?.(event.pointerId);
+        try { media.releasePointerCapture?.(event.pointerId); } catch {}
         if (!moved) return;
         const focal = `${px}% ${py}%`;
         figure.dataset.studioFocal = focal;
@@ -742,7 +779,6 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       // alone, because hijacking it over every photo would make the page
       // itself hard to read.
       let zoom = Number(figure.dataset.studioZoom || 1) || 1;
-      let zoomTimer;
 
       const badge = document.createElement('span');
       badge.className = 'studio-zoom-badge';
@@ -758,14 +794,9 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       };
 
       const saveZoom = () => {
-        clearTimeout(zoomTimer);
-        zoomTimer = setTimeout(async () => {
-          const value = Number(zoom.toFixed(2));
-          figure.dataset.studioZoom = String(value);
-          try {
-            await post('/gallery/patch', { index, patch: { zoom: value } });
-          } catch (error) { toast(error.message, true); }
-        }, 400);
+        const value = Number(zoom.toFixed(2));
+        figure.dataset.studioZoom = String(value);
+        queueSave(`zoom:${index}`, '/gallery/patch', { index, patch: { zoom: value } });
       };
 
       media.addEventListener('wheel', (event) => {
@@ -878,8 +909,11 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       });
 
       // Drag to crop, for the one slot whose schema has a focal point.
-      const focalField = HOME_FOCAL[path];
-      if (!focalField || media.tagName !== 'IMG') continue;
+      // Every image slot is croppable now. The focal and zoom field names
+      // differ per section (aboutSection has photoFocalPoint, list rows take a
+      // sibling focal), so the server resolves them from the slot path rather
+      // than the client carrying a second copy of that table.
+      if (media.tagName !== 'IMG') continue;
 
       const dot = document.createElement('span');
       dot.className = 'studio-crosshair';
@@ -891,6 +925,19 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         return m ? [parseFloat(m[1]), parseFloat(m[2])] : [50, 50];
       })();
 
+      const readZoom = () => {
+        const v = parseFloat(getComputedStyle(el).getPropertyValue('--zoom'));
+        return Number.isFinite(v) && v >= 1 ? v : 1;
+      };
+      let zoom = readZoom();
+
+      const badge = document.createElement('span');
+      badge.className = 'studio-zoom-badge';
+      badge.hidden = zoom <= 1.001;
+      badge.textContent = `${zoom.toFixed(2)}x`;
+      badge.title = 'Click to reset zoom';
+      el.appendChild(badge);
+
       const placeDot = () => {
         const box = media.getBoundingClientRect();
         const frame = el.getBoundingClientRect();
@@ -900,6 +947,26 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       placeDot();
       window.addEventListener('resize', placeDot);
 
+      /**
+       * Preview locally.
+       *
+       * Both the custom property and the inline style are set: the collage
+       * reads --focal, the about photo reads its own --about-focal, and the
+       * inline objectPosition covers whatever a slot's CSS happens to use.
+       * The reload after the save is what makes it real either way.
+       */
+      const showHome = () => {
+        const focal = `${px}% ${py}%`;
+        el.style.setProperty('--focal', focal);
+        el.style.setProperty('--zoom', String(zoom));
+        media.style.objectPosition = focal;
+        media.style.transformOrigin = focal;
+        media.style.transform = `scale(${zoom})`;
+        badge.textContent = `${zoom.toFixed(2)}x`;
+        badge.hidden = zoom <= 1.001;
+        placeDot();
+      };
+
       let dragging = false;
       let moved = false;
       media.addEventListener('pointerdown', (event) => {
@@ -907,7 +974,9 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         dragging = true;
         moved = false;
         el.classList.add('is-dragging');
-        media.setPointerCapture(event.pointerId);
+        // Best effort: if the pointer is already gone the drag still works,
+        // and throwing here would abort before anything is saved.
+        try { media.setPointerCapture(event.pointerId); } catch {}
         event.preventDefault();
       });
       media.addEventListener('pointermove', (event) => {
@@ -916,17 +985,16 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         const box = media.getBoundingClientRect();
         px = Math.round(Math.min(100, Math.max(0, ((event.clientX - box.left) / box.width) * 100)));
         py = Math.round(Math.min(100, Math.max(0, ((event.clientY - box.top) / box.height) * 100)));
-        media.style.objectPosition = `${px}% ${py}%`;
-        placeDot();
+        showHome();
       });
       const finishHome = async (event) => {
         if (!dragging) return;
         dragging = false;
         el.classList.remove('is-dragging');
-        media.releasePointerCapture?.(event.pointerId);
+        try { media.releasePointerCapture?.(event.pointerId); } catch {}
         if (!moved) return;
         try {
-          await post('/home/patch', { path: focalField, value: `${px}% ${py}%` });
+          await post('/home/crop', { imagePath: path, focal: `${px}% ${py}%` });
           toast(`crop → ${px}% ${py}%`);
         } catch (error) {
           toast(error.message, true);
@@ -934,6 +1002,23 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       };
       media.addEventListener('pointerup', finishHome);
       media.addEventListener('pointercancel', finishHome);
+
+      // Same gesture as the project gallery: pinch, or ⌥scroll.
+      const saveHomeZoom = () =>
+        queueSave(`zoom:${path}`, '/home/crop', { imagePath: path, zoom: Number(zoom.toFixed(2)) });
+      media.addEventListener('wheel', (event) => {
+        if (!event.ctrlKey && !event.altKey) return;
+        event.preventDefault();
+        zoom = Math.min(4, Math.max(1, zoom * Math.exp(-event.deltaY / 400)));
+        showHome();
+        saveHomeZoom();
+      }, { passive: false });
+      badge.addEventListener('click', () => {
+        zoom = 1;
+        showHome();
+        saveHomeZoom();
+        toast('zoom reset');
+      });
     }
 
     // A replace on the previous page load asked for a new description.

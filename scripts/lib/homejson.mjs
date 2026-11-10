@@ -20,12 +20,14 @@ export const getPath = (data, path) =>
   parts(path).reduce((node, key) => (node == null ? undefined : node[key]), data);
 
 /**
- * Set one leaf. Refuses to create missing branches: every editable field
- * already exists in home.json, so a path that doesn't resolve means the
- * caller got it wrong, and silently inventing keys would write a field the
- * Astro template never reads.
+ * Set one leaf. The parent must already exist: a path that doesn't resolve
+ * means the caller got it wrong, and silently inventing branches would write
+ * fields the Astro template never reads.
+ *
+ * `create` allows the LEAF to be new, for fields that are genuinely optional
+ * in the data — an uncropped tile has no focal key at all until you crop it.
  */
-export const setPath = (data, path, value) => {
+export const setPath = (data, path, value, { create = false } = {}) => {
   const keys = parts(path);
   if (keys.length === 0) throw new Error('empty path');
   let node = data;
@@ -36,9 +38,11 @@ export const setPath = (data, path, value) => {
     node = node[key];
   }
   const leaf = keys[keys.length - 1];
-  if (node == null || typeof node !== 'object' || !(leaf in node)) {
-    throw new Error(`no such field: ${path}`);
-  }
+  if (node == null || typeof node !== 'object') throw new Error(`no such field: ${path}`);
+  // `create` is for fields that are genuinely optional in the data — a crop
+  // that has never been set has no key at all. The parent must still exist,
+  // so a typo in the section name is still refused.
+  if (!(leaf in node) && !create) throw new Error(`no such field: ${path}`);
   if (value === null || value === undefined || value === '') delete node[leaf];
   else node[leaf] = value;
   return data;
