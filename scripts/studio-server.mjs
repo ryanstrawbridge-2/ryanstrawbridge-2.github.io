@@ -26,6 +26,7 @@ import { dirname, join, extname, basename, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { tmpdir } from 'node:os';
+import { spawn } from 'node:child_process';
 import {
   encode,
   convertVideo,
@@ -667,9 +668,73 @@ const undoLabel = (pathname, payload = {}) => {
     case '/home/add': return 'add tile';
     case '/home/remove': return 'remove tile';
     case '/text/patch': return 'text';
+    case '/publish': return 'publish';
     default: return pathname.replace(/^\//, '');
   }
 };
+
+// ---------------------------------------------------------------------------
+// Publish: run scripts/publish.sh from the page.
+//
+// One job at a time, output accumulated and polled rather than streamed —
+// EventSource can't set headers, and the Origin check is the only thing
+// standing between this server and anything else on the machine.
+//
+// The script is the same one `npm run publish` runs, so the terminal and the
+// button can't drift. STUDIO_PUBLISH_CMD overrides it for testing without
+// pushing anything.
+// ---------------------------------------------------------------------------
+let job = null;
+
+const startPublish = ({ message }) => {
+  if (job && job.running) throw new Error('a publish is already running');
+
+  const note = String(message ?? '').trim() || 'Content update';
+  // The message reaches git as a single argv entry, never a shell string, so
+  // quotes and newlines in it are data rather than something to escape.
+  const override = process.env.STUDIO_PUBLISH_CMD;
+  const [cmd, ...args] = override
+    ? ['bash', '-lc', override]
+    : ['bash', join(ROOT, 'scripts/publish.sh'), note];
+
+  job = { running: true, lines: [], code: null, startedAt: Date.now(), message: note };
+  const child = spawn(cmd, args, { cwd: ROOT, env: process.env });
+
+  const take = (chunk) => {
+    for (const line of chunk.toString('utf8').split(/\r?\n/)) {
+      if (line.trim() === '') continue;
+      job.lines.push(line);
+      // A runaway script shouldn't grow this without bound.
+      if (job.lines.length > 400) job.lines.shift();
+    }
+  };
+  child.stdout.on('data', take);
+  child.stderr.on('data', take);
+  child.on('error', (error) => {
+    job.lines.push(`could not start: ${error.message}`);
+    job.running = false;
+    job.code = -1;
+  });
+  child.on('close', (code) => {
+    job.running = false;
+    job.code = code;
+  });
+
+  return { started: true, message: note };
+};
+
+const publishStatus = () =>
+  job
+    ? {
+        running: job.running,
+        code: job.code,
+        lines: job.lines.slice(-40),
+        seconds: Math.round((Date.now() - job.startedAt) / 1000),
+        message: job.message,
+      }
+    : { running: false, code: null, lines: [], idle: true };
+
+const NOT_JOURNALLED = new Set(['/publish']);
 
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
@@ -697,6 +762,7 @@ const ROUTES = {
   '/home/move': homeMove,
   '/home/remove': homeRemove,
   '/home/add': homeAdd,
+  '/publish': startPublish,
 };
 
 const server = createServer(async (req, res) => {
@@ -734,6 +800,11 @@ const server = createServer(async (req, res) => {
     const result = await journal.undo(ROOT);
     if (result.ok) nudgeAstro();
     json(res, result.ok ? 200 : 409, result);
+    return;
+  }
+
+  if (url.pathname === '/publish/status') {
+    json(res, 200, { ok: true, ...publishStatus() });
     return;
   }
 
@@ -784,9 +855,13 @@ const server = createServer(async (req, res) => {
     const payload = await readBody(req);
     // Snapshot before, compare after: the journal works out for itself what
     // the route changed, so a new endpoint is undoable without being told.
-    await journal.begin(ROOT, undoLabel(url.pathname, payload));
+    // Publishing isn't an edit — it commits and pushes what is already saved,
+    // so there is nothing meaningful for an undo to restore, and journalling
+    // it would bury the last real edit under an entry that can't be reversed.
+    const journalled = !NOT_JOURNALLED.has(url.pathname);
+    if (journalled) await journal.begin(ROOT, undoLabel(url.pathname, payload));
     const result = await route(payload);
-    await journal.commit(ROOT);
+    if (journalled) await journal.commit(ROOT);
     json(res, 200, { ok: true, ...result, undo: journal.state() });
   } catch (error) {
     journal.abort();

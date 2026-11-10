@@ -31,11 +31,28 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         <span class="studio-dot" />
         <strong>Studio</strong>
         <span class="studio-hint">{mode === 'home' ? 'drag to crop · pinch or ⌥scroll to zoom · hover to replace' : 'drag to crop · pinch or ⌥scroll to zoom · drop files anywhere'}</span>
+        <button type="button" class="studio-publish" title="Commit and push to the live site">publish</button>
         <button type="button" class="studio-undo" title="Undo the last edit (⌘Z)" disabled>undo</button>
         <button type="button" class="studio-library-open">library</button>
         <button type="button" class="studio-off" title="Hide until reload">hide</button>
       </div>
       <div class="studio-toast" hidden />
+
+      <div class="studio-publish-panel" hidden>
+        <header>
+          <strong>Publish to the live site</strong>
+          <button type="button" class="studio-pub-close">close</button>
+        </header>
+        <label class="studio-pub-msg">
+          What changed?
+          <input type="text" placeholder="Content update" />
+        </label>
+        <div class="studio-pub-log" hidden />
+        <footer>
+          <span class="studio-pub-state">This commits and pushes everything saved. It goes live in about two minutes.</span>
+          <button type="button" class="studio-pub-go">publish</button>
+        </footer>
+      </div>
       <div class="studio-drop" hidden><span>Drop to add to this project</span></div>
 
       <div class="studio-library" hidden>
@@ -104,6 +121,48 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-undo[disabled] { opacity: 0.35; cursor: default; }
   .studio-library-open { background: #2563eb; }
   .studio-library-open:hover { background: #1d4ed8; }
+
+  .studio-publish { background: #16a34a; }
+  .studio-publish:hover { background: #15803d; }
+  .studio-publish[disabled] { opacity: 0.5; cursor: default; }
+
+  .studio-publish-panel {
+    position: fixed; right: 1rem; bottom: 4rem; z-index: 905;
+    width: min(540px, calc(100vw - 2rem));
+    background: #111; color: #eee; border-radius: 12px;
+    box-shadow: 0 20px 60px rgb(0 0 0 / 0.45);
+    font-size: 0.8rem; overflow: hidden;
+  }
+  .studio-publish-panel header,
+  .studio-publish-panel footer {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0.8rem; background: rgb(255 255 255 / 0.06);
+  }
+  .studio-publish-panel header strong { flex: 1; }
+  .studio-publish-panel footer { justify-content: space-between; }
+  .studio-pub-state { color: rgb(255 255 255 / 0.6); flex: 1; }
+  .studio-pub-msg { display: block; padding: 0.8rem; }
+  .studio-pub-msg input {
+    display: block; width: 100%; margin-top: 0.35rem;
+    background: rgb(255 255 255 / 0.08); border: 0; border-radius: 6px;
+    padding: 0.4rem 0.5rem; color: inherit; font: inherit;
+  }
+  .studio-pub-log {
+    margin: 0 0.8rem 0.8rem; padding: 0.5rem 0.6rem; max-height: 220px;
+    overflow: auto; background: #000; border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.72rem; line-height: 1.5; white-space: pre-wrap;
+    color: rgb(255 255 255 / 0.8);
+  }
+  .studio-pub-go {
+    background: #16a34a; color: white; border: 0; border-radius: 999px;
+    padding: 0.3rem 0.9rem; cursor: pointer; font: inherit;
+  }
+  .studio-pub-go[disabled] { opacity: 0.5; cursor: default; }
+  .studio-pub-close {
+    background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
+    border-radius: 999px; padding: 0.15rem 0.55rem; cursor: pointer; font: inherit;
+  }
 
   .studio-grip { cursor: grab; }
   .studio-grip:active { cursor: grabbing; }
@@ -481,6 +540,65 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     };
 
     undoBtn?.addEventListener('click', doUndo);
+
+    // -- publish ----------------------------------------------------------
+    // Deliberately two steps. The button opens a panel; publishing happens on
+    // a second, separate click. This pushes to a public site, so it shouldn't
+    // be one stray click away from the undo button next to it.
+    const pubPanel = root.querySelector('.studio-publish-panel');
+    const pubLog = root.querySelector('.studio-pub-log');
+    const pubState = root.querySelector('.studio-pub-state');
+    const pubGo = root.querySelector('.studio-pub-go');
+    const pubMsg = root.querySelector('.studio-pub-msg input');
+    let pollTimer;
+
+    const renderJob = (data) => {
+      if (data.lines?.length) {
+        pubLog.hidden = false;
+        pubLog.textContent = data.lines.join('\n');
+        pubLog.scrollTop = pubLog.scrollHeight;
+      }
+      if (data.running) {
+        pubState.textContent = `publishing… ${data.seconds}s`;
+        pubGo.disabled = true;
+      } else if (data.code === 0) {
+        pubState.textContent = 'pushed. GitHub Actions takes about two minutes.';
+        pubGo.disabled = false;
+        toast('published');
+      } else if (data.code !== null) {
+        pubState.textContent = `stopped (exit ${data.code}) — nothing was pushed if it failed before the push step`;
+        pubGo.disabled = false;
+      }
+    };
+
+    const poll = async () => {
+      clearTimeout(pollTimer);
+      try {
+        const data = await (await fetch(`${API}/publish/status`)).json();
+        renderJob(data);
+        if (data.running) pollTimer = setTimeout(poll, 700);
+      } catch { /* server went away; the panel keeps its last state */ }
+    };
+
+    root.querySelector('.studio-publish')?.addEventListener('click', () => {
+      pubPanel.hidden = !pubPanel.hidden;
+      if (!pubPanel.hidden) { pubMsg.focus(); poll(); }
+    });
+    root.querySelector('.studio-pub-close')?.addEventListener('click', () => { pubPanel.hidden = true; });
+
+    pubGo?.addEventListener('click', async () => {
+      pubGo.disabled = true;
+      pubLog.hidden = false;
+      pubLog.textContent = 'starting…';
+      try {
+        await post('/publish', { message: pubMsg.value });
+        poll();
+      } catch (error) {
+        pubGo.disabled = false;
+        pubState.textContent = error.message;
+        toast(error.message, true);
+      }
+    });
 
     // Is the writer running? Without it the overlay would look live and do
     // nothing, which is worse than not appearing at all.
