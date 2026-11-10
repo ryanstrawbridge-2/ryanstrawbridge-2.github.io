@@ -567,6 +567,70 @@ const homeCrop = async ({ imagePath, focal, zoom }) => {
   return { ...paths, focal, zoom };
 };
 
+/**
+ * List operations on home.json arrays (showcase tiles, interests, experience).
+ *
+ * Generic over the list path rather than hardcoded to the showcase: the same
+ * three operations are wanted on every list on the page, and a second copy of
+ * this with "interestsSection" substituted in would be the kind of duplication
+ * that drifts.
+ */
+const homeList = async (listPath) => {
+  const data = await readHome(HOME_JSON);
+  const list = getPath(data, listPath);
+  if (!Array.isArray(list)) throw new Error(`${listPath} is not a list`);
+  return { data, list };
+};
+
+const homeMove = async ({ listPath = 'showcase.items', from, to }) => {
+  const { list } = await homeList(listPath);
+  const a = Number(from);
+  const b = Math.min(list.length - 1, Math.max(0, Number(to)));
+  if (!Number.isInteger(a) || a < 0 || a >= list.length) throw new Error(`no item at ${from}`);
+  if (a === b) return { moved: false };
+  await withHome((home) => {
+    const items = getPath(home, listPath);
+    items.splice(b, 0, ...items.splice(a, 1));
+  });
+  return { moved: true, from: a, to: b };
+};
+
+const homeRemove = async ({ listPath = 'showcase.items', index }) => {
+  const { list } = await homeList(listPath);
+  const i = Number(index);
+  if (!Number.isInteger(i) || i < 0 || i >= list.length) throw new Error(`no item at ${index}`);
+  const before = list[i]?.image ?? list[i]?.video ?? null;
+  await withHome((home) => {
+    getPath(home, listPath).splice(i, 1);
+  });
+  // Same rule as a gallery row: only tidy up a file nothing else points at.
+  const displaced = await cleanupDisplaced(ROOT, before);
+  return { removed: i, ...(displaced ? { displaced } : {}) };
+};
+
+/**
+ * Add a tile. It is created empty-but-valid rather than prompting for a photo
+ * first, so the new cell is on the page and can be filled by dropping onto it
+ * like any other slot.
+ */
+const homeAdd = async ({ listPath = 'showcase.items', after, template }) => {
+  const { list } = await homeList(listPath);
+  // Shape per list: a row missing the keys its template reads renders blank
+  // and, worse, can't be filled in from the page afterwards.
+  const BLANKS = {
+    'showcase.items': { image: '', alt: '', size: 'regular' },
+    'interestsSection.items': { title: 'New interest', image: '', alt: '', body: '' },
+    'experienceSection.items': { role: 'New role', org: '', blurb: '', logo: '' },
+  };
+  const blank = template ?? BLANKS[listPath];
+  if (!blank) throw new Error(`don't know what a new ${listPath} row looks like`);
+  const at = Number.isInteger(Number(after)) ? Math.min(list.length, Number(after) + 1) : list.length;
+  await withHome((home) => {
+    getPath(home, listPath).splice(at, 0, blank);
+  });
+  return { index: at };
+};
+
 /** Read or write the description for a home slot. */
 const homeAlt = async ({ imagePath, value }) => {
   const data = await readHome(HOME_JSON);
@@ -630,6 +694,9 @@ const ROUTES = {
   '/home/upload': uploadHome,
   '/home/alt': homeAlt,
   '/home/crop': homeCrop,
+  '/home/move': homeMove,
+  '/home/remove': homeRemove,
+  '/home/add': homeAdd,
 };
 
 const server = createServer(async (req, res) => {

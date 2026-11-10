@@ -105,6 +105,16 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-library-open { background: #2563eb; }
   .studio-library-open:hover { background: #1d4ed8; }
 
+  .studio-grip { cursor: grab; }
+  .studio-grip:active { cursor: grabbing; }
+  /* While rearranging, nothing else on the page should react to the pointer —
+     otherwise crossing a photo starts a crop under the drag. */
+  body.studio-rearranging { user-select: none; }
+  body.studio-rearranging .studio-slot img,
+  body.studio-rearranging .studio-slot video { pointer-events: none; }
+  .studio-dragging-tile { opacity: 0.45; }
+  .studio-drop-target { outline: 3px solid #2563eb; outline-offset: -3px; }
+
   .studio-zoom-badge {
     position: absolute; right: 0.5rem; bottom: 0.5rem; z-index: 3;
     background: rgb(17 17 17 / 0.82); color: white;
@@ -868,6 +878,129 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       };
       altBtn.addEventListener('click', () => openAlt());
       if (hasAlt) tools.appendChild(altBtn);
+
+      /**
+       * List controls, for slots that are a row in a home.json array
+       * ("showcase.items.2.image"). Fixed slots like hero.headshot aren't in a
+       * list, so reordering and removing them would be meaningless.
+       */
+      const row = path.match(/^(.*\.items)\.(\d+)\./);
+      if (row) {
+        const [, listPath, rawIndex] = row;
+        const index = Number(rawIndex);
+        el.dataset.studioList = listPath;
+        el.dataset.studioRow = String(index);
+
+        /**
+         * Drag to rearrange.
+         *
+         * From a grip rather than the tile body: a pointerdown on the photo
+         * already starts a crop, and one gesture can't mean two things. The
+         * drop target is whatever tile is under the pointer, so this reorders
+         * on the grid rather than positioning freely — which is what keeps it
+         * working at phone width, where the grid reflows to one column.
+         */
+        const move = async (to, note) => {
+          try {
+            await post('/home/move', { listPath, from: index, to });
+            toast(note);
+          } catch (error) { toast(error.message, true); }
+        };
+
+        const grip = document.createElement('button');
+        grip.type = 'button';
+        grip.className = 'studio-grip';
+        grip.textContent = '⠿';
+        grip.title = 'Drag to rearrange';
+        grip.addEventListener('pointerdown', (event) => {
+          if (event.button !== 0) return;
+          event.preventDefault();
+          event.stopPropagation();
+          try { grip.setPointerCapture(event.pointerId); } catch {}
+          document.body.classList.add('studio-rearranging');
+          el.classList.add('studio-dragging-tile');
+
+          let target = null;
+          const onMove = (moveEvent) => {
+            const under = document
+              .elementFromPoint(moveEvent.clientX, moveEvent.clientY)
+              ?.closest('[data-studio-row]');
+            if (target === under) return;
+            target?.classList.remove('studio-drop-target');
+            target = under && under !== el && under.dataset.studioList === listPath ? under : null;
+            target?.classList.add('studio-drop-target');
+          };
+
+          const onUp = async () => {
+            grip.removeEventListener('pointermove', onMove);
+            grip.removeEventListener('pointerup', onUp);
+            grip.removeEventListener('pointercancel', onUp);
+            document.body.classList.remove('studio-rearranging');
+            el.classList.remove('studio-dragging-tile');
+            target?.classList.remove('studio-drop-target');
+            if (!target) return;
+            await move(Number(target.dataset.studioRow), 'rearranged');
+          };
+
+          grip.addEventListener('pointermove', onMove);
+          grip.addEventListener('pointerup', onUp);
+          grip.addEventListener('pointercancel', onUp);
+        });
+        tools.appendChild(grip);
+
+        for (const [text, delta, title] of [['◀', -1, 'Move earlier'], ['▶', 1, 'Move later']]) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = text;
+          button.title = title;
+          button.addEventListener('click', () => move(Math.max(0, index + delta), 'reordered'));
+          tools.appendChild(button);
+        }
+
+        // Which cell this takes in the collage. Only the showcase has the
+        // dominant large/video cells; the other lists are uniform.
+        if (listPath === 'showcase.items') {
+          const sizes = [['regular', 'small cell'], ['large', 'big cell'], ['video', 'tall cell']];
+          const size = document.createElement('select');
+          size.title = 'How much of the collage this fills';
+          for (const [value, text] of sizes) size.appendChild(new Option(text, value));
+          size.value = el.classList.contains('collage-large')
+            ? 'large'
+            : el.classList.contains('collage-video') ? 'video' : 'regular';
+          size.addEventListener('change', async () => {
+            try {
+              await post('/home/patch', { path: `${listPath}.${index}.size`, value: size.value });
+              toast(`cell → ${size.value}`);
+            } catch (error) { toast(error.message, true); }
+          });
+          tools.appendChild(size);
+        }
+
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.textContent = '+';
+        add.title = 'Add an empty tile after this one';
+        add.addEventListener('click', async () => {
+          try {
+            await post('/home/add', { listPath, after: index });
+            toast('tile added — drop a photo on it');
+          } catch (error) { toast(error.message, true); }
+        });
+        tools.appendChild(add);
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.textContent = '✕';
+        remove.title = 'Remove this tile';
+        remove.addEventListener('click', async () => {
+          if (!confirm('Remove this tile?\n\nIf nothing else uses the file and it was never committed, it is moved to .photo-trash and ⌘Z brings it back.')) return;
+          try {
+            const result = await post('/home/remove', { listPath, index });
+            toast(result.displaced?.deleted ? `removed · ${result.displaced.file} trashed` : 'removed');
+          } catch (error) { toast(error.message, true); }
+        });
+        tools.appendChild(remove);
+      }
 
       const name = document.createElement('span');
       name.className = 'studio-slot-path';
