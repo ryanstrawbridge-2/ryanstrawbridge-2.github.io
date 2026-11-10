@@ -1,0 +1,403 @@
+---
+/**
+ * Career roadmap.
+ *
+ * Two renderings of one list, from one piece of markup:
+ *
+ *   timeline — the default. A vertical list, readable at any width, fine with
+ *              a keyboard and a screen reader, and what everyone gets if the
+ *              JavaScript never runs.
+ *   flight   — a zooming canvas, Prezi-style: the stops are placed on a large
+ *              virtual surface and the viewport flies between them.
+ *
+ * The flight view is an enhancement, offered only on a wide screen and never
+ * when prefers-reduced-motion is set — a zooming canvas is genuinely unpleasant
+ * for anyone sensitive to motion, and cramped on a phone. The DOM is identical
+ * in both; only positioning changes, so nothing is hidden from assistive tech
+ * and nothing has to be kept in sync.
+ */
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import roadmap from '../data/roadmap.json';
+import { resolveSiteImage } from '../lib/site-images';
+import StudioOverlay from '../components/StudioOverlay.astro';
+
+const stops = (roadmap.stops ?? []).filter((stop) => stop.title);
+const images = stops.map((stop) => (stop.image ? resolveSiteImage(stop.image) : undefined));
+---
+
+<BaseLayout
+  title="Career roadmap"
+  description={roadmap.lede ?? 'Mechanical engineering co-ops, projects and milestones.'}
+>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        {roadmap.eyebrow && <p class="eyebrow">{roadmap.eyebrow}</p>}
+        <h1>{roadmap.title ?? 'Career roadmap'}</h1>
+        {roadmap.lede && <p class="lede">{roadmap.lede}</p>}
+      </div>
+
+      <div class="roadmap" data-roadmap>
+        <!-- Rendered hidden and revealed by script: it drives the flight view,
+             which does not exist without JavaScript. -->
+        <div class="flight-controls" data-flight-controls hidden>
+          <button type="button" data-flight-prev aria-label="Previous stop">‹</button>
+          <span class="flight-where" data-flight-where aria-live="polite"></span>
+          <button type="button" data-flight-next aria-label="Next stop">›</button>
+          <button type="button" class="flight-toggle" data-flight-toggle aria-pressed="false">
+            fly through it
+          </button>
+        </div>
+
+        <ol class="stops" data-stops>
+          {
+            stops.map((stop, i) => (
+              <li
+                class:list={['stop', `is-${stop.kind ?? 'milestone'}`]}
+                data-stop={stop.id ?? String(i)}
+                tabindex="-1"
+              >
+                <div class="stop-marker" aria-hidden="true">
+                  {images[i] ? (
+                    /* 96w covers the 48px marker at 2x. Without an explicit
+                       width Astro ships the original, which for these logos is
+                       2400px wide. */
+                    <Image src={images[i]} alt="" widths={[96]} sizes="48px" loading="lazy" />
+                  ) : (
+                    <span class="stop-dot" />
+                  )}
+                </div>
+                <div class="stop-body">
+                  <p class="stop-when">{stop.when}</p>
+                  <h2 class="stop-title">{stop.title}</h2>
+                  {stop.org && <p class="stop-org">{stop.org}</p>}
+                  {stop.body && <p class="stop-text">{stop.body}</p>}
+                  {stop.link && (
+                    <a class="stop-link" href={stop.link}>
+                      See the work →
+                    </a>
+                  )}
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <StudioOverlay mode="home" />
+</BaseLayout>
+
+<style>
+  .lede {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    max-width: 60ch;
+  }
+
+  /* -- timeline: the default, and the fallback -------------------------- */
+  .stops {
+    list-style: none;
+    margin: 2.5rem 0 0;
+    padding: 0;
+    position: relative;
+  }
+  /* The spine. Drawn behind the markers, which carry their own background so
+     the line appears to pass under them. */
+  .stops::before {
+    content: '';
+    position: absolute;
+    left: 23px;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    background: var(--border);
+  }
+  .stop {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 1.25rem;
+    padding-bottom: 2.5rem;
+    position: relative;
+  }
+  .stop:last-child {
+    padding-bottom: 0;
+  }
+  .stop-marker {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 2px solid var(--border);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    z-index: 1;
+  }
+  .stop-marker img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+    background: var(--logo-plate);
+  }
+  .stop-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .is-milestone .stop-marker {
+    border-style: dashed;
+  }
+  .stop-when {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    margin: 0 0 0.15rem;
+    letter-spacing: 0.02em;
+  }
+  .stop-title {
+    font-size: 1.3rem;
+    margin: 0 0 0.1rem;
+  }
+  .stop-org {
+    color: var(--text-muted);
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+  }
+  .stop-text {
+    margin: 0;
+    max-width: 62ch;
+  }
+  .stop-link {
+    display: inline-block;
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  /* A `display` declaration beats the hidden attribute's UA rule, so without
+     this the toggle stays on screen at phone width where flight mode is
+     deliberately not offered. */
+  .flight-controls[hidden] {
+    display: none;
+  }
+  .flight-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+  }
+  .flight-controls button {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 0.25rem 0.8rem;
+    cursor: pointer;
+    font: inherit;
+    transition: background var(--transition);
+  }
+  .flight-controls button:hover {
+    background: var(--accent-soft);
+  }
+  .flight-toggle[aria-pressed='true'] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  .flight-where {
+    flex: 1;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Only the arrows are flight-specific; the toggle has to stay reachable. */
+  .roadmap:not(.is-flying) [data-flight-prev],
+  .roadmap:not(.is-flying) [data-flight-next],
+  .roadmap:not(.is-flying) .flight-where {
+    display: none;
+  }
+
+  /* -- flight: same list, placed on a canvas ----------------------------- */
+  .roadmap.is-flying .stops {
+    position: relative;
+    height: min(70vh, 620px);
+    overflow: hidden;
+    margin-top: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(circle at 20% 20%, var(--accent-soft), transparent 55%),
+      var(--bg-subtle);
+    /* The canvas is the scrolling surface; the spine belongs to the list view. */
+    transform-style: preserve-3d;
+  }
+  .roadmap.is-flying .stops::before {
+    display: none;
+  }
+  .roadmap.is-flying .stop {
+    position: absolute;
+    width: 360px;
+    padding: 1.25rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    /* Positioned by script; transitioned so a jump between stops reads as
+       movement across one surface rather than a cut between slides. */
+    transition:
+      opacity 400ms ease,
+      filter 400ms ease;
+    opacity: 0.35;
+    filter: saturate(0.5);
+  }
+  /* The canvas has a fixed height, so a long blurb would run out of its card.
+     Clamped only in flight; the timeline shows every word. */
+  .roadmap.is-flying .stop-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .roadmap.is-flying .stop.is-active {
+    opacity: 1;
+    filter: none;
+    border-color: var(--accent);
+  }
+
+  @media (max-width: 720px) {
+    .stop {
+      grid-template-columns: 36px 1fr;
+      gap: 0.9rem;
+    }
+    .stops::before {
+      left: 17px;
+    }
+    .stop-marker {
+      width: 36px;
+      height: 36px;
+    }
+  }
+</style>
+
+<script>
+  const root = document.querySelector('[data-roadmap]');
+  const list = root?.querySelector('[data-stops]');
+  const controls = root?.querySelector('[data-flight-controls]');
+
+  if (root && list && controls) {
+    const stops = [...list.querySelectorAll('.stop')] as HTMLElement[];
+    const toggle = controls.querySelector('[data-flight-toggle]') as HTMLButtonElement;
+    const where = controls.querySelector('[data-flight-where]') as HTMLElement;
+    const prev = controls.querySelector('[data-flight-prev]') as HTMLButtonElement;
+    const next = controls.querySelector('[data-flight-next]') as HTMLButtonElement;
+
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const wide = matchMedia('(min-width: 860px)');
+
+    // Offer it only where it works. Below 860px the cards don't fit beside each
+    // other, and with reduced motion the flying is the whole point and is the
+    // thing to avoid — in both cases the timeline is not a downgrade.
+    const offerable = () => wide.matches && !reduced.matches;
+    const showToggle = () => {
+      controls.hidden = !offerable();
+      if (!offerable() && flying) stopFlying();
+    };
+
+    let flying = false;
+    let index = 0;
+
+    /**
+     * Place the cards on a gentle zigzag.
+     *
+     * Computed from the index rather than authored per stop, so adding a stop
+     * in the CMS needs no coordinates — and the path can't drift out of step
+     * with the list.
+     */
+    const layout = () => {
+      const stepX = 460;
+      const amplitude = 150;
+      stops.forEach((stop, i) => {
+        const x = i * stepX;
+        const y = Math.sin(i * 0.9) * amplitude;
+        stop.dataset.x = String(x);
+        stop.dataset.y = String(y);
+        stop.style.left = `${x}px`;
+        stop.style.top = `calc(50% + ${y}px)`;
+        stop.style.transform = 'translateY(-50%)';
+      });
+    };
+
+    const flyTo = (i: number) => {
+      index = Math.max(0, Math.min(stops.length - 1, i));
+      const stop = stops[index];
+      const x = Number(stop.dataset.x ?? 0);
+      const y = Number(stop.dataset.y ?? 0);
+      const box = list.getBoundingClientRect();
+
+      // Move the surface so the active card lands in the middle of the frame.
+      const dx = box.width / 2 - x - stop.offsetWidth / 2;
+      const dy = -y;
+      for (const other of stops) {
+        other.classList.toggle('is-active', other === stop);
+        other.style.marginLeft = `${dx}px`;
+        other.style.marginTop = `${dy}px`;
+        other.style.transition = 'margin 650ms cubic-bezier(0.4, 0.1, 0.2, 1), opacity 400ms ease, filter 400ms ease';
+      }
+
+      where.textContent = `${index + 1} of ${stops.length} · ${stop.querySelector('.stop-title')?.textContent ?? ''}`;
+      prev.disabled = index === 0;
+      next.disabled = index === stops.length - 1;
+    };
+
+    const startFlying = () => {
+      flying = true;
+      root.classList.add('is-flying');
+      toggle.setAttribute('aria-pressed', 'true');
+      toggle.textContent = 'back to the list';
+      layout();
+      flyTo(0);
+      // The canvas becomes a single focus target; the cards keep their own
+      // tabindex so a keyboard user can still reach each one.
+      list.setAttribute('tabindex', '0');
+      list.focus();
+    };
+
+    const stopFlying = () => {
+      flying = false;
+      root.classList.remove('is-flying');
+      toggle.setAttribute('aria-pressed', 'false');
+      toggle.textContent = 'fly through it';
+      for (const stop of stops) {
+        stop.removeAttribute('style');
+        stop.classList.remove('is-active');
+      }
+      list.removeAttribute('tabindex');
+    };
+
+    toggle.addEventListener('click', () => (flying ? stopFlying() : startFlying()));
+    prev.addEventListener('click', () => flyTo(index - 1));
+    next.addEventListener('click', () => flyTo(index + 1));
+
+    for (const [i, stop] of stops.entries()) {
+      stop.addEventListener('click', (event) => {
+        // A click on the project link should follow it, not re-centre the card.
+        if (flying && !(event.target as HTMLElement).closest('a')) flyTo(i);
+      });
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (!flying) return;
+      if (event.key === 'ArrowRight') { event.preventDefault(); flyTo(index + 1); }
+      if (event.key === 'ArrowLeft') { event.preventDefault(); flyTo(index - 1); }
+      if (event.key === 'Escape') { event.preventDefault(); stopFlying(); }
+    });
+
+    window.addEventListener('resize', () => { if (flying) flyTo(index); });
+    for (const query of [wide, reduced]) query.addEventListener('change', showToggle);
+    showToggle();
+  }
+</script>

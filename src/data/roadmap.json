@@ -1,0 +1,72 @@
+{
+  "show": true,
+  "eyebrow": "How I got here",
+  "title": "Career roadmap",
+  "lede": "Mechanical engineering at Northeastern, told through the co-ops and the hardware.",
+  "stops": [
+    {
+      "id": "aeronu",
+      "when": "2023 — present",
+      "title": "Propulsion Sub-Team Lead",
+      "org": "Northeastern Aerospace Club (AeroNU)",
+      "body": "Liquid rocket engine team since 2023. Currently designing a servo-to-valve torque coupling and custom ball valve regulator for the feed system on our flight vehicle.",
+      "kind": "role",
+      "image": "/src/assets/images/experience/aeronu.png",
+      "link": "/projects/actuated-ball-valves/"
+    },
+    {
+      "id": "raytheon",
+      "when": "2024",
+      "title": "Operations Engineering Co-op",
+      "org": "Raytheon Missiles & Defense",
+      "body": "Circuit card production for missile and radar systems. Designed a composite fixture shielding heat-sensitive filters from 93 °C reflow, and ran a nine-configuration solder stencil study that reduced rework across 15 programs.",
+      "kind": "role",
+      "image": "/src/assets/images/experience/raytheon.png",
+      "link": "/projects/qfn-fixture/"
+    },
+    {
+      "id": "cfs",
+      "when": "2026",
+      "title": "Manufacturing Engineering Co-op",
+      "org": "Commonwealth Fusion Systems",
+      "body": "Two terms supporting the poloidal field magnets for the SPARC tokamak. Designed a 2,100 lb lifting frame certified to ASME BTH-1, conformal fixturing for 11 cable configurations, and tooling that cut hours out of the insulation-wrapping process.",
+      "kind": "role",
+      "image": "/src/assets/images/experience/cfs.png",
+      "link": "/projects/lifting-frame/"
+    },
+    {
+      "id": "capstone",
+      "when": "2026",
+      "title": "Underwater Mechanical Release System",
+      "org": "Capstone — It's That Deep",
+      "body": "Mechanical release for a resettable, low-cost underwater retrieval system rated to 300 m, targeting under $400 against $2,000+ commercial systems.",
+      "kind": "project",
+      "image": "/src/assets/images/projects/underwater-mechanical-release-system/hero-overview.png",
+      "link": "/projects/underwater-mechanical-release-system/"
+    },
+    {
+      "id": "bsme",
+      "when": "May 2027",
+      "title": "BSME",
+      "org": "Northeastern University",
+      "body": "Bachelor of Science in Mechanical Engineering.",
+      "kind": "milestone"
+    },
+    {
+      "id": "available",
+      "when": "July 2027",
+      "title": "Available full-time",
+      "org": "",
+      "body": "Looking for propulsion, test, mechanical design or manufacturing engineering work.",
+      "kind": "milestone"
+    },
+    {
+      "id": "msme",
+      "when": "December 2027",
+      "title": "MSME — Mechanics & Design",
+      "org": "Northeastern University",
+      "body": "Master of Science in Mechanical Engineering.",
+      "kind": "milestone"
+    }
+  ]
+}

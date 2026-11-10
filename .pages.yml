@@ -73,6 +73,44 @@ content:
           values: [sans, serif, mono]
 
   # =========================================================================
+  # CAREER ROADMAP — /roadmap/
+  # =========================================================================
+  - name: roadmap
+    label: Career roadmap
+    type: file
+    path: src/data/roadmap.json
+    description: The stops on the roadmap page, in order. Shown as a timeline, and as a zooming canvas on wide screens.
+    fields:
+      - { name: show, label: Show this page, type: boolean, default: true }
+      - { name: eyebrow, label: Eyebrow, type: string }
+      - { name: title, label: Title, type: string }
+      - { name: lede, label: Intro line, type: text }
+      - name: stops
+        label: Stops
+        type: object
+        list: true
+        description: Drag to reorder. Order is the order they are read and flown through.
+        fields:
+          - { name: id, label: Id, type: string, description: Short slug, used as the anchor. }
+          - { name: when, label: When, type: string, description: "Free text, e.g. 2024 or May 2027." }
+          - { name: title, label: Title, type: string }
+          - { name: org, label: Organization, type: string }
+          - { name: body, label: Body, type: text }
+          - name: kind
+            label: Kind
+            type: select
+            description: Milestones get a dashed marker.
+            options:
+              values: [role, project, milestone]
+          - name: image
+            label: Logo or photo
+            type: image
+            options:
+              input: src/assets/images
+              output: /src/assets/images/{name}{extension}
+          - { name: link, label: Link, type: string, description: "Optional, e.g. /projects/lifting-frame/" }
+
+  # =========================================================================
   # HOME PAGE
   # =========================================================================
   - name: home
