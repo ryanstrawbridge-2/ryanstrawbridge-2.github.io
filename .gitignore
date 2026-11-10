@@ -40,3 +40,6 @@ resume/*.out
 resume/*.fls
 resume/*.fdb_latexmk
 resume/*.synctex.gz
+
+# studio undo: deleted media is moved here so an undo can put it back
+.photo-trash/

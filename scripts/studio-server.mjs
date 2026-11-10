@@ -39,6 +39,7 @@ import {
 } from './lib/media.mjs';
 import { readHome, writeHome, setPath, getPath } from './lib/homejson.mjs';
 import { cleanupDisplaced } from './lib/orphans.mjs';
+import * as journal from './lib/journal.mjs';
 import {
   readProject,
   writeProject,
@@ -538,6 +539,35 @@ const homeAlt = async ({ imagePath, value }) => {
   return { path, value };
 };
 
+/** What the undo button says it will undo. */
+const undoLabel = (pathname, payload = {}) => {
+  const patch = payload.patch ?? {};
+  const keys = Object.keys(patch);
+  switch (pathname) {
+    case '/gallery/patch':
+      if (keys.length === 1 && keys[0] === 'focal') return 'crop';
+      if (keys.length === 1 && keys[0] === 'zoom') return 'zoom';
+      if (keys.length === 1 && keys[0] === 'width') return `width ${patch.width}`;
+      if (keys.length === 1 && keys[0] === 'aspect') return 'shape';
+      if (keys.length === 1 && keys[0] === 'section') return 'section';
+      if (keys.length === 1 && keys[0] === 'alt') return 'description';
+      return keys.length ? keys.join(' + ') : 'edit';
+    case '/gallery/delete': return 'remove photo';
+    case '/gallery/move': return 'reorder';
+    case '/project/patch': return 'page settings';
+    case '/upload': return `add ${payload.filename ?? 'file'}`;
+    case '/library/pick': return `add ${payload.file ?? 'file'}`;
+    case '/home/patch': return `home ${String(payload.path ?? '').split('.').pop()}`;
+    case '/home/upload': return 'home photo';
+    case '/home/alt': return 'home description';
+    case '/home/move': return 'reorder tiles';
+    case '/home/add': return 'add tile';
+    case '/home/remove': return 'remove tile';
+    case '/text/patch': return 'text';
+    default: return pathname.replace(/^\//, '');
+  }
+};
+
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
     withProject(slug, (file) => patchGalleryItem(file.doc, index, patch)),
@@ -583,7 +613,20 @@ const server = createServer(async (req, res) => {
       projects: await projectSlugs(CONTENT),
       video: hasVideoConverter(),
       library: existsSync(LIBRARY),
+      undo: journal.state(),
+      trash: await journal.trashSize(ROOT),
     });
+    return;
+  }
+
+  if (url.pathname === '/undo' && req.method === 'POST') {
+    if (!origin || !DEV_ORIGINS.has(origin)) {
+      json(res, 403, { error: 'studio only accepts requests from the local dev server' });
+      return;
+    }
+    const result = await journal.undo(ROOT);
+    if (result.ok) nudgeAstro();
+    json(res, result.ok ? 200 : 409, result);
     return;
   }
 
@@ -632,8 +675,14 @@ const server = createServer(async (req, res) => {
 
   try {
     const payload = await readBody(req);
-    json(res, 200, { ok: true, ...(await route(payload)) });
+    // Snapshot before, compare after: the journal works out for itself what
+    // the route changed, so a new endpoint is undoable without being told.
+    await journal.begin(ROOT, undoLabel(url.pathname, payload));
+    const result = await route(payload);
+    await journal.commit(ROOT);
+    json(res, 200, { ok: true, ...result, undo: journal.state() });
   } catch (error) {
+    journal.abort();
     console.error(`studio: ${url.pathname} — ${error.message}`);
     json(res, 400, { error: error.message });
   }

@@ -15,10 +15,11 @@
  *                                   Ryan put in deliberately years ago.
  */
 
-import { readdir, readFile, unlink, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import YAML from 'yaml';
+import { trashFile } from './journal.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -129,6 +130,8 @@ export const cleanupDisplaced = async (root, previousValue) => {
   }
 
   const { size } = await stat(full);
-  await unlink(full);
+  // Moved, not unlinked: the journal restores an undone delete from
+  // .photo-trash/, and it can only do that if the bytes still exist.
+  await trashFile(root, path);
   return { file: basename(path), path, deleted: true, bytes: size };
 };

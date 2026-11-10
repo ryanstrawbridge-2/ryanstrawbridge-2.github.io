@@ -31,6 +31,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         <span class="studio-dot" />
         <strong>Studio</strong>
         <span class="studio-hint">{mode === 'home' ? 'hover a photo to replace it · drop a file on any photo' : 'drag a photo to crop · hover for controls · drop files anywhere'}</span>
+        <button type="button" class="studio-undo" title="Undo the last edit (⌘Z)" disabled>undo</button>
         <button type="button" class="studio-library-open">library</button>
         <button type="button" class="studio-off" title="Hide until reload">hide</button>
       </div>
@@ -89,13 +90,18 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-bar.is-offline .studio-dot { background: #f87171; box-shadow: 0 0 0 3px rgb(248 113 113 / 0.2); }
   .studio-hint { color: rgb(255 255 255 / 0.55); }
   .studio-off,
+  .studio-undo,
   .studio-library-open {
     background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
     border-radius: 999px; padding: 0.15rem 0.55rem; cursor: pointer; font-size: 0.75rem;
     font-family: inherit;
   }
   .studio-off:hover,
+  .studio-undo:not([disabled]):hover { background: rgb(255 255 255 / 0.2); }
   .studio-library-open:hover { background: rgb(255 255 255 / 0.2); }
+  /* Disabled rather than hidden: a control that appears and disappears as you
+     work is harder to find than one that is always in the same place. */
+  .studio-undo[disabled] { opacity: 0.35; cursor: default; }
   .studio-library-open { background: #2563eb; }
   .studio-library-open:hover { background: #1d4ed8; }
 
@@ -363,6 +369,24 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       toastTimer = setTimeout(() => { toastEl.hidden = true; }, isError ? 6000 : 2600);
     };
 
+    const undoBtn = root.querySelector('.studio-undo');
+
+    /**
+     * Keep the undo button in step with the server's journal.
+     *
+     * The label names the edit rather than counting them ("undo crop" beats
+     * "undo (3)") — you are undoing one specific thing you just did, and the
+     * only way to be sure it is the right one is to see it named.
+     */
+    const setUndo = (state) => {
+      if (!undoBtn || !state) return;
+      undoBtn.disabled = !state.depth;
+      undoBtn.textContent = state.next ? `undo ${state.next}` : 'undo';
+      undoBtn.title = state.next
+        ? `Undo: ${state.next} (⌘Z)`
+        : 'Nothing to undo yet';
+    };
+
     const post = async (path, payload) => {
       const response = await fetch(API + path, {
         method: 'POST',
@@ -371,14 +395,41 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || `save failed (${response.status})`);
+      setUndo(data.undo);
       return data;
     };
+
+    let undoing = false;
+    const doUndo = async () => {
+      if (undoing || undoBtn?.disabled) return;
+      undoing = true;
+      try {
+        const response = await fetch(`${API}/undo`, { method: 'POST' });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.reason || data.error || 'undo failed');
+        // The write nudges Astro, so the page is about to reload with the
+        // restored file. Say what came back before that happens.
+        const bits = [];
+        if (data.restoredMedia) bits.push(`${data.restoredMedia} file back`);
+        if (data.deleted) bits.push(`${data.deleted} file removed`);
+        toast(`undid ${data.label}${bits.length ? ` · ${bits.join(' · ')}` : ''}`);
+        if (data.missing?.length)
+          toast(`undid ${data.label}, but ${data.missing.length} file could not be restored`, true);
+        setUndo({ depth: data.remaining, next: null });
+      } catch (error) {
+        toast(error.message, true);
+      } finally {
+        undoing = false;
+      }
+    };
+
+    undoBtn?.addEventListener('click', doUndo);
 
     // Is the writer running? Without it the overlay would look live and do
     // nothing, which is worse than not appearing at all.
     fetch(`${API}/health`)
       .then((r) => r.json())
-      .then(() => { root.hidden = false; })
+      .then((health) => { root.hidden = false; setUndo(health.undo); })
       .catch(() => {
         root.hidden = false;
         bar.classList.add('is-offline');
@@ -978,6 +1029,15 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     root.querySelector('.studio-lib-close').addEventListener('click', () => { libPanel.hidden = true; });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !libPanel.hidden) libPanel.hidden = true;
+
+      // ⌘Z is the browser's own undo inside a text field; only claim it when
+      // the caret isn't in one, or editing a caption would become impossible.
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName ?? '')
+        || document.activeElement?.isContentEditable;
+      if (!typing && (event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        doUndo();
+      }
     });
 
     // -- drop files anywhere on the page ----------------------------------
