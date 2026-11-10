@@ -220,7 +220,7 @@ portfolio-photos/
   layerdowner/                 lifting-frame/         logos/
   personal/{guitar,interior-design,running}/          qfn-fixture/
   swirl-injector/              underwater-mechanical-release-system/
-  _wix-archive/                ← the old Wix export, unsorted, left alone
+  wix-archive/                 ← the old Wix export, unsorted, left alone
 ```
 
 **`src/assets/images/`** — the web copies that actually ship. Four folders, and
