@@ -31,12 +31,28 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         <span class="studio-dot" />
         <strong>Studio</strong>
         <span class="studio-hint">{mode === 'home' ? 'drag to crop · pinch or ⌥scroll to zoom · hover to replace' : 'drag to crop · pinch or ⌥scroll to zoom · drop files anywhere'}</span>
+        <button type="button" class="studio-phone" title="See this page at phone width">phone</button>
         <button type="button" class="studio-publish" title="Commit and push to the live site">publish</button>
         <button type="button" class="studio-undo" title="Undo the last edit (⌘Z)" disabled>undo</button>
         <button type="button" class="studio-library-open">library</button>
         <button type="button" class="studio-off" title="Hide until reload">hide</button>
       </div>
       <div class="studio-toast" hidden />
+
+      <div class="studio-phone-panel" hidden>
+        <header>
+          <strong>Phone</strong>
+          <select class="studio-phone-size">
+            <option value="390x844">iPhone 15 · 390</option>
+            <option value="375x812">iPhone SE/13 mini · 375</option>
+            <option value="430x932">iPhone Pro Max · 430</option>
+            <option value="768x1024">iPad · 768</option>
+          </select>
+          <button type="button" class="studio-phone-reload" title="Reload the preview">↻</button>
+          <button type="button" class="studio-phone-close">close</button>
+        </header>
+        <iframe class="studio-phone-frame" title="Phone preview" />
+      </div>
 
       <div class="studio-publish-panel" hidden>
         <header>
@@ -121,6 +137,32 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-undo[disabled] { opacity: 0.35; cursor: default; }
   .studio-library-open { background: #2563eb; }
   .studio-library-open:hover { background: #1d4ed8; }
+
+  .studio-phone-panel {
+    position: fixed; right: 1rem; top: 1rem; z-index: 906;
+    background: #111; color: #eee; border-radius: 12px;
+    box-shadow: 0 20px 60px rgb(0 0 0 / 0.5); overflow: hidden;
+    font-size: 0.8rem;
+  }
+  .studio-phone-panel header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 0.6rem; background: rgb(255 255 255 / 0.06);
+  }
+  .studio-phone-panel header strong { flex: 1; }
+  .studio-phone-panel select,
+  .studio-phone-panel button {
+    background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
+    border-radius: 999px; padding: 0.15rem 0.5rem; cursor: pointer; font: inherit;
+  }
+  /* Scaled down so a 844px-tall phone still fits beside the page on a laptop.
+     The iframe keeps its real pixel size, so media queries inside it fire at
+     the width being emulated rather than the width on screen. */
+  .studio-phone-frame {
+    display: block; border: 0; background: white;
+    transform: scale(var(--phone-scale, 0.62));
+    transform-origin: top left;
+  }
+  .studio-phone-shell { overflow: hidden; }
 
   .studio-publish { background: #16a34a; }
   .studio-publish:hover { background: #15803d; }
@@ -410,7 +452,12 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
 {enabled && (
 <script is:inline>
   const root = document.getElementById('studio');
-  if (root) {
+  // ?studio=off suppresses the overlay. The phone preview loads this same page
+  // in an iframe, and a second editor inside it would both cover the layout
+  // being inspected and bind a duplicate set of handlers.
+  if (root && new URLSearchParams(location.search).get('studio') === 'off') {
+    root.remove();
+  } else if (root) {
     const PORT = root.dataset.port || '4322';
     const API = `http://127.0.0.1:${PORT}`;
     const HEADINGS = JSON.parse(root.dataset.headings || '[]');
@@ -540,6 +587,49 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     };
 
     undoBtn?.addEventListener('click', doUndo);
+
+    // -- phone preview ----------------------------------------------------
+    // An iframe, not a narrowed container: media queries key off the viewport,
+    // and the viewport inside an iframe is the iframe. Anything that merely
+    // shrinks a wrapper shows the desktop layout at a smaller size, which is
+    // exactly the thing that misleads you about a crop.
+    const phonePanel = root.querySelector('.studio-phone-panel');
+    const phoneFrame = root.querySelector('.studio-phone-frame');
+    const phoneSize = root.querySelector('.studio-phone-size');
+
+    const phoneUrl = () => {
+      const url = new URL(location.href);
+      url.searchParams.set('studio', 'off'); // no overlay inside the preview
+      return url.toString();
+    };
+
+    const sizePhone = () => {
+      const [w, h] = phoneSize.value.split('x').map(Number);
+      // Fit the tallest device into the window with room for the header.
+      const scale = Math.min(0.75, (window.innerHeight - 140) / h);
+      phoneFrame.width = w;
+      phoneFrame.height = h;
+      phoneFrame.style.setProperty('--phone-scale', String(scale));
+      phoneFrame.parentElement.style.width = `${Math.round(w * scale)}px`;
+      phoneFrame.parentElement.style.height = `${Math.round(h * scale) + 36}px`;
+    };
+
+    root.querySelector('.studio-phone')?.addEventListener('click', () => {
+      phonePanel.hidden = !phonePanel.hidden;
+      if (phonePanel.hidden) { phoneFrame.src = 'about:blank'; return; }
+      phonePanel.classList.add('studio-phone-shell');
+      sizePhone();
+      phoneFrame.src = phoneUrl();
+    });
+    phoneSize?.addEventListener('change', sizePhone);
+    window.addEventListener('resize', () => { if (!phonePanel.hidden) sizePhone(); });
+    root.querySelector('.studio-phone-reload')?.addEventListener('click', () => {
+      phoneFrame.src = phoneUrl();
+    });
+    root.querySelector('.studio-phone-close')?.addEventListener('click', () => {
+      phonePanel.hidden = true;
+      phoneFrame.src = 'about:blank';
+    });
 
     // -- publish ----------------------------------------------------------
     // Deliberately two steps. The button opens a panel; publishing happens on
