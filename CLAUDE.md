@@ -61,7 +61,7 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | 3D model intake | `scripts/model-intake.mjs` (`npm run model`), `src/components/Model3D.astro`, models in `public/models/` |
 | Live editor (dev only) | `scripts/studio.sh` (`npm run studio`), `scripts/studio-server.mjs`, `src/components/StudioOverlay.astro` |
 | Undo journal + trash | `scripts/lib/journal.mjs`, `.photo-trash/` (gitignored) |
-| Career roadmap | `src/pages/roadmap.astro` + `src/data/roadmap.json` |
+| Career roadmap (parked) | `src/pages/_roadmap.astro` + `src/data/roadmap.json` — the `_` prefix keeps Astro from routing it, so the page is NOT built and nothing links to it. To bring it back: rename to `roadmap.astro`, re-add the nav item to `src/data/navigation.json`, and restore the `roadmap` collection in `.pages.yml` (its image field needs `output: /src/assets/images/roadmap/{name}{extension}` — the version removed here wrote to the assets root, which `check:media` rejects, gotcha 27). |
 | Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs`, `scripts/lib/homejson.mjs`, `scripts/lib/orphans.mjs` |
 | Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |

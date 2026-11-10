@@ -115,7 +115,8 @@
           "/src/assets/images/about/extras/music-3.jpeg"
         ],
         "alt": "Music",
-        "body": "I have a great appreciation for music. I played trumpet in high school, picked up guitar my junior year, and now play rhythm guitar in an alt-rock band."
+        "body": "I have a great appreciation for music. I played trumpet in high school, picked up guitar my junior year, and now play rhythm guitar in an alt-rock band.",
+        "focal": "50% 73%"
       },
       {
         "title": "Interior Design & Plants",
@@ -125,7 +126,8 @@
           "/src/assets/images/about/extras/plants-3.jpeg"
         ],
         "alt": "Plants",
-        "body": "I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants!"
+        "body": "I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants!",
+        "focal": "48% 79%"
       }
     ]
   },

@@ -1,5 +1,6 @@
 {
-  "accentColor": "#c2410c",
-  "accentColorHover": "#9a3412",
-  "containerWidth": "standard"
+  "accentColor": "#334155",
+  "accentColorHover": "#263140",
+  "containerWidth": "standard",
+  "accentSoft": "#e7e8eb"
 }
