@@ -31,6 +31,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         <span class="studio-dot" />
         <strong>Studio</strong>
         <span class="studio-hint">{mode === 'home' ? 'drag to crop · pinch or ⌥scroll to zoom · hover to replace' : 'drag to crop · pinch or ⌥scroll to zoom · drop files anywhere'}</span>
+        <button type="button" class="studio-text" aria-pressed="false" title="Click any text on the page to edit it">text</button>
         <button type="button" class="studio-phone" title="See this page at phone width">phone</button>
         <button type="button" class="studio-publish" title="Commit and push to the live site">publish</button>
         <button type="button" class="studio-undo" title="Undo the last edit (⌘Z)" disabled>undo</button>
@@ -137,6 +138,34 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-undo[disabled] { opacity: 0.35; cursor: default; }
   .studio-library-open { background: #2563eb; }
   .studio-library-open:hover { background: #1d4ed8; }
+
+  .studio-text[aria-pressed="true"] { background: #7c3aed; }
+  .studio-text-slot {
+    outline: 1px dashed rgb(124 58 237 / 0.55);
+    outline-offset: 3px; cursor: text; border-radius: 3px;
+  }
+  .studio-text-slot:hover { outline-style: solid; background: rgb(124 58 237 / 0.08); }
+  .studio-editing {
+    outline: 2px solid #7c3aed !important; outline-offset: 3px;
+    background: rgb(124 58 237 / 0.1);
+  }
+  .studio-text-edit {
+    position: absolute; z-index: 904; display: grid; gap: 0.35rem;
+    padding: 0.5rem; min-width: 280px;
+    background: #111; color: #eee; border-radius: 8px;
+    box-shadow: 0 14px 40px rgb(0 0 0 / 0.45); font-size: 0.78rem;
+    text-align: left;
+  }
+  .studio-text-edit textarea {
+    width: 100%; background: rgb(255 255 255 / 0.08); border: 0;
+    border-radius: 6px; padding: 0.4rem 0.5rem; color: inherit;
+    font: inherit; resize: vertical;
+  }
+  .studio-text-edit span { color: rgb(255 255 255 / 0.5); font-size: 0.7rem; }
+  .studio-text-edit button {
+    justify-self: start; background: #7c3aed; color: white; border: 0;
+    border-radius: 999px; padding: 0.2rem 0.7rem; cursor: pointer; font: inherit;
+  }
 
   .studio-phone-panel {
     position: fixed; right: 1rem; top: 1rem; z-index: 906;
@@ -587,6 +616,156 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     };
 
     undoBtn?.addEventListener('click', doUndo);
+
+    // -- inline text editing ----------------------------------------------
+    /**
+     * Any element already carrying a data-tina-field that isn't an image slot
+     * becomes editable. index.astro tagged these for click-to-edit, so no new
+     * markup was needed — the same reuse that made home-mode cropping cheap.
+     *
+     * Text is edited from the SOURCE, not from what's on screen: the tagline
+     * renders "*bridge*" as italics, and editing the rendered text would eat
+     * the asterisks. When source and rendered text agree the field is edited
+     * in place; when they differ a small box opens seeded with the source, so
+     * the markup is visible and survives.
+     */
+    // `body` is the whole rendered markdown document, not a field — editing
+    // what's on screen would replace the source with its own HTML. It stays a
+    // CMS-and-editor job until there's real source mapping.
+    const TEXT_SKIP = /(^|\.)(image|photo|logo|headshot|video|alt|href|poster|body|gallery)($|\.)/i;
+
+    const textSlots = () =>
+      [...document.querySelectorAll('[data-tina-field]')]
+        .map((el) => {
+          const raw = el.getAttribute('data-tina-field') || '';
+          const home = raw.split('---home.')[1];
+          const project = raw.split('---project.')[1];
+          return { el, path: home ?? project, isHome: Boolean(home) };
+        })
+        .filter(({ el, path }) =>
+          path && !TEXT_SKIP.test(path) &&
+          !el.querySelector('img, video') &&
+          el.textContent.trim() !== '');
+
+    const saveText = (slot, value) =>
+      slot.isHome
+        ? post('/home/patch', { path: slot.path, value })
+        : post('/project/patch', { patch: { [slot.path]: value } });
+
+    const readText = (slot) =>
+      slot.isHome
+        ? post('/home/value', { path: slot.path })
+        : post('/project/value', { path: slot.path });
+
+    const editText = async (slot) => {
+      const { el } = slot;
+      if (el.dataset.studioEditing) return;
+
+      let source;
+      try {
+        source = (await readText(slot)).value ?? '';
+      } catch (error) { toast(error.message, true); return; }
+
+      const rendered = el.textContent.trim();
+      const plain = source.trim() === rendered;
+
+      if (plain) {
+        // Edit in place. The element keeps its own typography, so what you
+        // type is what the page will look like.
+        el.dataset.studioEditing = '1';
+        el.setAttribute('contenteditable', 'plaintext-only');
+        el.classList.add('studio-editing');
+        el.focus();
+
+        const done = async (commit) => {
+          el.removeAttribute('contenteditable');
+          el.classList.remove('studio-editing');
+          delete el.dataset.studioEditing;
+          const next = el.textContent.trim();
+          if (!commit || next === rendered) { el.textContent = rendered; return; }
+          try {
+            await saveText(slot, next);
+            toast('text saved');
+          } catch (error) { toast(error.message, true); el.textContent = rendered; }
+        };
+
+        el.addEventListener('blur', () => done(true), { once: true });
+        el.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') { event.preventDefault(); done(false); el.blur(); }
+          // Enter commits on a single-line field; multi-line needs ⌘Enter.
+          const multiline = source.includes('\n') || rendered.length > 120;
+          if (event.key === 'Enter' && (!multiline || event.metaKey || event.ctrlKey)) {
+            event.preventDefault();
+            el.blur();
+          }
+        });
+        return;
+      }
+
+      // Source and screen disagree — show the source in a box instead.
+      el.querySelector('.studio-text-edit')?.remove();
+      const box = document.createElement('form');
+      box.className = 'studio-text-edit';
+      const area = document.createElement('textarea');
+      area.value = source;
+      area.rows = Math.min(10, Math.max(2, source.split('\n').length + 1));
+      area.setAttribute('aria-label', `Edit ${slot.path}`);
+      const hint = document.createElement('span');
+      hint.textContent = 'markup — ⌘↵ to save, esc to cancel';
+      const ok = document.createElement('button');
+      ok.type = 'submit';
+      ok.textContent = 'save';
+      box.append(area, hint, ok);
+      el.appendChild(box);
+      area.focus();
+      area.select();
+
+      const close = () => box.remove();
+      box.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const value = area.value;
+        close();
+        try {
+          await saveText(slot, value);
+          toast('text saved');
+        } catch (error) { toast(error.message, true); }
+      });
+      area.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { event.preventDefault(); close(); }
+        if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          box.requestSubmit();
+        }
+      });
+      for (const type of ['pointerdown', 'click']) {
+        box.addEventListener(type, (event) => event.stopPropagation());
+      }
+    };
+
+    let textOn = false;
+    const textBtn = root.querySelector('.studio-text');
+
+    const setTextMode = (on) => {
+      textOn = on;
+      textBtn?.setAttribute('aria-pressed', String(on));
+      document.body.classList.toggle('studio-text-mode', on);
+      for (const slot of textSlots()) {
+        slot.el.classList.toggle('studio-text-slot', on);
+        if (on && !slot.el.dataset.studioTextBound) {
+          slot.el.dataset.studioTextBound = '1';
+          slot.el.addEventListener('click', (event) => {
+            if (!textOn) return;
+            // A heading that is also a link would navigate instead.
+            event.preventDefault();
+            event.stopPropagation();
+            editText(slot);
+          });
+        }
+      }
+      toast(on ? 'text mode — click any text to edit' : 'text mode off');
+    };
+
+    textBtn?.addEventListener('click', () => setTextMode(!textOn));
 
     // -- phone preview ----------------------------------------------------
     // An iframe, not a narrowed container: media queries key off the viewport,

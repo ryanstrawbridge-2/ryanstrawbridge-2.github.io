@@ -632,6 +632,31 @@ const homeAdd = async ({ listPath = 'showcase.items', after, template }) => {
   return { index: at };
 };
 
+/**
+ * Read the raw value behind a rendered field.
+ *
+ * The page shows "I bridge gaps…" with bridge italicised; home.json holds
+ * "I *bridge* gaps…". Editing what's on screen would silently eat the
+ * asterisks, so the editor seeds itself from the source rather than from
+ * textContent, and only offers in-place editing when the two agree.
+ */
+const homeValue = async ({ path }) => {
+  const data = await readHome(HOME_JSON);
+  const value = getPath(data, path);
+  if (value === undefined) throw new Error(`no such field: ${path}`);
+  if (typeof value === 'object') throw new Error(`${path} is not text`);
+  return { path, value: value ?? '' };
+};
+
+/** Same, for a project's frontmatter. */
+const projectValue = async ({ slug, path }) => {
+  const file = await readProject(CONTENT, slug);
+  const value = file.doc.getIn(String(path).split('.'));
+  if (value === undefined || value === null) return { path, value: '' };
+  if (typeof value === 'object') throw new Error(`${path} is not text`);
+  return { path, value: String(value) };
+};
+
 /** Read or write the description for a home slot. */
 const homeAlt = async ({ imagePath, value }) => {
   const data = await readHome(HOME_JSON);
@@ -657,7 +682,7 @@ const undoLabel = (pathname, payload = {}) => {
       return keys.length ? keys.join(' + ') : 'edit';
     case '/gallery/delete': return 'remove photo';
     case '/gallery/move': return 'reorder';
-    case '/project/patch': return 'page settings';
+    case '/project/patch': return keys.length === 1 ? keys[0] : 'page settings';
     case '/upload': return `add ${payload.filename ?? 'file'}`;
     case '/library/pick': return `add ${payload.file ?? 'file'}`;
     case '/home/patch': return `home ${String(payload.path ?? '').split('.').pop()}`;
@@ -734,7 +759,8 @@ const publishStatus = () =>
       }
     : { running: false, code: null, lines: [], idle: true };
 
-const NOT_JOURNALLED = new Set(['/publish']);
+// Reads that happen to be POSTs (they take a body); nothing to undo.
+const NOT_JOURNALLED = new Set(['/publish', '/home/value', '/project/value']);
 
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
@@ -762,6 +788,8 @@ const ROUTES = {
   '/home/move': homeMove,
   '/home/remove': homeRemove,
   '/home/add': homeAdd,
+  '/home/value': homeValue,
+  '/project/value': projectValue,
   '/publish': startPublish,
 };
 
