@@ -57,6 +57,7 @@ const IMAGES = join(ROOT, 'src/assets/images/projects');
 const VIDEOS = join(ROOT, 'public/videos');
 const LIBRARY = join(ROOT, 'portfolio-photos');
 const HOME_JSON = join(ROOT, 'src/data/home.json');
+const SITE_JSON = join(ROOT, 'src/data/site.json');
 const HOME_IMAGES = join(ROOT, 'src/assets/images/home');
 const THUMBS = join(ROOT, '.astro/studio-thumbs');
 
@@ -633,6 +634,28 @@ const homeAdd = async ({ listPath = 'showcase.items', after, template }) => {
 };
 
 /**
+ * Site-wide theme settings (src/data/site.json).
+ *
+ * Fields are created on write: accentSoft, cornerStyle and headingFont don't
+ * exist in a site.json written before the theme panel did, and BaseLayout
+ * falls through to global.css for anything absent.
+ */
+const siteTheme = async ({ patch }) => {
+  if (!patch || typeof patch !== 'object') throw new Error('nothing to set');
+  const data = JSON.parse(await readFile(SITE_JSON, 'utf8'));
+  for (const [key, value] of Object.entries(patch)) {
+    if (!/^[a-zA-Z]+$/.test(key)) throw new Error(`bad setting name: ${key}`);
+    if (value === null || value === '') delete data[key];
+    else data[key] = value;
+  }
+  await writeFile(SITE_JSON, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
+  nudgeAstro();
+  return { site: data };
+};
+
+const siteRead = async () => ({ site: JSON.parse(await readFile(SITE_JSON, 'utf8')) });
+
+/**
  * Read the raw value behind a rendered field.
  *
  * The page shows "I bridge gaps…" with bridge italicised; home.json holds
@@ -694,6 +717,7 @@ const undoLabel = (pathname, payload = {}) => {
     case '/home/remove': return 'remove tile';
     case '/text/patch': return 'text';
     case '/publish': return 'publish';
+    case '/site/theme': return 'theme';
     default: return pathname.replace(/^\//, '');
   }
 };
@@ -760,7 +784,7 @@ const publishStatus = () =>
     : { running: false, code: null, lines: [], idle: true };
 
 // Reads that happen to be POSTs (they take a body); nothing to undo.
-const NOT_JOURNALLED = new Set(['/publish', '/home/value', '/project/value']);
+const NOT_JOURNALLED = new Set(['/publish', '/home/value', '/project/value', '/site/read']);
 
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
@@ -788,6 +812,8 @@ const ROUTES = {
   '/home/move': homeMove,
   '/home/remove': homeRemove,
   '/home/add': homeAdd,
+  '/site/theme': siteTheme,
+  '/site/read': siteRead,
   '/home/value': homeValue,
   '/project/value': projectValue,
   '/publish': startPublish,

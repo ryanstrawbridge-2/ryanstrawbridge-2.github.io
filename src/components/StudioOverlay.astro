@@ -31,6 +31,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         <span class="studio-dot" />
         <strong>Studio</strong>
         <span class="studio-hint">{mode === 'home' ? 'drag to crop · pinch or ⌥scroll to zoom · hover to replace' : 'drag to crop · pinch or ⌥scroll to zoom · drop files anywhere'}</span>
+        <button type="button" class="studio-theme" title="Colours, corners and type">theme</button>
         <button type="button" class="studio-text" aria-pressed="false" title="Click any text on the page to edit it">text</button>
         <button type="button" class="studio-phone" title="See this page at phone width">phone</button>
         <button type="button" class="studio-publish" title="Commit and push to the live site">publish</button>
@@ -39,6 +40,42 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         <button type="button" class="studio-off" title="Hide until reload">hide</button>
       </div>
       <div class="studio-toast" hidden />
+
+      <div class="studio-theme-panel" hidden>
+        <header>
+          <strong>Theme</strong>
+          <span class="studio-theme-note">applies site-wide</span>
+          <button type="button" class="studio-theme-close">close</button>
+        </header>
+        <div class="studio-theme-body">
+          <label>Accent
+            <span class="studio-swatches" />
+            <input type="color" class="studio-accent" />
+          </label>
+          <label>Corners
+            <select class="studio-corners">
+              <option value="sharp">sharp</option>
+              <option value="soft">soft</option>
+              <option value="round">round</option>
+            </select>
+          </label>
+          <label>Headings
+            <select class="studio-headfont">
+              <option value="sans">sans</option>
+              <option value="serif">serif</option>
+              <option value="mono">mono</option>
+            </select>
+          </label>
+          <label>Page width
+            <select class="studio-width-setting">
+              <option value="narrow">narrow · 960</option>
+              <option value="standard">standard · 1100</option>
+              <option value="wide">wide · 1280</option>
+            </select>
+          </label>
+        </div>
+        <footer><span class="studio-theme-state">changes preview instantly and save as you make them</span></footer>
+      </div>
 
       <div class="studio-phone-panel" hidden>
         <header>
@@ -138,6 +175,41 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-undo[disabled] { opacity: 0.35; cursor: default; }
   .studio-library-open { background: #2563eb; }
   .studio-library-open:hover { background: #1d4ed8; }
+
+  .studio-theme { background: #0891b2; }
+  .studio-theme:hover { background: #0e7490; }
+  .studio-theme-panel {
+    position: fixed; left: 1rem; bottom: 4rem; z-index: 905;
+    width: min(320px, calc(100vw - 2rem));
+    background: #111; color: #eee; border-radius: 12px;
+    box-shadow: 0 20px 60px rgb(0 0 0 / 0.45); font-size: 0.8rem; overflow: hidden;
+  }
+  .studio-theme-panel header,
+  .studio-theme-panel footer {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.55rem 0.7rem; background: rgb(255 255 255 / 0.06);
+  }
+  .studio-theme-panel header strong { flex: 1; }
+  .studio-theme-note,
+  .studio-theme-state { color: rgb(255 255 255 / 0.5); font-size: 0.72rem; }
+  .studio-theme-body { display: grid; gap: 0.7rem; padding: 0.8rem 0.7rem; }
+  .studio-theme-body label { display: grid; gap: 0.3rem; }
+  .studio-theme-body select,
+  .studio-theme-body input[type="color"] {
+    background: rgb(255 255 255 / 0.08); border: 0; border-radius: 6px;
+    padding: 0.3rem 0.4rem; color: inherit; font: inherit; width: 100%;
+    height: 2rem; cursor: pointer;
+  }
+  .studio-swatches { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  .studio-swatches button {
+    width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent;
+    cursor: pointer; padding: 0;
+  }
+  .studio-swatches button[aria-pressed="true"] { border-color: white; }
+  .studio-theme-close {
+    background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
+    border-radius: 999px; padding: 0.15rem 0.55rem; cursor: pointer; font: inherit;
+  }
 
   .studio-text[aria-pressed="true"] { background: #7c3aed; }
   .studio-text-slot {
@@ -616,6 +688,100 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     };
 
     undoBtn?.addEventListener('click', doUndo);
+
+    // -- theme ------------------------------------------------------------
+    /**
+     * Every control previews by setting the custom property on <html> and
+     * saves in the background. The reload that follows re-renders from
+     * site.json, so what you see mid-drag and what ships are the same values.
+     */
+    const themePanel = root.querySelector('.studio-theme-panel');
+    const accentInput = root.querySelector('.studio-accent');
+    const cornersSel = root.querySelector('.studio-corners');
+    const headFontSel = root.querySelector('.studio-headfont');
+    const widthSel = root.querySelector('.studio-width-setting');
+    const swatches = root.querySelector('.studio-swatches');
+
+    const CORNERS = { sharp: ['2px', '4px'], soft: ['6px', '12px'], round: ['12px', '22px'] };
+    const WIDTHS = { narrow: '960px', standard: '1100px', wide: '1280px' };
+    const HEAD_FONTS = { sans: 'var(--font-sans)', serif: 'var(--font-serif)', mono: 'var(--font-mono)' };
+    const PRESETS = ['#c2410c', '#b45309', '#15803d', '#0f766e', '#1d4ed8', '#6d28d9', '#be123c', '#334155'];
+
+    /** Mix a colour toward black or white, for the hover and soft variants. */
+    const shade = (hex, amount, toward) => {
+      const n = parseInt(hex.slice(1), 16);
+      const parts = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) =>
+        Math.round(c + (toward - c) * amount));
+      return `#${parts.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+    };
+
+    const previewAccent = (hex) => {
+      const el = document.documentElement;
+      el.style.setProperty('--accent', hex);
+      el.style.setProperty('--accent-hover', shade(hex, 0.25, 0));
+      el.style.setProperty('--accent-soft', shade(hex, 0.88, 255));
+      for (const button of swatches.querySelectorAll('button'))
+        button.setAttribute('aria-pressed', String(button.dataset.color === hex));
+    };
+
+    const saveTheme = (patch, key) =>
+      queueSave(`theme:${key}`, '/site/theme', { patch }, 250);
+
+    const setAccent = (hex) => {
+      previewAccent(hex);
+      accentInput.value = hex;
+      saveTheme({
+        accentColor: hex,
+        accentColorHover: shade(hex, 0.25, 0),
+        accentSoft: shade(hex, 0.88, 255),
+      }, 'accent');
+    };
+
+    for (const color of PRESETS) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.color = color;
+      button.style.background = color;
+      button.title = color;
+      button.setAttribute('aria-pressed', 'false');
+      button.addEventListener('click', () => setAccent(color));
+      swatches.appendChild(button);
+    }
+
+    accentInput?.addEventListener('input', (event) => setAccent(event.target.value));
+
+    cornersSel?.addEventListener('change', () => {
+      const [r, rl] = CORNERS[cornersSel.value];
+      document.documentElement.style.setProperty('--radius', r);
+      document.documentElement.style.setProperty('--radius-lg', rl);
+      saveTheme({ cornerStyle: cornersSel.value }, 'corners');
+    });
+
+    headFontSel?.addEventListener('change', () => {
+      document.documentElement.style.setProperty('--font-heading', HEAD_FONTS[headFontSel.value]);
+      saveTheme({ headingFont: headFontSel.value }, 'headfont');
+    });
+
+    widthSel?.addEventListener('change', () => {
+      document.documentElement.style.setProperty('--container', WIDTHS[widthSel.value]);
+      saveTheme({ containerWidth: widthSel.value }, 'width');
+    });
+
+    root.querySelector('.studio-theme')?.addEventListener('click', async () => {
+      themePanel.hidden = !themePanel.hidden;
+      if (themePanel.hidden) return;
+      try {
+        const { site } = await post('/site/read', {});
+        const accent = site.accentColor || '#c2410c';
+        accentInput.value = accent;
+        for (const button of swatches.querySelectorAll('button'))
+          button.setAttribute('aria-pressed', String(button.dataset.color === accent));
+        cornersSel.value = site.cornerStyle || 'soft';
+        headFontSel.value = site.headingFont || 'sans';
+        widthSel.value = site.containerWidth || 'standard';
+      } catch (error) { toast(error.message, true); }
+    });
+    root.querySelector('.studio-theme-close')?.addEventListener('click', () => { themePanel.hidden = true; });
 
     // -- inline text editing ----------------------------------------------
     /**

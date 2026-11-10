@@ -31,7 +31,31 @@ const widthMap: Record<string, string> = {
 const containerWidth = widthMap[siteSettings.containerWidth ?? 'standard'] ?? widthMap.standard;
 const accent = siteSettings.accentColor ?? '#c2410c';
 const accentHover = siteSettings.accentColorHover ?? '#9a3412';
-const rootStyle = `--accent: ${accent}; --accent-hover: ${accentHover}; --container: ${containerWidth};`;
+
+// Corner style and heading font, editable in studio's theme panel. Every one
+// is optional and falls through to the value already in global.css, so a
+// site.json written before these existed renders exactly as it did.
+const radiusMap: Record<string, [string, string]> = {
+  sharp: ['2px', '4px'],
+  soft: ['6px', '12px'],
+  round: ['12px', '22px'],
+};
+const headingFonts: Record<string, string> = {
+  sans: 'var(--font-sans)',
+  serif: 'var(--font-serif)',
+  mono: 'var(--font-mono)',
+};
+const radius = radiusMap[siteSettings.cornerStyle ?? 'soft'];
+const headingFont = headingFonts[siteSettings.headingFont ?? 'sans'];
+
+const rootStyle = [
+  `--accent: ${accent}`,
+  `--accent-hover: ${accentHover}`,
+  `--container: ${containerWidth}`,
+  ...(siteSettings.accentSoft ? [`--accent-soft: ${siteSettings.accentSoft}`] : []),
+  ...(radius ? [`--radius: ${radius[0]}`, `--radius-lg: ${radius[1]}`] : []),
+  ...(headingFont ? [`--font-heading: ${headingFont}`] : []),
+].join('; ') + ';';
 
 // JSON-LD structured data — lets search engines and social crawlers
 // understand who/what this site is.

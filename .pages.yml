@@ -53,6 +53,24 @@ content:
         description: How wide the content area can grow on big screens.
         options:
           values: [narrow, standard, wide]
+      # Written by studio's theme panel. Listed here so editing site settings
+      # in Pages CMS doesn't drop fields it doesn't know about.
+      - name: accentSoft
+        label: Accent tint
+        type: string
+        description: Pale wash behind accent elements. Derived from the accent in studio.
+      - name: cornerStyle
+        label: Corner style
+        type: select
+        description: How rounded cards, photos and buttons are.
+        options:
+          values: [sharp, soft, round]
+      - name: headingFont
+        label: Heading font
+        type: select
+        description: Typeface for headings. Body text always uses the sans stack.
+        options:
+          values: [sans, serif, mono]
 
   # =========================================================================
   # HOME PAGE

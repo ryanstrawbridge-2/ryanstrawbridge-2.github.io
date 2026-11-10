@@ -108,6 +108,9 @@ h6 {
   letter-spacing: -0.02em;
   font-weight: 700;
   color: var(--text);
+  /* Set by the theme panel via site.json; defaults to the body face, so a
+     site.json written before this existed renders unchanged. */
+  font-family: var(--font-heading, var(--font-sans));
 }
 
 h1 {
