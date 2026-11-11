@@ -146,7 +146,33 @@ and breaks its content watching for the rest of the session.
 root of `src/assets/images/` — which is how a 14 MB PNG and a 9.2 MB JPEG ended
 up committed, and why files called `IMG_6268.jpeg` are sitting loose in there.
 
-Use the intake instead. Drop files in `photo-inbox/<project-slug>/`, then:
+Use the intake instead. Drop files in `photo-inbox/` named `PREFIX_title`:
+
+| Prefix | Project |
+|---|---|
+| `ABV_` | Actuated ball valves |
+| `Bend_` | Hydraulic bender |
+| `Lift_` | Lifting frame |
+| `Lay_` | Layerdowner |
+| `CNC_` | CNC seam cutter |
+| `Leak_` | Faucet leak ring |
+| `QFN_` | Solder reflow fixture |
+| `ITD_` / `UMR_` | Underwater release |
+| `gen_` | General: any project, picked from studio |
+
+Case doesn't matter. `ABV_valve-test.jpg` becomes
+`actuated-ball-valves-valve-test.jpg`. The table lives in `photo-prefixes.json`;
+add a line there for a new project.
+
+Two ways in from there:
+
+- **Studio:** open Media. The inbox is the first group, sorted by prefix, with
+  this project's files on top. Reopen the panel to pick up new files. Picking
+  copies; the original stays in the inbox marked Added.
+- **Terminal:** `npm run photos` imports everything with a known prefix and
+  moves the originals to `_done/`. It skips anything studio already imported.
+
+The older `photo-inbox/<project-slug>/` folders still work.
 
 ```bash
 cd ~/Documents/Projects/portfolio && npm run photos

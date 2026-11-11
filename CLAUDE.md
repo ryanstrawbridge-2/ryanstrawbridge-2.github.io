@@ -70,7 +70,7 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
 | Media layout guard | `scripts/check-media-layout.mjs` (`npm run check:media`) |
 | Ryan's photo library (gitignored) | `portfolio-photos/<project-slug>/` — 138 originals, folders named for the site's project slugs; READ-ONLY, studio browses and copies from it, never writes. `wix-archive/` is the unsorted legacy Wix export. |
-| Intake queue (gitignored) | `photo-inbox/<slug>/`, processed originals in `photo-inbox/_done/` |
+| Intake queue (gitignored) | `photo-inbox/PREFIX_title.ext` routed by `photo-prefixes.json` (parser: `scripts/lib/prefixes.mjs`, shared by studio library + `npm run photos`); legacy `photo-inbox/<slug>/` still works; processed originals in `photo-inbox/_done/` |
 | SSH key for git | `~/.ssh/id_ed25519_portfolio` |
 | Auto-sync log | `~/Library/Logs/portfolio-sync/sync.log` |
 
@@ -314,6 +314,17 @@ GitHub SSH push from background processes stalls on large payloads.
     figure's draft `plan` notes would ship, while Tina still dropped the whole
     list on save for want of a schema field. If a future field is notes-only,
     keep it out of the payload too.
+47. **Callout markers anchor on the dot.** `.pfig-callout` holds dot + label;
+    translating the whole button by -50% centred the PAIR on (x, y), so every
+    marker sat half a label-width off its target. Each `place-*` now offsets by
+    half the dot (0.8rem) on its own axis. Change the dot size, change that.
+48. **`heroZoom` is a studio field Tina doesn't know.** Same class as gotcha 41:
+    saving a project in TinaCMS drops it and the main photo snaps back to 1x.
+    Pages CMS has it. The hero image now sits in a clipping `.hero-frame` so
+    zoom crops at the rounded edge.
+49. **Restarting the studio writer by hand loses undo.** The journal is in
+    memory. `studio.sh` now kills whatever holds 4322 before starting, so a
+    hand-started writer can't block the next `npm run studio`.
 
 ## macOS gotchas
 

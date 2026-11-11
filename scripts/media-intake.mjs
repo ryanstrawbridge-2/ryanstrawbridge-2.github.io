@@ -2,7 +2,10 @@
 /**
  * Photo + video intake.  `npm run photos`
  *
- * Drop originals into photo-inbox/<project-slug>/ and run it. For each file:
+ * Drop originals into photo-inbox/ named PREFIX_title.ext and run it — the
+ * prefix picks the project (photo-prefixes.json: ABV_ -> actuated-ball-valves,
+ * Lift_ -> lifting-frame, ...) and the title becomes the filename. The older
+ * photo-inbox/<project-slug>/ folders still work. For each file:
  *   - bakes in EXIF rotation, then strips ALL metadata (GPS, camera, timestamps)
  *   - resizes so the long edge is at most 2400px
  *   - re-encodes (PNG stays PNG, everything else becomes JPEG q82)
@@ -41,6 +44,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, extname, basename, relative } from 'node:path';
 import sharp from 'sharp';
+import { loadPrefixes, parseInboxName } from './lib/prefixes.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const INBOX = join(ROOT, 'photo-inbox');
@@ -313,13 +317,28 @@ const runIntake = async () => {
     );
 
     if (loose.length > 0) {
-      if (slugArg) jobs.push({ slug: slugArg, dir: INBOX, files: loose.map((e) => e.name), consume: true });
-      else {
-        console.log(
-          `\n${loose.length} file(s) sit loose in ${relative(ROOT, INBOX)}/ with no project.\n` +
-            `  Put them in a subfolder named after a project, or run:\n` +
-            `    npm run photos -- <project-slug>\n`,
-        );
+      const prefixes = await loadPrefixes(ROOT);
+      if (slugArg) {
+        // Naming a project sends every loose file there, prefix or not.
+        jobs.push({ slug: slugArg, dir: INBOX, files: loose.map((e) => e.name), consume: true, prefixed: true });
+      } else {
+        // Route by PREFIX_. gen_ and unknown prefixes have no project to go to.
+        const bySlug = new Map();
+        const stranded = [];
+        for (const { name } of loose) {
+          const { slug } = parseInboxName(name, prefixes);
+          if (slug) bySlug.set(slug, [...(bySlug.get(slug) ?? []), name]);
+          else stranded.push(name);
+        }
+        for (const [slug, files] of bySlug) jobs.push({ slug, dir: INBOX, files, consume: true, prefixed: true });
+        if (stranded.length > 0) {
+          console.log(
+            `\n${stranded.length} file(s) in ${relative(ROOT, INBOX)}/ have no project prefix (or are gen_):\n` +
+              stranded.map((n) => `    ${n}`).join('\n') +
+              `\n  Rename to PREFIX_title (prefixes: ${[...prefixes.keys()].join(', ')}), or run:\n` +
+              `    npm run photos -- <project-slug>\n`,
+          );
+        }
       }
     }
     for (const folder of folders) {
@@ -331,7 +350,7 @@ const runIntake = async () => {
   }
 
   if (jobs.length === 0) {
-    console.log(`Nothing to do. Drop files into ${relative(ROOT, INBOX)}/<project-slug>/ and run again,`);
+    console.log(`Nothing to do. Drop files into ${relative(ROOT, INBOX)}/ named PREFIX_title (e.g. ABV_valve-test.jpg) and run again,`);
     console.log('or point the script at a folder you already have:');
     console.log('  npm run photos -- --library');
     console.log(`\nProjects: ${slugs.join(', ')}`);
@@ -365,7 +384,11 @@ const runIntake = async () => {
     for (const name of job.files.sort()) {
       const source = join(job.dir, name);
       const ext = extname(name).toLowerCase();
-      const stem = slugify(basename(name, extname(name))) || 'photo';
+      // Inbox files drop their PREFIX_; files read from elsewhere keep their
+      // whole name, because IMG_1234 is a camera name, not a prefix.
+      const stem = job.prefixed
+        ? parseInboxName(name, await loadPrefixes(ROOT)).title
+        : slugify(basename(name, extname(name))) || 'photo';
       let size;
       try {
         ({ size } = await stat(source));
@@ -391,6 +414,17 @@ const runIntake = async () => {
       if (!IMAGE_EXT.has(ext)) {
         console.log(`  · ${name} — not an image or video, left alone`);
         continue;
+      }
+
+      // Already imported from the studio library? Retire the original rather
+      // than adding the same photo twice.
+      if (job.prefixed && existsSync(outDir)) {
+        const have = (await readdir(outDir)).some((f) => basename(f, extname(f)) === `${job.slug}-${stem}`);
+        if (have) {
+          console.log(`  = ${name} — already in ${job.slug}/ (added from studio), moved to _done`);
+          await retire(source, name);
+          continue;
+        }
       }
 
       let encoded;
