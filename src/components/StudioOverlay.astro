@@ -27,25 +27,53 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       data-headings={JSON.stringify(headings)}
       hidden
     >
-      <div class="studio-bar">
-        <span class="studio-dot" />
-        <strong>Studio</strong>
-        <span class="studio-hint">{mode === 'home' ? 'drag to crop · pinch or ⌥scroll to zoom · hover to replace' : 'drag to crop · pinch or ⌥scroll to zoom · drop files anywhere'}</span>
-        <button type="button" class="studio-theme" title="Colours, corners and type">theme</button>
-        <button type="button" class="studio-text" aria-pressed="false" title="Click any text on the page to edit it">text</button>
-        <button type="button" class="studio-phone" title="See this page at phone width">phone</button>
-        <button type="button" class="studio-publish" title="Commit and push to the live site">publish</button>
-        <button type="button" class="studio-undo" title="Undo the last edit (⌘Z)" disabled>undo</button>
-        <button type="button" class="studio-library-open">library</button>
-        <button type="button" class="studio-off" title="Hide until reload">hide</button>
+      <div class="studio-bar" role="toolbar" aria-label="Studio">
+        <span class="studio-brand"><span class="studio-dot" />Studio</span>
+        <span class="studio-sep" />
+        <button type="button" class="studio-btn studio-library-open" title="Browse photos and video">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5" /><circle cx="9" cy="9" r="1.8" /><path d="m21 15-3.6-3.6a1.8 1.8 0 0 0-2.5 0L5 21" /></svg>
+          <span>Media</span>
+        </button>
+        <button type="button" class="studio-btn studio-text" aria-pressed="false" title="Click any text on the page to edit it">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4.5h16V7" /><path d="M12 4.5v15" /><path d="M9 19.5h6" /></svg>
+          <span>Text</span>
+        </button>
+        <button type="button" class="studio-btn studio-theme" title="Colours, corners and type">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" /><circle cx="15" cy="6" r="2" /><circle cx="9" cy="12" r="2" /><circle cx="17" cy="18" r="2" /></svg>
+          <span>Theme</span>
+        </button>
+        <button type="button" class="studio-btn studio-phone" title="See this page at phone width">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2" /><path d="M11 18h2" /></svg>
+          <span>Phone</span>
+        </button>
+        <span class="studio-sep" />
+        <button type="button" class="studio-btn studio-undo" title="Undo the last edit (⌘Z)" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+          <span class="studio-undo-label">Undo</span>
+        </button>
+        <span class="studio-help">
+          <button type="button" class="studio-btn studio-icon" aria-label="How to edit" aria-describedby="studio-hint">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M9.2 9.2a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.6-2.8 2.6" /><path d="M12 17h.01" /></svg>
+          </button>
+          <span class="studio-hint" id="studio-hint" role="tooltip">{mode === 'home' ? 'Drag a photo to crop · pinch or ⌥scroll to zoom · hover a photo to replace it' : 'Drag a photo to crop · pinch or ⌥scroll to zoom · drop files anywhere to add them · drop on the main photo to replace it'}</span>
+        </span>
+        <button type="button" class="studio-btn studio-primary studio-publish" title="Commit and push to the live site">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14V3.5" /><path d="m7.5 8 4.5-4.5L16.5 8" /><path d="M4 14.5v4A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-4" /></svg>
+          <span>Publish</span>
+        </button>
+        <button type="button" class="studio-btn studio-icon studio-off" title="Hide until reload" aria-label="Hide studio">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
       </div>
-      <div class="studio-toast" hidden />
+      <div class="studio-toast" role="status" aria-live="polite" hidden />
 
-      <div class="studio-theme-panel" hidden>
+      <div class="studio-panel studio-theme-panel" hidden>
         <header>
           <strong>Theme</strong>
-          <span class="studio-theme-note">applies site-wide</span>
-          <button type="button" class="studio-theme-close">close</button>
+          <span class="studio-theme-note">site-wide</span>
+          <button type="button" class="studio-btn studio-icon studio-theme-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
         </header>
         <div class="studio-theme-body">
           <label>Accent
@@ -54,73 +82,83 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           </label>
           <label>Corners
             <select class="studio-corners">
-              <option value="sharp">sharp</option>
-              <option value="soft">soft</option>
-              <option value="round">round</option>
+              <option value="sharp">Sharp</option>
+              <option value="soft">Soft</option>
+              <option value="round">Round</option>
             </select>
           </label>
           <label>Headings
             <select class="studio-headfont">
-              <option value="sans">sans</option>
-              <option value="serif">serif</option>
-              <option value="mono">mono</option>
+              <option value="sans">Sans</option>
+              <option value="serif">Serif</option>
+              <option value="mono">Mono</option>
             </select>
           </label>
           <label>Page width
             <select class="studio-width-setting">
-              <option value="narrow">narrow · 960</option>
-              <option value="standard">standard · 1100</option>
-              <option value="wide">wide · 1280</option>
+              <option value="narrow">Narrow · 960</option>
+              <option value="standard">Standard · 1100</option>
+              <option value="wide">Wide · 1280</option>
             </select>
           </label>
         </div>
-        <footer><span class="studio-theme-state">changes preview instantly and save as you make them</span></footer>
+        <footer><span class="studio-theme-state">Changes preview instantly and save as you make them.</span></footer>
       </div>
 
-      <div class="studio-phone-panel" hidden>
+      <div class="studio-panel studio-phone-panel" hidden>
         <header>
-          <strong>Phone</strong>
+          <strong>Phone preview</strong>
           <select class="studio-phone-size">
             <option value="390x844">iPhone 15 · 390</option>
-            <option value="375x812">iPhone SE/13 mini · 375</option>
+            <option value="375x812">iPhone SE / 13 mini · 375</option>
             <option value="430x932">iPhone Pro Max · 430</option>
             <option value="768x1024">iPad · 768</option>
           </select>
-          <button type="button" class="studio-phone-reload" title="Reload the preview">↻</button>
-          <button type="button" class="studio-phone-close">close</button>
+          <button type="button" class="studio-btn studio-icon studio-phone-reload" title="Reload the preview" aria-label="Reload">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></svg>
+          </button>
+          <button type="button" class="studio-btn studio-icon studio-phone-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
         </header>
         <iframe class="studio-phone-frame" title="Phone preview" />
       </div>
 
-      <div class="studio-publish-panel" hidden>
+      <div class="studio-panel studio-publish-panel" hidden>
         <header>
           <strong>Publish to the live site</strong>
-          <button type="button" class="studio-pub-close">close</button>
+          <button type="button" class="studio-btn studio-icon studio-pub-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
         </header>
         <label class="studio-pub-msg">
-          What changed?
-          <input type="text" placeholder="Content update" />
+          <span>What changed?</span>
+          <input type="text" class="studio-input" placeholder="Content update" />
         </label>
         <div class="studio-pub-log" hidden />
         <footer>
-          <span class="studio-pub-state">This commits and pushes everything saved. It goes live in about two minutes.</span>
-          <button type="button" class="studio-pub-go">publish</button>
+          <span class="studio-pub-state">Commits and pushes everything saved. Live in about two minutes.</span>
+          <button type="button" class="studio-btn studio-primary studio-pub-go">Publish now</button>
         </footer>
       </div>
       <div class="studio-drop" hidden><span>Drop to add to this project</span></div>
 
       <div class="studio-library" hidden>
         <header>
-          <strong>Photos &amp; video</strong>
-          <span class="studio-lib-path">portfolio-photos/ + what is already on the site</span>
-          <label>into <select class="studio-lib-section"></select></label>
-          <label>as <select class="studio-lib-width">
-            <option value="">page default</option>
-            <option value="full">full</option>
-            <option value="half">half</option>
-            <option value="third">third</option>
+          <div class="studio-lib-title">
+            <strong>Media library</strong>
+            <span class="studio-lib-target">Pick a file to add it to this page</span>
+          </div>
+          <label class="studio-lib-opt">Section <select class="studio-lib-section"></select></label>
+          <label class="studio-lib-opt">Width <select class="studio-lib-width">
+            <option value="">Page default</option>
+            <option value="full">Full</option>
+            <option value="half">Half</option>
+            <option value="third">Third</option>
           </select></label>
-          <button type="button" class="studio-lib-close">close</button>
+          <button type="button" class="studio-btn studio-icon studio-lib-close" aria-label="Close library">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
         </header>
         <div class="studio-lib-body">
           <nav class="studio-lib-folders" />
@@ -133,420 +171,538 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
 
 {enabled && (
 <style is:global is:inline>
+  /* Studio chrome. Dark in both site themes on purpose — editor chrome should
+     read as a tool sitting on top of the page, never as part of it, the same
+     way Figma's or Framer's toolbars do. Every colour comes from these tokens. */
+  :root {
+    --st-surface: rgb(24 24 27 / 0.94);
+    --st-solid: #18181b;
+    --st-well: rgb(255 255 255 / 0.05);
+    --st-hover: rgb(255 255 255 / 0.09);
+    --st-press: rgb(255 255 255 / 0.15);
+    --st-line: rgb(255 255 255 / 0.09);
+    --st-line-strong: rgb(255 255 255 / 0.16);
+    --st-text: #fafafa;
+    --st-muted: #a1a1aa;
+    --st-faint: #71717a;
+    --st-accent: #3b82f6;
+    --st-accent-strong: #2563eb;
+    --st-accent-tint: rgb(59 130 246 / 0.2);
+    --st-accent-ink: #bfdbfe;
+    --st-ok: #22c55e;
+    --st-danger: #ef4444;
+    --st-danger-tint: rgb(239 68 68 / 0.18);
+    --st-r-sm: 6px;
+    --st-r: 9px;
+    --st-r-lg: 14px;
+    --st-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --st-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+    --st-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+      0 16px 40px -12px rgb(0 0 0 / 0.6), 0 4px 12px -4px rgb(0 0 0 / 0.4);
+    --st-ease: cubic-bezier(0.2, 0, 0, 1);
+  }
+
   #studio[hidden] { display: none; }
 
+  /* --- shared controls --------------------------------------------------- */
+
+  #studio, .studio-tools, .studio-alt-edit, .studio-text-edit, .studio-zoom-badge {
+    font-family: var(--st-font);
+    -webkit-font-smoothing: antialiased;
+  }
+  #studio svg, .studio-tools svg {
+    width: 16px; height: 16px; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 1.75;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .studio-btn,
+  .studio-tools button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    height: 32px; padding: 0 0.7rem;
+    border: 0; border-radius: var(--st-r-sm);
+    background: transparent; color: var(--st-text);
+    font: 500 12.5px/1 var(--st-font); letter-spacing: 0.005em;
+    white-space: nowrap; cursor: pointer;
+    transition: background 120ms var(--st-ease), color 120ms var(--st-ease), opacity 120ms;
+  }
+  .studio-btn:hover,
+  .studio-tools button:hover { background: var(--st-hover); }
+  .studio-btn:active,
+  .studio-tools button:active { background: var(--st-press); }
+  .studio-btn:focus-visible,
+  .studio-tools button:focus-visible,
+  .studio-tools select:focus-visible,
+  #studio select:focus-visible,
+  #studio input:focus-visible {
+    outline: 2px solid var(--st-accent); outline-offset: 1px;
+  }
+  .studio-btn[aria-pressed='true'],
+  .studio-tools button[aria-pressed='true'] {
+    background: var(--st-accent-tint); color: var(--st-accent-ink);
+  }
+  .studio-btn[disabled],
+  .studio-tools button[disabled] { opacity: 0.38; cursor: default; background: transparent; }
+  .studio-icon { width: 32px; padding: 0; }
+  .studio-primary { background: var(--st-accent); color: white; padding: 0 0.85rem; }
+  .studio-primary:hover { background: var(--st-accent-strong); }
+  .studio-primary[disabled] { background: var(--st-accent); }
+
+  #studio select,
+  .studio-tools select {
+    height: 32px; padding: 0 1.7rem 0 0.6rem;
+    border: 1px solid var(--st-line); border-radius: var(--st-r-sm);
+    background: var(--st-well) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.45rem center / 14px;
+    color: var(--st-text); font: 500 12.5px/1 var(--st-font);
+    appearance: none; -webkit-appearance: none; cursor: pointer;
+  }
+  #studio select:hover,
+  .studio-tools select:hover { border-color: var(--st-line-strong); }
+  #studio select option,
+  .studio-tools select option { background: var(--st-solid); color: var(--st-text); }
+
+  .studio-input,
+  .studio-alt-edit input,
+  .studio-text-edit textarea {
+    width: 100%; box-sizing: border-box;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--st-line); border-radius: var(--st-r-sm);
+    background: var(--st-well); color: var(--st-text);
+    font: 13px/1.45 var(--st-font);
+  }
+  .studio-input:focus,
+  .studio-alt-edit input:focus,
+  .studio-text-edit textarea:focus {
+    outline: none; border-color: var(--st-accent);
+    box-shadow: 0 0 0 3px var(--st-accent-tint);
+  }
+  .studio-input::placeholder,
+  .studio-alt-edit input::placeholder { color: var(--st-faint); }
+
+  /* --- toolbar ----------------------------------------------------------- */
+
   .studio-bar {
-    position: fixed;
-    left: 50%;
-    bottom: 1rem;
-    transform: translateX(-50%);
+    position: fixed; left: 50%; bottom: 1.1rem; transform: translateX(-50%);
     z-index: 900;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.5rem 0.9rem;
-    border-radius: 999px;
-    background: rgb(17 17 17 / 0.92);
-    color: white;
-    font-size: 0.8rem;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.5);
-    backdrop-filter: blur(8px);
+    display: flex; align-items: center; gap: 2px;
+    padding: 5px;
+    border-radius: var(--st-r-lg);
+    background: var(--st-surface); color: var(--st-text);
+    box-shadow: var(--st-shadow);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    max-width: calc(100vw - 1.5rem);
+  }
+  .studio-brand {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0 0.6rem 0 0.55rem;
+    font: 600 12.5px/1 var(--st-font); letter-spacing: 0.01em;
   }
   .studio-dot {
     width: 7px; height: 7px; border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 0 3px rgb(74 222 128 / 0.2);
+    background: var(--st-ok); box-shadow: 0 0 0 3px rgb(34 197 94 / 0.22);
   }
-  .studio-bar.is-offline .studio-dot { background: #f87171; box-shadow: 0 0 0 3px rgb(248 113 113 / 0.2); }
-  .studio-hint { color: rgb(255 255 255 / 0.55); }
-  .studio-off,
-  .studio-undo,
-  .studio-library-open {
-    background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
-    border-radius: 999px; padding: 0.15rem 0.55rem; cursor: pointer; font-size: 0.75rem;
-    font-family: inherit;
-  }
-  .studio-off:hover,
-  .studio-undo:not([disabled]):hover { background: rgb(255 255 255 / 0.2); }
-  .studio-library-open:hover { background: rgb(255 255 255 / 0.2); }
-  /* Disabled rather than hidden: a control that appears and disappears as you
-     work is harder to find than one that is always in the same place. */
-  .studio-undo[disabled] { opacity: 0.35; cursor: default; }
-  .studio-library-open { background: #2563eb; }
-  .studio-library-open:hover { background: #1d4ed8; }
+  .studio-bar.is-offline .studio-dot { background: var(--st-danger); box-shadow: 0 0 0 3px var(--st-danger-tint); }
+  .studio-sep { width: 1px; height: 18px; margin: 0 4px; background: var(--st-line-strong); }
+  .studio-undo-label { max-width: 11rem; overflow: hidden; text-overflow: ellipsis; }
 
-  .studio-theme { background: #0891b2; }
-  .studio-theme:hover { background: #0e7490; }
-  .studio-theme-panel {
-    position: fixed; left: 1rem; bottom: 4rem; z-index: 905;
-    width: min(320px, calc(100vw - 2rem));
-    background: #111; color: #eee; border-radius: 12px;
-    box-shadow: 0 20px 60px rgb(0 0 0 / 0.45); font-size: 0.8rem; overflow: hidden;
+  .studio-help { position: relative; display: inline-flex; }
+  .studio-hint {
+    position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translate(-50%, 4px);
+    width: max-content; max-width: min(360px, 80vw);
+    padding: 0.55rem 0.75rem; border-radius: var(--st-r);
+    background: var(--st-solid); color: var(--st-muted); box-shadow: var(--st-shadow);
+    font: 12px/1.5 var(--st-font); text-align: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 140ms var(--st-ease), transform 140ms var(--st-ease);
   }
-  .studio-theme-panel header,
-  .studio-theme-panel footer {
+  .studio-help:hover .studio-hint,
+  .studio-help:focus-within .studio-hint { opacity: 1; transform: translate(-50%, 0); }
+  /* Offline is the one message that must be seen without hovering. */
+  .studio-bar.is-offline .studio-hint {
+    opacity: 1; transform: translate(-50%, 0);
+    color: #fecaca; background: #3f1d1d;
+  }
+
+  /* Narrow windows: icons only, so the bar never wraps over the page. */
+  @media (max-width: 760px) {
+    .studio-bar .studio-btn > span:not(.studio-undo-label) { display: none; }
+    .studio-bar .studio-btn { width: 32px; padding: 0; }
+    .studio-undo-label { display: none; }
+    .studio-brand { padding-right: 0.3rem; }
+  }
+
+  /* --- toast ------------------------------------------------------------- */
+
+  .studio-toast {
+    position: fixed; left: 50%; bottom: 4.6rem; transform: translateX(-50%);
+    z-index: 901;
+    display: flex; align-items: center; gap: 0.55rem;
+    padding: 0.55rem 0.85rem 0.55rem 0.7rem; border-radius: var(--st-r);
+    background: var(--st-solid); color: var(--st-text);
+    font: 500 12.5px/1.4 var(--st-font);
+    box-shadow: var(--st-shadow);
+    max-width: min(90vw, 640px);
+    animation: studio-rise 180ms var(--st-ease);
+  }
+  .studio-toast::before {
+    content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--st-ok);
+  }
+  .studio-toast[hidden] { display: none; }
+  .studio-toast.is-error { background: #2a1314; color: #fecaca; box-shadow: var(--st-shadow), 0 0 0 1px rgb(239 68 68 / 0.35); }
+  .studio-toast.is-error::before { background: var(--st-danger); }
+  @keyframes studio-rise { from { opacity: 0; transform: translate(-50%, 6px); } }
+
+  /* --- panels ------------------------------------------------------------ */
+
+  .studio-panel {
+    position: fixed; z-index: 905;
+    background: var(--st-solid); color: var(--st-text);
+    border-radius: var(--st-r-lg); box-shadow: var(--st-shadow);
+    font: 13px/1.45 var(--st-font); overflow: hidden;
+    animation: studio-pop 160ms var(--st-ease);
+  }
+  .studio-panel[hidden] { display: none; }
+  @keyframes studio-pop { from { opacity: 0; transform: translateY(6px) scale(0.985); } }
+  .studio-panel > header,
+  .studio-panel > footer {
     display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.55rem 0.7rem; background: rgb(255 255 255 / 0.06);
+    padding: 0.5rem 0.5rem 0.5rem 0.95rem;
   }
-  .studio-theme-panel header strong { flex: 1; }
-  .studio-theme-note,
-  .studio-theme-state { color: rgb(255 255 255 / 0.5); font-size: 0.72rem; }
-  .studio-theme-body { display: grid; gap: 0.7rem; padding: 0.8rem 0.7rem; }
-  .studio-theme-body label { display: grid; gap: 0.3rem; }
-  .studio-theme-body select,
-  .studio-theme-body input[type="color"] {
-    background: rgb(255 255 255 / 0.08); border: 0; border-radius: 6px;
-    padding: 0.3rem 0.4rem; color: inherit; font: inherit; width: 100%;
-    height: 2rem; cursor: pointer;
+  .studio-panel > header { border-bottom: 1px solid var(--st-line); min-height: 48px; box-sizing: border-box; }
+  .studio-panel > footer { border-top: 1px solid var(--st-line); padding: 0.65rem 0.65rem 0.65rem 0.95rem; }
+  .studio-panel > header strong { flex: 1; font-weight: 600; font-size: 13.5px; }
+
+  .studio-theme-panel { left: 1rem; bottom: 5rem; width: min(320px, calc(100vw - 2rem)); }
+  .studio-theme-note { color: var(--st-faint); font-size: 12px; }
+  .studio-theme-state { color: var(--st-faint); font-size: 12px; }
+  .studio-theme-body { display: grid; gap: 1rem; padding: 1rem 0.95rem; }
+  .studio-theme-body label {
+    display: grid; gap: 0.45rem;
+    color: var(--st-muted); font-size: 11.5px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.06em;
   }
-  .studio-swatches { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  .studio-theme-body select { width: 100%; text-transform: none; letter-spacing: 0; }
+  .studio-theme-body input[type='color'] {
+    width: 100%; height: 34px; padding: 3px;
+    border: 1px solid var(--st-line); border-radius: var(--st-r-sm);
+    background: var(--st-well); cursor: pointer;
+  }
+  .studio-swatches { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .studio-swatches button {
-    width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent;
-    cursor: pointer; padding: 0;
+    width: 24px; height: 24px; border-radius: 50%; padding: 0; cursor: pointer;
+    border: 0; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12) inset;
+    transition: transform 120ms var(--st-ease);
   }
-  .studio-swatches button[aria-pressed="true"] { border-color: white; }
-  .studio-theme-close {
-    background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
-    border-radius: 999px; padding: 0.15rem 0.55rem; cursor: pointer; font: inherit;
-  }
+  .studio-swatches button:hover { transform: scale(1.1); }
+  .studio-swatches button[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--st-solid), 0 0 0 4px var(--st-text); }
 
-  .studio-text[aria-pressed="true"] { background: #7c3aed; }
-  .studio-text-slot {
-    outline: 1px dashed rgb(124 58 237 / 0.55);
-    outline-offset: 3px; cursor: text; border-radius: 3px;
-  }
-  .studio-text-slot:hover { outline-style: solid; background: rgb(124 58 237 / 0.08); }
-  .studio-editing {
-    outline: 2px solid #7c3aed !important; outline-offset: 3px;
-    background: rgb(124 58 237 / 0.1);
-  }
-  .studio-text-edit {
-    position: absolute; z-index: 904; display: grid; gap: 0.35rem;
-    padding: 0.5rem; min-width: 280px;
-    background: #111; color: #eee; border-radius: 8px;
-    box-shadow: 0 14px 40px rgb(0 0 0 / 0.45); font-size: 0.78rem;
-    text-align: left;
-  }
-  .studio-text-edit textarea {
-    width: 100%; background: rgb(255 255 255 / 0.08); border: 0;
-    border-radius: 6px; padding: 0.4rem 0.5rem; color: inherit;
-    font: inherit; resize: vertical;
-  }
-  .studio-text-edit span { color: rgb(255 255 255 / 0.5); font-size: 0.7rem; }
-  .studio-text-edit button {
-    justify-self: start; background: #7c3aed; color: white; border: 0;
-    border-radius: 999px; padding: 0.2rem 0.7rem; cursor: pointer; font: inherit;
-  }
-
-  .studio-phone-panel {
-    position: fixed; right: 1rem; top: 1rem; z-index: 906;
-    background: #111; color: #eee; border-radius: 12px;
-    box-shadow: 0 20px 60px rgb(0 0 0 / 0.5); overflow: hidden;
-    font-size: 0.8rem;
-  }
-  .studio-phone-panel header {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.5rem 0.6rem; background: rgb(255 255 255 / 0.06);
-  }
-  .studio-phone-panel header strong { flex: 1; }
-  .studio-phone-panel select,
-  .studio-phone-panel button {
-    background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
-    border-radius: 999px; padding: 0.15rem 0.5rem; cursor: pointer; font: inherit;
-  }
+  .studio-phone-panel { right: 1rem; top: 1rem; z-index: 906; }
+  .studio-phone-panel select { max-width: 13rem; }
   /* Scaled down so a 844px-tall phone still fits beside the page on a laptop.
      The iframe keeps its real pixel size, so media queries inside it fire at
      the width being emulated rather than the width on screen. */
   .studio-phone-frame {
     display: block; border: 0; background: white;
-    transform: scale(var(--phone-scale, 0.62));
-    transform-origin: top left;
+    transform: scale(var(--phone-scale, 0.62)); transform-origin: top left;
   }
   .studio-phone-shell { overflow: hidden; }
 
-  .studio-publish { background: #16a34a; }
-  .studio-publish:hover { background: #15803d; }
-  .studio-publish[disabled] { opacity: 0.5; cursor: default; }
-
-  .studio-publish-panel {
-    position: fixed; right: 1rem; bottom: 4rem; z-index: 905;
-    width: min(540px, calc(100vw - 2rem));
-    background: #111; color: #eee; border-radius: 12px;
-    box-shadow: 0 20px 60px rgb(0 0 0 / 0.45);
-    font-size: 0.8rem; overflow: hidden;
-  }
-  .studio-publish-panel header,
-  .studio-publish-panel footer {
-    display: flex; align-items: center; gap: 0.6rem;
-    padding: 0.6rem 0.8rem; background: rgb(255 255 255 / 0.06);
-  }
-  .studio-publish-panel header strong { flex: 1; }
-  .studio-publish-panel footer { justify-content: space-between; }
-  .studio-pub-state { color: rgb(255 255 255 / 0.6); flex: 1; }
-  .studio-pub-msg { display: block; padding: 0.8rem; }
-  .studio-pub-msg input {
-    display: block; width: 100%; margin-top: 0.35rem;
-    background: rgb(255 255 255 / 0.08); border: 0; border-radius: 6px;
-    padding: 0.4rem 0.5rem; color: inherit; font: inherit;
-  }
+  .studio-publish-panel { right: 1rem; bottom: 5rem; width: min(520px, calc(100vw - 2rem)); }
+  .studio-publish-panel > footer { justify-content: space-between; }
+  .studio-pub-state { color: var(--st-muted); flex: 1; font-size: 12px; }
+  .studio-pub-msg { display: grid; gap: 0.45rem; padding: 0.95rem; }
+  .studio-pub-msg > span { color: var(--st-muted); font-size: 12px; font-weight: 500; }
   .studio-pub-log {
-    margin: 0 0.8rem 0.8rem; padding: 0.5rem 0.6rem; max-height: 220px;
-    overflow: auto; background: #000; border-radius: 6px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.72rem; line-height: 1.5; white-space: pre-wrap;
-    color: rgb(255 255 255 / 0.8);
+    margin: 0 0.95rem 0.95rem; padding: 0.65rem 0.75rem; max-height: 220px;
+    overflow: auto; background: #09090b; border: 1px solid var(--st-line); border-radius: var(--st-r-sm);
+    font: 11.5px/1.55 var(--st-mono); white-space: pre-wrap; color: #d4d4d8;
   }
-  .studio-pub-go {
-    background: #16a34a; color: white; border: 0; border-radius: 999px;
-    padding: 0.3rem 0.9rem; cursor: pointer; font: inherit;
+  .studio-pub-log[hidden] { display: none; }
+
+  /* --- inline text editing ----------------------------------------------- */
+
+  .studio-text-slot {
+    outline: 1px dashed rgb(59 130 246 / 0.55);
+    outline-offset: 4px; cursor: text; border-radius: 3px;
+    transition: background 120ms, outline-color 120ms;
   }
-  .studio-pub-go[disabled] { opacity: 0.5; cursor: default; }
-  .studio-pub-close {
-    background: rgb(255 255 255 / 0.1); color: inherit; border: 0;
-    border-radius: 999px; padding: 0.15rem 0.55rem; cursor: pointer; font: inherit;
+  .studio-text-slot:hover { outline-style: solid; outline-color: var(--st-accent); background: rgb(59 130 246 / 0.07); }
+  .studio-editing {
+    outline: 2px solid var(--st-accent) !important; outline-offset: 4px;
+    background: rgb(59 130 246 / 0.08);
   }
+  .studio-text-edit {
+    position: absolute; z-index: 904; display: grid; gap: 0.5rem;
+    padding: 0.6rem; min-width: 300px;
+    background: var(--st-solid); color: var(--st-text);
+    border-radius: var(--st-r); box-shadow: var(--st-shadow);
+    font-size: 13px; text-align: left;
+  }
+  .studio-text-edit textarea { resize: vertical; font-family: var(--st-mono); font-size: 12.5px; }
+  .studio-text-edit span { color: var(--st-faint); font-size: 11.5px; }
+  .studio-text-edit button {
+    justify-self: end; height: 30px; padding: 0 0.85rem;
+    background: var(--st-accent); color: white; border: 0; border-radius: var(--st-r-sm);
+    font: 500 12.5px/1 var(--st-font); cursor: pointer;
+  }
+  .studio-text-edit button:hover { background: var(--st-accent-strong); }
+
+  /* --- drop target ------------------------------------------------------- */
+
+  .studio-drop {
+    position: fixed; inset: 0.6rem; z-index: 899;
+    display: grid; place-items: center;
+    background: rgb(59 130 246 / 0.08);
+    border: 2px dashed rgb(59 130 246 / 0.7); border-radius: 18px;
+    pointer-events: none;
+  }
+  .studio-drop span {
+    padding: 0.7rem 1.1rem; border-radius: var(--st-r);
+    background: var(--st-solid); color: var(--st-text); box-shadow: var(--st-shadow);
+    font: 600 14px/1 var(--st-font);
+  }
+  .studio-drop[hidden] { display: none; }
+
+  /* --- library ----------------------------------------------------------- */
+
+  .studio-library {
+    position: fixed; left: 0.75rem; right: 0.75rem; bottom: 0.75rem;
+    height: min(64vh, 580px);
+    z-index: 902;
+    display: flex; flex-direction: column;
+    background: var(--st-solid); color: var(--st-text);
+    border-radius: 16px; box-shadow: var(--st-shadow);
+    font: 13px/1.4 var(--st-font);
+    overflow: hidden;
+    animation: studio-pop 180ms var(--st-ease);
+  }
+  .studio-library[hidden] { display: none; }
+  .studio-library header {
+    display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+    padding: 0.6rem 0.6rem 0.6rem 1.1rem;
+    border-bottom: 1px solid var(--st-line);
+  }
+  .studio-lib-title { display: grid; gap: 0.15rem; margin-right: auto; }
+  .studio-lib-title strong { font-size: 14px; font-weight: 600; }
+  .studio-lib-target { color: var(--st-muted); font-size: 12px; }
+  .studio-library.is-hero .studio-lib-target { color: var(--st-accent-ink); }
+  .studio-lib-opt {
+    display: flex; align-items: center; gap: 0.45rem;
+    color: var(--st-muted); font-size: 12px; font-weight: 500;
+  }
+  .studio-lib-opt[hidden] { display: none; }
+
+  .studio-lib-body { display: flex; min-height: 0; flex: 1; }
+  .studio-lib-folders {
+    width: 240px; flex: none; overflow-y: auto;
+    border-right: 1px solid var(--st-line);
+    padding: 0.5rem;
+    background: rgb(255 255 255 / 0.015);
+  }
+  .studio-lib-folders button {
+    display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+    width: 100%; height: auto; min-height: 32px; padding: 0.35rem 0.6rem;
+    text-align: left; border: 0; border-radius: var(--st-r-sm);
+    background: transparent; color: var(--st-muted);
+    font: 500 12.5px/1.3 var(--st-font); cursor: pointer;
+  }
+  .studio-lib-folders button:hover { background: var(--st-hover); color: var(--st-text); }
+  .studio-lib-folders button[aria-current='true'] { background: var(--st-accent-tint); color: var(--st-accent-ink); }
+  .studio-lib-folders .count {
+    flex: none; min-width: 1.4rem; padding: 0.1rem 0.35rem; border-radius: 999px;
+    background: var(--st-well); color: var(--st-faint);
+    font-size: 11px; text-align: center; font-variant-numeric: tabular-nums;
+  }
+  .studio-lib-heading {
+    margin: 0.9rem 0 0.3rem; padding: 0 0.6rem;
+    font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--st-faint);
+  }
+  .studio-lib-heading:first-child { margin-top: 0.35rem; }
+  .studio-lib-note {
+    margin: 0.9rem 0.35rem 0.35rem; padding: 0.65rem 0.7rem;
+    border: 1px dashed var(--st-line-strong); border-radius: var(--st-r-sm);
+    color: var(--st-faint); font-size: 11.5px; line-height: 1.5;
+  }
+  .studio-lib-note code {
+    font: 11px var(--st-mono); color: var(--st-muted);
+    background: var(--st-well); padding: 0.05rem 0.25rem; border-radius: 4px;
+  }
+
+  .studio-lib-grid {
+    flex: 1; overflow-y: auto; padding: 0.9rem;
+    display: grid; gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    align-content: start;
+  }
+  .studio-lib-tile {
+    position: relative; padding: 0; border: 0; cursor: pointer;
+    background: var(--st-well); border-radius: var(--st-r); overflow: hidden;
+    display: flex; flex-direction: column; text-align: left;
+    font: inherit; color: inherit;
+    box-shadow: 0 0 0 1px var(--st-line);
+    transition: box-shadow 120ms var(--st-ease), transform 120ms var(--st-ease);
+  }
+  .studio-lib-tile:hover { box-shadow: 0 0 0 2px var(--st-accent); transform: translateY(-1px); }
+  .studio-lib-tile:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--st-accent), 0 0 0 5px var(--st-accent-tint); }
+  .studio-lib-tile img {
+    width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
+    background: repeating-conic-gradient(rgb(255 255 255 / 0.04) 0 25%, transparent 0 50%) 0 0 / 16px 16px;
+  }
+  .studio-lib-tile .meta {
+    display: grid; gap: 0.1rem;
+    padding: 0.45rem 0.55rem 0.55rem;
+    font-size: 11px; line-height: 1.3; color: var(--st-faint);
+  }
+  .studio-lib-tile .meta b {
+    color: var(--st-text); font-weight: 500; font-size: 11.5px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .studio-lib-tile .badge {
+    position: absolute; top: 0.4rem; right: 0.4rem;
+    padding: 0.18rem 0.45rem; border-radius: 999px;
+    font: 600 10px/1 var(--st-font); letter-spacing: 0.02em;
+    background: rgb(22 163 74 / 0.92); color: white;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+  }
+  .studio-lib-tile .badge.kind { background: rgb(0 0 0 / 0.72); left: 0.4rem; right: auto; }
+  .studio-lib-tile[disabled] { opacity: 0.5; cursor: progress; }
+  .studio-lib-empty { color: var(--st-muted); font-size: 13px; padding: 1rem; grid-column: 1 / -1; }
+
+  @media (max-width: 700px) {
+    .studio-lib-folders { width: 150px; }
+  }
+
+  /* --- per-photo toolbar (gallery, home slots, main photo) -------------- */
+
+  .studio-tools {
+    position: absolute; top: 0.6rem; left: 0.6rem;
+    max-width: calc(100% - 1.2rem);
+    z-index: 5;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 2px;
+    padding: 4px;
+    border-radius: var(--st-r);
+    background: var(--st-surface); color: var(--st-text);
+    box-shadow: var(--st-shadow);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    opacity: 0; transform: translateY(-3px);
+    transition: opacity 140ms var(--st-ease), transform 140ms var(--st-ease);
+    pointer-events: none;
+    line-height: 1;
+  }
+  figure[data-studio-index]:hover .studio-tools,
+  .studio-slot:hover .studio-tools,
+  .studio-tools:focus-within { opacity: 1; transform: none; pointer-events: auto; }
+
+  .studio-tools button { height: 28px; padding: 0 0.55rem; font-size: 12px; }
+  .studio-tools button.studio-tool-icon { width: 28px; padding: 0; }
+  .studio-tools select { height: 28px; font-size: 12px; }
+  .studio-tools .studio-danger:hover { background: var(--st-danger-tint); color: #fca5a5; }
+  .studio-tools .studio-tool-sep { width: 1px; height: 16px; margin: 0 3px; background: var(--st-line-strong); }
+
+  /* Segmented control: one choice of several, sitting in one well. */
+  .studio-seg {
+    display: inline-flex; gap: 2px; padding: 2px;
+    border-radius: 7px; background: var(--st-well);
+  }
+  .studio-seg button { height: 24px; padding: 0 0.55rem; border-radius: 5px; color: var(--st-muted); }
+  .studio-seg button[aria-pressed='true'] { background: var(--st-press); color: var(--st-text); }
+
+  .studio-slot-path,
+  .studio-tool-label {
+    padding: 0 0.5rem;
+    font: 600 10.5px/1 var(--st-font); letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--st-muted); align-self: center;
+  }
+  .studio-slot-path { font-family: var(--st-mono); text-transform: none; letter-spacing: 0; font-weight: 500; }
 
   .studio-grip { cursor: grab; }
   .studio-grip:active { cursor: grabbing; }
+
   /* While rearranging, nothing else on the page should react to the pointer —
      otherwise crossing a photo starts a crop under the drag. */
   body.studio-rearranging { user-select: none; }
   body.studio-rearranging .studio-slot img,
   body.studio-rearranging .studio-slot video { pointer-events: none; }
   .studio-dragging-tile { opacity: 0.45; }
-  .studio-drop-target { outline: 3px solid #2563eb; outline-offset: -3px; }
-
-  .studio-zoom-badge {
-    position: absolute; right: 0.5rem; bottom: 0.5rem; z-index: 3;
-    background: rgb(17 17 17 / 0.82); color: white;
-    font-size: 0.7rem; font-variant-numeric: tabular-nums;
-    padding: 0.1rem 0.4rem; border-radius: 999px; cursor: pointer;
-    pointer-events: auto;
-  }
-  .studio-zoom-badge:hover { background: rgb(37 99 235 / 0.95); }
-
-  .studio-toast {
-    position: fixed; left: 50%; bottom: 3.6rem; transform: translateX(-50%);
-    z-index: 901; padding: 0.45rem 0.8rem; border-radius: 8px;
-    background: rgb(17 17 17 / 0.92); color: white;
-    font: 0.78rem ui-sans-serif, system-ui, sans-serif;
-    box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.5);
-    max-width: min(90vw, 640px);
-  }
-  .studio-toast[hidden] { display: none; }
-  .studio-toast.is-error { background: #b91c1c; }
-
-  .studio-drop {
-    position: fixed; inset: 0; z-index: 899;
-    display: grid; place-items: center;
-    background: rgb(37 99 235 / 0.12);
-    border: 3px dashed rgb(37 99 235 / 0.7);
-    font: 600 1.1rem ui-sans-serif, system-ui, sans-serif;
-    color: #1d4ed8;
-    pointer-events: none;
-  }
-  .studio-drop[hidden] { display: none; }
-
-  /* --- library panel ------------------------------------------------------ */
-
-  .studio-library {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    height: min(62vh, 560px);
-    z-index: 902;
-    display: flex; flex-direction: column;
-    background: rgb(20 20 20 / 0.97);
-    color: white;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    box-shadow: 0 -18px 50px -12px rgb(0 0 0 / 0.6);
-    backdrop-filter: blur(10px);
-  }
-  .studio-library[hidden] { display: none; }
-
-  .studio-library header {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.7rem 1rem;
-    border-bottom: 1px solid rgb(255 255 255 / 0.12);
-    font-size: 0.82rem;
-    flex-wrap: wrap;
-  }
-  .studio-lib-path { color: rgb(255 255 255 / 0.4); font-family: ui-monospace, monospace; font-size: 0.75rem; }
-  .studio-library header label { display: flex; align-items: center; gap: 0.3rem; color: rgb(255 255 255 / 0.6); }
-  .studio-library select {
-    background: rgb(255 255 255 / 0.1); color: white;
-    border: 1px solid rgb(255 255 255 / 0.15); border-radius: 5px;
-    padding: 0.2rem 0.35rem; font: inherit; font-size: 0.78rem;
-  }
-  .studio-library select option { background: #1a1a1a; }
-  .studio-lib-close {
-    margin-left: auto;
-    background: rgb(255 255 255 / 0.1); color: white; border: 0;
-    border-radius: 999px; padding: 0.25rem 0.7rem; cursor: pointer; font: inherit; font-size: 0.78rem;
-  }
-  .studio-lib-close:hover { background: rgb(255 255 255 / 0.2); }
-
-  .studio-lib-body { display: flex; min-height: 0; flex: 1; }
-
-  .studio-lib-folders {
-    width: 230px; flex: none; overflow-y: auto;
-    border-right: 1px solid rgb(255 255 255 / 0.12);
-    padding: 0.5rem;
-  }
-  .studio-lib-folders button {
-    display: flex; justify-content: space-between; gap: 0.5rem;
-    width: 100%; text-align: left;
-    background: transparent; color: rgb(255 255 255 / 0.75); border: 0;
-    border-radius: 6px; padding: 0.4rem 0.55rem; cursor: pointer;
-    font: inherit; font-size: 0.78rem;
-  }
-  .studio-lib-folders button:hover { background: rgb(255 255 255 / 0.08); color: white; }
-  .studio-lib-folders button[aria-current='true'] { background: #2563eb; color: white; }
-  .studio-lib-heading {
-    margin: 0.7rem 0 0.25rem; padding: 0 0.55rem;
-    font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.08em;
-    color: rgb(255 255 255 / 0.35);
-  }
-  .studio-lib-heading:first-child { margin-top: 0.2rem; }
-  .studio-lib-folders .count { opacity: 0.5; }
-
-  .studio-lib-grid {
-    flex: 1; overflow-y: auto; padding: 0.75rem;
-    display: grid; gap: 0.6rem;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    align-content: start;
-  }
-  .studio-lib-tile {
-    position: relative; padding: 0; border: 0; cursor: pointer;
-    background: rgb(255 255 255 / 0.06); border-radius: 8px; overflow: hidden;
-    display: flex; flex-direction: column; text-align: left;
-    font: inherit;
-  }
-  .studio-lib-tile:hover { outline: 2px solid #2563eb; outline-offset: 1px; }
-  .studio-lib-tile img {
-    width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
-    background: rgb(255 255 255 / 0.05);
-  }
-  .studio-lib-tile .meta {
-    padding: 0.3rem 0.4rem 0.4rem;
-    font-size: 0.66rem; line-height: 1.25;
-    color: rgb(255 255 255 / 0.65);
-    word-break: break-word;
-  }
-  .studio-lib-tile .meta b { display: block; color: white; font-weight: 500; }
-  .studio-lib-tile .badge {
-    position: absolute; top: 0.3rem; right: 0.3rem;
-    padding: 0.1rem 0.35rem; border-radius: 999px;
-    font-size: 0.6rem; background: #16a34a; color: white;
-  }
-  .studio-lib-tile .badge.kind { background: rgb(0 0 0 / 0.7); left: 0.3rem; right: auto; }
-  .studio-lib-tile[disabled] { opacity: 0.5; cursor: progress; }
-  .studio-lib-empty { color: rgb(255 255 255 / 0.5); font-size: 0.82rem; padding: 1rem; }
-
-  /* --- home page slots ---------------------------------------------------- */
-
-  .studio-slot { position: relative; }
-  .studio-slot:hover img,
-  .studio-slot:hover video {
-    outline: 2px solid rgb(37 99 235 / 0.9);
-    outline-offset: 2px;
-  }
-  .studio-slot-over {
-    outline: 3px dashed #2563eb;
-    outline-offset: 3px;
-    background: rgb(37 99 235 / 0.08);
-  }
-  .studio-slot-path {
-    font-size: 0.62rem;
-    padding: 0.3rem 0.4rem;
-    border-radius: 5px;
-    background: rgb(0 0 0 / 0.7);
-    color: rgb(255 255 255 / 0.75);
-    font-family: ui-monospace, monospace;
-    align-self: center;
-  }
-  .studio-slot[data-tina-field*='photo'] img { cursor: grab; }
-  .studio-slot.is-dragging img { cursor: grabbing; }
-
-  /* --- per-figure editing ------------------------------------------------ */
-
-  figure[data-studio-index] { position: relative; }
-
-  figure[data-studio-index]:hover > img,
-  figure[data-studio-index]:hover > video {
-    outline: 2px solid rgb(37 99 235 / 0.9);
-    outline-offset: 2px;
-  }
-
-  figure[data-studio-index][data-studio-kind='image'] > img { cursor: grab; }
-  figure[data-studio-index].is-dragging > img { cursor: grabbing; }
-  /* The lightbox binds click on any img in the root; suppress it mid-drag. */
-  figure[data-studio-index].is-dragging { pointer-events: auto; }
-
-  .studio-tools {
-    position: absolute;
-    top: 0.4rem; left: 0.4rem; right: 0.4rem;
-    z-index: 5;
-    display: flex; flex-wrap: wrap; gap: 0.25rem;
-    opacity: 0; transition: opacity 120ms ease;
-    pointer-events: none;
-    font-family: ui-sans-serif, system-ui, sans-serif;
-  }
-  figure[data-studio-index]:hover .studio-tools,
-  .studio-slot:hover .studio-tools,
-  .studio-tools:focus-within { opacity: 1; pointer-events: auto; }
-
-  .studio-tools button,
-  .studio-tools select {
-    font-size: 0.68rem; line-height: 1;
-    padding: 0.3rem 0.45rem;
-    border: 0; border-radius: 5px;
-    background: rgb(17 17 17 / 0.86); color: white;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .studio-tools button:hover,
-  .studio-tools select:hover { background: rgb(17 17 17 / 0.98); }
-  .studio-tools button[aria-pressed='true'] { background: #2563eb; }
-  .studio-tools .studio-danger:hover { background: #b91c1c; }
+  .studio-drop-target { outline: 2px solid var(--st-accent); outline-offset: -2px; }
 
   .studio-alt-edit {
-    position: absolute;
-    left: 0.4rem; right: 0.4rem; bottom: 0.4rem;
-    z-index: 6;
-    display: flex; gap: 0.3rem;
-    font-family: ui-sans-serif, system-ui, sans-serif;
+    position: absolute; left: 0.6rem; right: 0.6rem; bottom: 0.6rem; z-index: 6;
+    display: flex; gap: 0.35rem; padding: 0.35rem;
+    border-radius: var(--st-r); background: var(--st-surface); box-shadow: var(--st-shadow);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
-  .studio-alt-edit input {
-    flex: 1; min-width: 0;
-    font: inherit; font-size: 0.72rem;
-    padding: 0.35rem 0.45rem;
-    border: 1px solid rgb(255 255 255 / 0.2);
-    border-radius: 5px;
-    background: rgb(17 17 17 / 0.95);
-    color: white;
-  }
-  .studio-alt-edit input:focus { outline: 2px solid #2563eb; outline-offset: 0; }
+  .studio-alt-edit input { flex: 1; min-width: 0; padding: 0.45rem 0.6rem; }
   .studio-alt-edit button {
-    font: inherit; font-size: 0.7rem;
-    padding: 0.35rem 0.55rem;
-    border: 0; border-radius: 5px;
-    background: #2563eb; color: white; cursor: pointer;
+    flex: none; height: auto; padding: 0 0.85rem;
+    border: 0; border-radius: var(--st-r-sm);
+    background: var(--st-accent); color: white;
+    font: 500 12.5px/1 var(--st-font); cursor: pointer;
   }
+  .studio-alt-edit button:hover { background: var(--st-accent-strong); }
+
+  .studio-zoom-badge {
+    position: absolute; right: 0.6rem; bottom: 0.6rem; z-index: 3;
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    height: 24px; padding: 0 0.5rem; border-radius: 999px;
+    background: var(--st-surface); color: var(--st-text); box-shadow: var(--st-shadow);
+    font: 600 11px/1 var(--st-font); font-variant-numeric: tabular-nums;
+    cursor: pointer; pointer-events: auto;
+  }
+  .studio-zoom-badge::after { content: 'reset'; color: var(--st-faint); font-weight: 500; }
+  .studio-zoom-badge:hover { background: var(--st-accent); }
+  .studio-zoom-badge:hover::after { color: white; }
+  .studio-zoom-badge[hidden] { display: none; }
 
   .studio-crosshair {
     position: absolute; z-index: 4;
-    width: 18px; height: 18px; margin: -9px 0 0 -9px;
-    border: 2px solid white; border-radius: 50%;
-    box-shadow: 0 0 0 2px rgb(0 0 0 / 0.5);
+    width: 22px; height: 22px; margin: -11px 0 0 -11px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45), 0 0 0 4px rgb(59 130 246 / 0.35), 0 2px 8px rgb(0 0 0 / 0.4);
     pointer-events: none;
-    opacity: 0; transition: opacity 120ms ease;
+    opacity: 0; transition: opacity 120ms var(--st-ease);
+  }
+  .studio-crosshair::after {
+    content: ''; position: absolute; left: 50%; top: 50%;
+    width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: white;
   }
   figure[data-studio-index]:hover .studio-crosshair,
   figure[data-studio-index].is-dragging .studio-crosshair,
   .studio-slot:hover .studio-crosshair,
   .studio-slot.is-dragging .studio-crosshair { opacity: 1; }
   figure.g-full .studio-crosshair { display: none; }
+
+  /* --- hover outlines ---------------------------------------------------- */
+
+  .studio-slot { position: relative; }
+  .studio-slot:hover img,
+  .studio-slot:hover video,
+  figure[data-studio-index]:hover > .gallery-frame {
+    outline: 2px solid rgb(59 130 246 / 0.9);
+    outline-offset: 2px;
+  }
+  .studio-slot-over { outline: 2px dashed var(--st-accent); outline-offset: 4px; background: rgb(59 130 246 / 0.06); }
+  .studio-slot[data-tina-field*='photo'] img,
+  .studio-hero img { cursor: grab; }
+  .studio-slot.is-dragging img { cursor: grabbing; }
+  /* The main photo's frame clips its own outline, so draw it inside. */
+  .studio-hero:hover img { outline: none; }
+  .studio-hero:hover { box-shadow: 0 0 0 2px rgb(59 130 246 / 0.9), var(--shadow-lg); }
+
+  figure[data-studio-index] { position: relative; }
+  figure[data-studio-index][data-studio-kind='image'] img { cursor: grab; }
+  figure[data-studio-index].is-dragging img { cursor: grabbing; }
+  /* The lightbox binds click on any img in the root; suppress it mid-drag. */
+  figure[data-studio-index].is-dragging { pointer-events: auto; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .studio-toast, .studio-panel, .studio-library { animation: none; }
+    .studio-tools, .studio-hint { transition: none; }
+  }
 </style>
 )}
 
@@ -586,6 +742,37 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     const size = (n) =>
       n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
 
+    // Stroke icons, 24-unit grid, drawn in currentColor. Inline so the overlay
+    // has no asset requests and nothing here can reach the production build.
+    const ICON = {
+      left: '<path d="m15 18-6-6 6-6"/>',
+      right: '<path d="m9 18 6-6-6-6"/>',
+      trash: '<path d="M4 7h16"/><path d="M9 7V4.5h6V7"/><path d="M6.5 7l.8 12.5a1.5 1.5 0 0 0 1.5 1.5h6.4a1.5 1.5 0 0 0 1.5-1.5L17.5 7"/><path d="M10 11v6M14 11v6"/>',
+      alt: '<path d="M4 6h16M4 12h11M4 18h7"/>',
+      replace: '<path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 15.5"/><path d="M4 20v-4.5h4.5"/>',
+      plus: '<path d="M12 5v14M5 12h14"/>',
+      grip: '<circle cx="9" cy="6" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="18" r="1.2"/>',
+    };
+    const svg = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[name]}</svg>`;
+
+    /** Toolbar button. Icon-only buttons carry their name in aria-label. */
+    const toolButton = ({ icon, text, title, className = '' }) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      if (title) button.title = title;
+      if (icon && !text) {
+        button.className = `studio-tool-icon ${className}`.trim();
+        button.setAttribute('aria-label', title || icon);
+        button.innerHTML = svg(icon);
+      } else {
+        if (className) button.className = className;
+        button.innerHTML = icon ? svg(icon) : '';
+        button.append(text);
+      }
+      return button;
+    };
+    const toolSep = () => Object.assign(document.createElement('span'), { className: 'studio-tool-sep' });
+
     let toastTimer;
     const toast = (message, isError = false) => {
       toastEl.textContent = message;
@@ -607,7 +794,8 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     const setUndo = (state) => {
       if (!undoBtn || !state) return;
       undoBtn.disabled = !state.depth;
-      undoBtn.textContent = state.next ? `undo ${state.next}` : 'undo';
+      const labelEl = undoBtn.querySelector('.studio-undo-label');
+      if (labelEl) labelEl.textContent = state.next ? `Undo ${state.next}` : 'Undo';
       undoBtn.title = state.next
         ? `Undo: ${state.next} (⌘Z)`
         : 'Nothing to undo yet';
@@ -1156,33 +1344,40 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       tools.className = 'studio-tools';
 
       const widths = ['full', 'half', 'third'];
+      const seg = document.createElement('div');
+      seg.className = 'studio-seg';
+      seg.setAttribute('role', 'group');
+      seg.setAttribute('aria-label', 'Width');
       for (const width of widths) {
         const button = document.createElement('button');
         button.type = 'button';
-        button.textContent = width;
+        button.dataset.value = width;
+        button.textContent = width[0].toUpperCase() + width.slice(1);
+        button.title = `${width} width`;
         button.setAttribute('aria-pressed', String(figure.dataset.studioWidth === width));
         button.addEventListener('click', async () => {
           // Change the page first so the new layout is on screen immediately;
           // the save and HMR reload only confirm it.
           for (const w of widths) figure.classList.toggle(`g-${w}`, w === width);
           figure.dataset.studioWidth = width;
-          for (const sibling of tools.querySelectorAll('button[aria-pressed]')) {
-            sibling.setAttribute('aria-pressed', String(sibling.textContent === width));
+          for (const sibling of seg.querySelectorAll('button')) {
+            sibling.setAttribute('aria-pressed', String(sibling.dataset.value === width));
           }
           try {
             await post('/gallery/patch', { index, patch: { width } });
             toast(`width → ${width}`);
           } catch (error) { toast(error.message, true); }
         });
-        tools.appendChild(button);
+        seg.appendChild(button);
       }
+      tools.appendChild(seg);
 
       // Frame shape. 'auto' is 4:3 for half/third and natural height for full,
       // which is how every existing row already renders — so leaving this
       // alone changes nothing.
       if (kind === 'image') {
         const shapes = [
-          ['auto', 'shape: auto'], ['1/1', 'square'], ['4/3', '4:3'], ['3/2', '3:2'],
+          ['auto', 'Auto shape'], ['1/1', 'Square'], ['4/3', '4:3'], ['3/2', '3:2'],
           ['16/9', '16:9'], ['3/4', '3:4 tall'], ['2/3', '2:3 tall'], ['9/16', '9:16 tall'],
         ];
         const shape = document.createElement('select');
@@ -1211,9 +1406,9 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       if (HEADINGS.length > 0) {
         const select = document.createElement('select');
         select.title = 'Which section this sits in';
-        const bottom = new Option('↓ bottom of page', '');
+        const bottom = new Option('Bottom of page', '');
         select.appendChild(bottom);
-        for (const id of HEADINGS) select.appendChild(new Option(`in: ${label(id)}`, id));
+        for (const id of HEADINGS) select.appendChild(new Option(`In ${label(id)}`, id));
         select.value = figure.dataset.studioSection || '';
         select.addEventListener('change', async () => {
           try {
@@ -1227,10 +1422,8 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         tools.appendChild(select);
       }
 
-      const altBtn = document.createElement('button');
-      altBtn.type = 'button';
-      altBtn.textContent = 'alt';
-      altBtn.title = 'Edit the description screen readers announce';
+      tools.appendChild(toolSep());
+      const altBtn = toolButton({ icon: 'alt', text: 'Alt', title: 'Edit the description screen readers announce' });
       altBtn.addEventListener('click', () => {
         editAlt(figure, figure.dataset.studioAlt ?? '', async (value) => {
           await post('/gallery/patch', { index, patch: { alt: value } });
@@ -1239,11 +1432,8 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       });
       tools.appendChild(altBtn);
 
-      const mover = (text, delta, title) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = text;
-        button.title = title;
+      const mover = (icon, delta, title) => {
+        const button = toolButton({ icon, title });
         button.addEventListener('click', async () => {
           try {
             await post('/gallery/move', { from: index, to: Math.max(0, index + delta) });
@@ -1252,14 +1442,10 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         });
         return button;
       };
-      tools.appendChild(mover('←', -1, 'Move earlier'));
-      tools.appendChild(mover('→', 1, 'Move later'));
+      tools.appendChild(mover('left', -1, 'Move earlier'));
+      tools.appendChild(mover('right', 1, 'Move later'));
 
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'studio-danger';
-      remove.textContent = '✕';
-      remove.title = 'Remove from the gallery';
+      const remove = toolButton({ icon: 'trash', title: 'Remove from the gallery', className: 'studio-danger' });
       remove.addEventListener('click', async () => {
         if (!confirm('Remove this from the gallery?\n\nIf nothing else uses the file and it was never committed, it is deleted too.')) return;
         try {
@@ -1391,6 +1577,185 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       }, true);
     }
 
+    // -- project main photo (hero) ----------------------------------------
+    //
+    // Same gestures as a gallery photo — drag to crop, pinch or ⌥scroll to
+    // zoom — plus replace (library or a file dropped straight on it), frame
+    // shape and description. Writes top-level frontmatter: hero, heroAlt,
+    // heroFocalPoint, heroZoom, heroAspect.
+    let heroTarget = false; // true while the library is choosing a new main photo
+    const heroWrap = MODE === 'project' ? document.querySelector('[data-studio-hero]') : null;
+    const heroFrame = heroWrap?.querySelector('.hero-frame');
+    const heroImg = heroFrame?.querySelector('img');
+
+    const HERO_SHAPES = [
+      ['wide', 'Wide 21:9', '21 / 9'],
+      ['standard', 'Standard 3:2', '3 / 2'],
+      ['tall', 'Tall 4:5', '4 / 5'],
+      ['square', 'Square', '1 / 1'],
+    ];
+
+    const editHeroAlt = (seed) =>
+      editAlt(heroFrame, seed ?? heroWrap.dataset.studioAlt ?? '', async (value) => {
+        // heroAlt is required by the schema; blank would break the build.
+        if (!value) throw new Error('the main photo needs a description');
+        await post('/project/patch', { patch: { heroAlt: value } });
+        heroWrap.dataset.studioAlt = value;
+      });
+
+    if (heroWrap && heroFrame && heroImg) {
+      heroFrame.classList.add('studio-slot', 'studio-hero');
+
+      const tools = document.createElement('div');
+      tools.className = 'studio-tools';
+      tools.appendChild(Object.assign(document.createElement('span'), {
+        className: 'studio-tool-label', textContent: 'Main photo',
+      }));
+
+      const replace = toolButton({ icon: 'replace', text: 'Replace', title: 'Pick a new main photo from the library — or drop a file on it' });
+      replace.addEventListener('click', () => openLibrary({ hero: true }));
+      tools.appendChild(replace);
+
+      const shape = document.createElement('select');
+      shape.title = 'Shape of the main photo';
+      for (const [value, text] of HERO_SHAPES) shape.appendChild(new Option(text, value));
+      shape.value = heroWrap.dataset.studioAspect || 'wide';
+      shape.addEventListener('change', async () => {
+        const ratio = HERO_SHAPES.find(([v]) => v === shape.value)?.[2];
+        if (ratio) heroWrap.style.setProperty('--hero-aspect', ratio);
+        heroWrap.dataset.studioAspect = shape.value;
+        placeDot();
+        try {
+          await post('/project/patch', { patch: { heroAspect: shape.value } });
+          toast(`main photo → ${shape.selectedOptions[0].text}`);
+        } catch (error) { toast(error.message, true); }
+      });
+      tools.appendChild(shape);
+
+      tools.appendChild(toolSep());
+      const altBtn = toolButton({ icon: 'alt', text: 'Alt', title: 'Edit the description screen readers announce' });
+      altBtn.addEventListener('click', () => editHeroAlt());
+      tools.appendChild(altBtn);
+      heroFrame.appendChild(tools);
+
+      // Drop a file on the main photo to replace it. Stops propagation so the
+      // page-wide handler doesn't also add it to the gallery.
+      heroFrame.addEventListener('dragover', (event) => {
+        if (!isFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        heroFrame.classList.add('studio-slot-over');
+      });
+      heroFrame.addEventListener('dragleave', () => heroFrame.classList.remove('studio-slot-over'));
+      heroFrame.addEventListener('drop', async (event) => {
+        if (!isFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        heroFrame.classList.remove('studio-slot-over');
+        dropEl.hidden = true;
+        const file = event.dataTransfer.files[0];
+        if (!file) return;
+        toast(`replacing the main photo with ${file.name}…`);
+        try {
+          const data = await readAsBase64(file);
+          const result = await post('/project/hero', { filename: file.name, data });
+          toast(`main photo → ${file.name}  ${size(result.before)} → ${size(result.after)}${displacedNote(result.displaced)}`);
+          parkAltPrompt({ hero: true, staleAlt: result.staleAlt });
+        } catch (error) { toast(error.message, true); }
+      });
+
+      // Crop and zoom.
+      const dot = document.createElement('span');
+      dot.className = 'studio-crosshair';
+      heroFrame.appendChild(dot);
+
+      let [px, py] = toPct(heroWrap.dataset.studioFocal);
+      let zoom = Number(heroWrap.dataset.studioZoom || 1) || 1;
+
+      const badge = document.createElement('span');
+      badge.className = 'studio-zoom-badge';
+      badge.title = 'Click to reset zoom';
+      heroFrame.appendChild(badge);
+
+      function placeDot() {
+        const box = heroImg.getBoundingClientRect();
+        const frame = heroFrame.getBoundingClientRect();
+        dot.style.left = `${box.left - frame.left + (box.width * px) / 100}px`;
+        dot.style.top = `${box.top - frame.top + (box.height * py) / 100}px`;
+      }
+      const showHero = () => {
+        heroWrap.style.setProperty('--hero-focal', `${px}% ${py}%`);
+        heroWrap.style.setProperty('--hero-zoom', String(zoom));
+        badge.textContent = `${zoom.toFixed(2)}×`;
+        badge.hidden = zoom <= 1.001;
+        placeDot();
+      };
+      showHero();
+      window.addEventListener('resize', placeDot);
+      heroImg.addEventListener('load', placeDot);
+
+      let dragging = false;
+      let moved = false;
+      heroImg.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        dragging = true;
+        moved = false;
+        heroFrame.classList.add('is-dragging');
+        try { heroImg.setPointerCapture(event.pointerId); } catch {}
+        event.preventDefault();
+      });
+      heroImg.addEventListener('pointermove', (event) => {
+        if (!dragging) return;
+        moved = true;
+        const box = heroImg.getBoundingClientRect();
+        px = Math.round(Math.min(100, Math.max(0, ((event.clientX - box.left) / box.width) * 100)));
+        py = Math.round(Math.min(100, Math.max(0, ((event.clientY - box.top) / box.height) * 100)));
+        showHero();
+      });
+      const finish = async (event) => {
+        if (!dragging) return;
+        dragging = false;
+        heroFrame.classList.remove('is-dragging');
+        try { heroImg.releasePointerCapture?.(event.pointerId); } catch {}
+        if (!moved) return;
+        const focal = `${px}% ${py}%`;
+        heroWrap.dataset.studioFocal = focal;
+        try {
+          await post('/project/patch', { patch: { heroFocalPoint: focal } });
+          toast(`main photo crop → ${focal}`);
+        } catch (error) { toast(error.message, true); }
+      };
+      heroImg.addEventListener('pointerup', finish);
+      heroImg.addEventListener('pointercancel', finish);
+
+      const saveZoom = () => {
+        const value = Number(zoom.toFixed(2));
+        heroWrap.dataset.studioZoom = String(value);
+        queueSave('zoom:hero', '/project/patch', { patch: { heroZoom: value } });
+      };
+      heroImg.addEventListener('wheel', (event) => {
+        if (!event.ctrlKey && !event.altKey) return; // let the page scroll
+        event.preventDefault();
+        zoom = Math.min(4, Math.max(1, zoom * Math.exp(-event.deltaY / 400)));
+        showHero();
+        saveZoom();
+      }, { passive: false });
+      badge.addEventListener('click', () => {
+        zoom = 1;
+        showHero();
+        saveZoom();
+        toast('zoom reset');
+      });
+
+      // A replace on the previous load asked for a new description.
+      const pendingAlt = takeAltPrompt();
+      if (pendingAlt?.hero) {
+        heroFrame.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        toast('Main photo replaced — update the description');
+        editHeroAlt(pendingAlt.staleAlt);
+      }
+    }
+
     // -- home page: per-slot controls --------------------------------------
     let homeTarget = null; // which slot the library panel will fill
 
@@ -1402,10 +1767,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       const tools = document.createElement('div');
       tools.className = 'studio-tools';
 
-      const replace = document.createElement('button');
-      replace.type = 'button';
-      replace.textContent = 'replace';
-      replace.title = `Pick a new photo for ${path}`;
+      const replace = toolButton({ icon: 'replace', text: 'Replace', title: `Pick a new photo for ${path}` });
       replace.addEventListener('click', () => {
         homeTarget = path;
         openLibrary();
@@ -1416,10 +1778,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       // the description — so offering the button there would only ever error.
       const hasAlt = !path.endsWith('.logo');
 
-      const altBtn = document.createElement('button');
-      altBtn.type = 'button';
-      altBtn.textContent = 'alt';
-      altBtn.title = 'Edit the description screen readers announce';
+      const altBtn = toolButton({ icon: 'alt', text: 'Alt', title: 'Edit the description screen readers announce' });
       const openAlt = async (seed) => {
         let current = seed;
         if (current === undefined) {
@@ -1460,11 +1819,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           } catch (error) { toast(error.message, true); }
         };
 
-        const grip = document.createElement('button');
-        grip.type = 'button';
-        grip.className = 'studio-grip';
-        grip.textContent = '⠿';
-        grip.title = 'Drag to rearrange';
+        const grip = toolButton({ icon: 'grip', title: 'Drag to rearrange', className: 'studio-grip' });
         grip.addEventListener('pointerdown', (event) => {
           if (event.button !== 0) return;
           event.preventDefault();
@@ -1501,11 +1856,8 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         });
         tools.appendChild(grip);
 
-        for (const [text, delta, title] of [['◀', -1, 'Move earlier'], ['▶', 1, 'Move later']]) {
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.textContent = text;
-          button.title = title;
+        for (const [icon, delta, title] of [['left', -1, 'Move earlier'], ['right', 1, 'Move later']]) {
+          const button = toolButton({ icon, title });
           button.addEventListener('click', () => move(Math.max(0, index + delta), 'reordered'));
           tools.appendChild(button);
         }
@@ -1513,7 +1865,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         // Which cell this takes in the collage. Only the showcase has the
         // dominant large/video cells; the other lists are uniform.
         if (listPath === 'showcase.items') {
-          const sizes = [['regular', 'small cell'], ['large', 'big cell'], ['video', 'tall cell']];
+          const sizes = [['regular', 'Small cell'], ['large', 'Big cell'], ['video', 'Tall cell']];
           const size = document.createElement('select');
           size.title = 'How much of the collage this fills';
           for (const [value, text] of sizes) size.appendChild(new Option(text, value));
@@ -1529,10 +1881,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           tools.appendChild(size);
         }
 
-        const add = document.createElement('button');
-        add.type = 'button';
-        add.textContent = '+';
-        add.title = 'Add an empty tile after this one';
+        const add = toolButton({ icon: 'plus', title: 'Add an empty tile after this one' });
         add.addEventListener('click', async () => {
           try {
             await post('/home/add', { listPath, after: index });
@@ -1541,10 +1890,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         });
         tools.appendChild(add);
 
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.textContent = '✕';
-        remove.title = 'Remove this tile';
+        const remove = toolButton({ icon: 'trash', title: 'Remove this tile', className: 'studio-danger' });
         remove.addEventListener('click', async () => {
           if (!confirm('Remove this tile?\n\nIf nothing else uses the file and it was never committed, it is moved to .photo-trash and ⌘Z brings it back.')) return;
           try {
@@ -1736,7 +2082,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       // Fixed slots: there's no section to choose or width to set.
       for (const el of root.querySelectorAll('.studio-library header label')) el.hidden = true;
     } else {
-      libSection.appendChild(new Option('↓ bottom of page', ''));
+      libSection.appendChild(new Option('Bottom of page', ''));
       for (const id of HEADINGS) libSection.appendChild(new Option(label(id), id));
     }
 
@@ -1745,6 +2091,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     const keyOf = (group) => `${group.source}::${group.folder}`;
 
     const SOURCE_LABEL = {
+      inbox: 'Photo inbox',
       library: 'On this Mac',
       site: 'Already on the site',
       videos: 'Already on the site',
@@ -1763,9 +2110,12 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         const img = document.createElement('img');
         img.loading = 'lazy';
         img.alt = '';
+        // Inbox groups are sorted by prefix, not folder, so each file carries
+        // its own folder; everything else shares the group's.
+        const folder = file.folder ?? group.folder;
         img.src =
           `${API}/library/thumb?source=${encodeURIComponent(group.source)}` +
-          `&folder=${encodeURIComponent(group.folder)}` +
+          `&folder=${encodeURIComponent(folder)}` +
           `&file=${encodeURIComponent(file.name)}`;
         // Videos and anything sharp can't read still get a tile, just no preview.
         img.addEventListener('error', () => { img.style.visibility = 'hidden'; });
@@ -1774,13 +2124,13 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         if (file.kind === 'video') {
           const kind = document.createElement('span');
           kind.className = 'badge kind';
-          kind.textContent = '▶ video';
+          kind.textContent = 'Video';
           tile.appendChild(kind);
         }
         if (file.used) {
           const used = document.createElement('span');
           used.className = 'badge';
-          used.textContent = group.source === 'library' ? 'added' : 'on this page';
+          used.textContent = group.source === 'library' || group.source === 'inbox' ? 'Added' : 'On this page';
           tile.appendChild(used);
         }
 
@@ -1792,19 +2142,26 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         tile.appendChild(meta);
 
         tile.addEventListener('click', async () => {
+          if (MODE === 'home' && !homeTarget) {
+            toast('Hover the photo you want to change and choose Replace', true);
+            return;
+          }
           tile.disabled = true;
           const sectionId = libSection.value;
           try {
             const result = await post('/library/pick', {
               source: group.source,
-              folder: group.folder,
+              folder,
               file: file.name,
               section: sectionId ? label(sectionId) : null,
               width: libWidth.value || null,
               homePath: MODE === 'home' ? homeTarget : null,
+              hero: heroTarget,
             });
             toast(
-              result.home
+              result.hero
+                ? `main photo → ${file.name}${displacedNote(result.displaced)}`
+                : result.home
                 ? `${homeTarget} → ${file.name}${displacedNote(result.displaced)}`
                 : result.reused
                   ? `added ${file.name} (already in the repo — not copied)`
@@ -1816,6 +2173,10 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
               libPanel.hidden = true;
               if (result.altPath) parkAltPrompt({ path: homeTarget, staleAlt: result.staleAlt });
             }
+            if (result.hero) {
+              libPanel.hidden = true;
+              parkAltPrompt({ hero: true, staleAlt: result.staleAlt });
+            }
           } catch (error) {
             toast(error.message, true);
             tile.disabled = false;
@@ -1826,7 +2187,16 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       }
     };
 
-    const openLibrary = async () => {
+    const libTarget = root.querySelector('.studio-lib-target');
+    const openLibrary = async ({ hero = false } = {}) => {
+      heroTarget = MODE === 'project' && hero;
+      libPanel.classList.toggle('is-hero', heroTarget);
+      for (const el of root.querySelectorAll('.studio-lib-opt')) el.hidden = MODE === 'home' || heroTarget;
+      libTarget.textContent = heroTarget
+        ? 'Choosing a new main photo for this project'
+        : MODE === 'home'
+          ? (homeTarget ? `Replacing ${homeTarget}` : 'Hover a photo on the page and choose Replace')
+          : 'Pick a file to add it to this page';
       libPanel.hidden = false;
       libGrid.replaceChildren(
         Object.assign(document.createElement('p'), {
@@ -1879,6 +2249,8 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         count.className = 'count';
         count.textContent = String(group.files.length);
         button.append(name, count);
+        if (group.current) button.dataset.current = '';
+        if (group.source === 'library') button.dataset.library = '';
         button.addEventListener('click', () => {
           activeKey = keyOf(group);
           for (const sibling of libFolders.querySelectorAll('button')) {
@@ -1888,10 +2260,29 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         });
         libFolders.appendChild(button);
       }
-      libFolders.querySelector('button').click();
+      // How to get new photos in. Shown every time because the scheme is the
+      // kind of thing you forget between editing sessions.
+      const note = document.createElement('p');
+      note.className = 'studio-lib-note';
+      note.innerHTML =
+        'New photos: drop them in <code>photo-inbox/</code> named <code>PREFIX_title</code> — ' +
+        'e.g. <code>ABV_valve-test.jpg</code>. Prefixes live in <code>photo-prefixes.json</code>. ' +
+        'Reopen this panel to see them.';
+      libFolders.appendChild(note);
+
+      // Open on this project's inbox if it has anything, else the first
+      // archive folder — the old default.
+      (libFolders.querySelector('button[data-current]')
+        || libFolders.querySelector('button[data-library]')
+        || libFolders.querySelector('button'))?.click();
     };
 
-    root.querySelector('.studio-library-open').addEventListener('click', openLibrary);
+    root.querySelector('.studio-library-open').addEventListener('click', () => {
+      // From the bar there's no slot chosen; a stale one from an earlier
+      // Replace would silently overwrite the wrong photo.
+      homeTarget = null;
+      openLibrary();
+    });
     root.querySelector('.studio-lib-close').addEventListener('click', () => { libPanel.hidden = true; });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !libPanel.hidden) libPanel.hidden = true;

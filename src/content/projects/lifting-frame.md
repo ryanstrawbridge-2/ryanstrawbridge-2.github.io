@@ -8,6 +8,7 @@ hero: ../../assets/images/projects/lifting-frame/frame-07.jpeg
 heroAlt: 3-point lifting frame on the manufacturing floor
 gallery:
   - image: ../../assets/images/projects/lifting-frame/lift-test.jpg
+    focal: 59% 55%
 tools:
   - NX
   - Lifting Documentation (ASME BTH-1 | ASME B30.20)
@@ -33,27 +34,25 @@ figures:
   - section: What I did
     kind: photo
     title: The machined corner joint
-    takeaway: PLACEHOLDER COPY — rewrite. Every arm lands in a socket and bolts through.
+    takeaway: PLACEHOLDER COPY — rewrite. Each arm slides over a square spigot and is retained through a tapped cross hole.
     image: ../../assets/images/projects/lifting-frame/joint-rev2.jpg
-    alt: Machined aluminium corner joint with two arm sockets and a bolted top face
-    caption: PLACEHOLDER CAPTION. Callout positions are approximate — drag them where you want them.
+    alt: Machined aluminum corner joint with two square spigots and two tapped holes on the top face
+    caption: PLACEHOLDER CAPTION.
     aspect: 4/3
     points:
-      - Bolt pattern on the top face — CHECK AND REWRITE.
-      - Arm socket; the extrusion lands here — CHECK AND REWRITE.
-      - Through-bolt, which is what the load path crosses — CHECK AND REWRITE.
+      - Two tapped holes on the top face. What mounts here — the hoist ring from Rev 1? CHECK AND REWRITE.
+      - Square spigot, one per arm. The arm tube slides over it — CHECK AND REWRITE.
+      - Tapped cross hole that retains the arm — bolt, pin, or screw? CHECK AND REWRITE.
     callouts:
-      - { x: 36, y: 27, label: Bolt pattern, place: right }
-      - { x: 76, y: 33, label: Arm socket, place: left }
-      - { x: 57, y: 58, label: Through-bolt, place: right }
+      - { x: 51, y: 18, label: Tapped holes, place: right }
+      - { x: 72, y: 50, label: Spigot, place: right }
+      - { x: 61, y: 67, label: Cross hole, place: left }
   - section: What I did
     kind: diagram
     title: Load path and sling angle
     takeaway: PLACEHOLDER COPY — rewrite.
     plan: >-
-      NX isometric of the frame with the three slings drawn in, the included
-      angle dimensioned, and an arrow per arm showing the resulting compression.
-      Note the ASME BTH-1 design factor you carried.
+      NX isometric of the frame with the three slings drawn in, the included angle dimensioned, and an arrow per arm showing the resulting compression. Note the ASME BTH-1 design factor you carried.
     aspect: 16/9
     points:
       - Validated against ASME BTH-1 and ASME B30.20, carried through sign-off with structural engineering and safety.
@@ -77,8 +76,7 @@ figures:
     title: Time per lift
     takeaway: PLACEHOLDER COPY — rewrite.
     plan: >-
-      Two horizontal bars, old against new, in minutes per lift. Annotate the
-      30-45 minute saving. Keep it small; it is one number.
+      Two horizontal bars, old against new, in minutes per lift. Annotate the 30-45 minute saving. Keep it small; it is one number.
     aspect: 16/9
 ---
 

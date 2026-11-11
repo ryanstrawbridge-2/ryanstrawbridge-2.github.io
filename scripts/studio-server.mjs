@@ -40,6 +40,7 @@ import {
 } from './lib/media.mjs';
 import { readHome, writeHome, setPath, getPath } from './lib/homejson.mjs';
 import { cleanupDisplaced } from './lib/orphans.mjs';
+import { loadPrefixes, parseInboxName } from './lib/prefixes.mjs';
 import * as journal from './lib/journal.mjs';
 import {
   readProject,
@@ -56,6 +57,8 @@ const CONTENT = join(ROOT, 'src/content/projects');
 const IMAGES = join(ROOT, 'src/assets/images/projects');
 const VIDEOS = join(ROOT, 'public/videos');
 const LIBRARY = join(ROOT, 'portfolio-photos');
+// Intake queue for new photos, named PREFIX_title.ext (see photo-prefixes.json).
+const INBOX = join(ROOT, 'photo-inbox');
 const HOME_JSON = join(ROOT, 'src/data/home.json');
 const SITE_JSON = join(ROOT, 'src/data/site.json');
 const HOME_IMAGES = join(ROOT, 'src/assets/images/home');
@@ -220,7 +223,11 @@ const SOURCES = {
   library: { root: LIBRARY, label: 'portfolio-photos/' },
   site: { root: join(ROOT, 'src/assets/images'), label: 'src/assets/images/' },
   videos: { root: VIDEOS, label: 'public/videos/' },
+  inbox: { root: INBOX, label: 'photo-inbox/' },
 };
+
+/** Sources whose files are originals: picking one COPIES it through encode(). */
+const COPY_SOURCES = new Set(['library', 'inbox']);
 
 /** Resolve inside one source, refusing anything that escapes it. */
 const sourcePath = (source, folder, file) => {
@@ -295,6 +302,7 @@ const listLibrary = async (slug) => {
 
   const groups = [];
   for (const [source, { root, label }] of Object.entries(SOURCES)) {
+    if (source === 'inbox') continue; // sorted by prefix instead — see listInbox
     if (!existsSync(root)) continue;
     for (const [folder, names] of await walkFolders(root)) {
       const files = [];
@@ -326,7 +334,149 @@ const listLibrary = async (slug) => {
       groups[groups.length - 1].files = files;
     }
   }
-  return { groups };
+  return { groups: [...(await listInbox(slug)), ...groups] };
+};
+
+// ---------------------------------------------------------------------------
+// Photo inbox, sorted by filename prefix.
+//
+// ABV_p-and-id.png lands in the actuated-ball-valves group, gen_ files in
+// General, anything with an unknown prefix in Unsorted. Re-read on every
+// library open, so a file dropped into the folder in Finder shows up the next
+// time the panel opens — no restart, no rescan button.
+//
+// Picking from here copies, like the library: the original stays in the inbox
+// with an "added" badge. `npm run photos` is what retires originals to
+// _done/, and it skips anything studio already imported.
+// ---------------------------------------------------------------------------
+
+/** Loose inbox files, plus one level of the older photo-inbox/<slug>/ folders. */
+const inboxEntries = async () => {
+  const out = [];
+  if (!existsSync(INBOX)) return out;
+  const isMedia = (name) => !name.startsWith('.') && LIBRARY_EXT.has(extname(name).toLowerCase());
+  for (const entry of await readdir(INBOX, { withFileTypes: true })) {
+    if (entry.name.startsWith('.') || entry.name === '_done') continue;
+    if (entry.isFile() && isMedia(entry.name)) out.push({ folder: '', name: entry.name });
+    else if (entry.isDirectory()) {
+      for (const name of await readdir(join(INBOX, entry.name))) {
+        if (isMedia(name)) out.push({ folder: entry.name, name });
+      }
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+};
+
+/** Stems already in a project's image folder, cached per call. */
+const stemsIn = async (cache, slug) => {
+  if (!cache.has(slug)) {
+    const dir = join(IMAGES, slug);
+    cache.set(
+      slug,
+      new Set(existsSync(dir) ? (await readdir(dir)).map((f) => basename(f, extname(f))) : []),
+    );
+  }
+  return cache.get(slug);
+};
+
+const listInbox = async (slug) => {
+  const entries = await inboxEntries();
+  if (entries.length === 0) return [];
+  const prefixes = await loadPrefixes(ROOT);
+  const slugs = await projectSlugs(CONTENT);
+  const prefixFor = new Map();
+  for (const [prefix, target] of prefixes) if (target && !prefixFor.has(target)) prefixFor.set(target, prefix);
+
+  const stemCache = new Map();
+  const buckets = new Map();
+  for (const { folder, name } of entries) {
+    const parsed = parseInboxName(name, prefixes);
+    // An old-style photo-inbox/<slug>/ folder says where it goes outright.
+    const target = folder && slugs.includes(folder) ? folder : parsed.slug;
+    const key = target ?? (parsed.general ? '__general' : '__unsorted');
+    let size = 0;
+    try {
+      ({ size } = await stat(join(INBOX, folder, name)));
+    } catch {
+      continue;
+    }
+    // "added" means: picking this on the page you're on would duplicate it.
+    const into = slug ?? target;
+    const used = into ? (await stemsIn(stemCache, into)).has(`${into}-${parsed.title}`) : false;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push({
+      name,
+      folder,
+      size,
+      used,
+      kind: VIDEO_EXT.has(extname(name).toLowerCase()) ? 'video' : 'image',
+    });
+  }
+
+  const tag = (target) => (prefixFor.get(target) ?? '').toUpperCase();
+  const labelFor = (key) => {
+    if (key === '__general') return 'General · gen_';
+    if (key === '__unsorted') return 'Unsorted · unknown prefix';
+    const prefix = tag(key);
+    return `${key === slug ? 'This project' : key.replace(/-/g, ' ')}${prefix ? ` · ${prefix}_` : ''}`;
+  };
+  const order = [
+    slug,
+    '__general',
+    ...[...buckets.keys()].filter((k) => k !== slug && !k.startsWith('__')).sort(),
+    '__unsorted',
+  ];
+  return order
+    .filter((key) => key && buckets.has(key))
+    .map((key) => ({
+      source: 'inbox',
+      folder: '',
+      label: labelFor(key),
+      root: 'photo-inbox/',
+      current: key === slug,
+      files: buckets.get(key),
+    }));
+};
+
+/**
+ * Point a project's hero at a new image and tidy up what it replaced.
+ *
+ * The old crop and zoom were chosen for a different photo, so they reset to
+ * centre and 1x. The old alt is handed back so the editor can prompt for a new
+ * one — a stale alt is invisible on screen, so nothing else would catch it.
+ */
+const setProjectHero = async (slug, ref) => {
+  let before = null;
+  let staleAlt = '';
+  await withProject(slug, (file) => {
+    before = String(file.doc.get('hero') ?? '') || null;
+    staleAlt = String(file.doc.get('heroAlt') ?? '');
+    file.doc.set('hero', ref);
+    file.doc.delete('heroFocalPoint');
+    file.doc.delete('heroZoom');
+  });
+  const displaced = before === ref ? null : await cleanupDisplaced(ROOT, before);
+  return { hero: true, staleAlt, ...(displaced ? { displaced } : {}) };
+};
+
+/** Encode an image into a project's folder; returns the new filename. */
+const importProjectImage = async (slug, input, ext, title) => {
+  const outDir = join(IMAGES, slug);
+  await mkdir(outDir, { recursive: true });
+  const encoded = await encode(input, ext);
+  const outName = await uniqueName(outDir, `${slug}-${title}`, encoded.ext);
+  await writeFile(join(outDir, outName), encoded.data);
+  return { outName, before: input.length, after: encoded.data.length };
+};
+
+/** Replace the hero with a file dropped on it. */
+const uploadHero = async ({ slug, filename, data }) => {
+  const ext = extname(filename || '').toLowerCase();
+  if (!IMAGE_EXT.has(ext)) throw new Error('the main photo has to be an image');
+  const prefixes = await loadPrefixes(ROOT);
+  const { title } = parseInboxName(filename || 'photo', prefixes);
+  const { outName, before, after } = await importProjectImage(slug, Buffer.from(data, 'base64'), ext, title);
+  return { kind: 'image', file: outName, before, after, ...(await setProjectHero(slug, astroPath(slug, outName))) };
 };
 
 /**
@@ -352,10 +502,14 @@ const libraryThumb = async (source, folder, file) => {
   return data;
 };
 
-const pickFromLibrary = async ({ slug, source = 'library', folder, file, section, width, homePath }) => {
+const pickFromLibrary = async ({ slug, source = 'library', folder, file, section, width, homePath, hero }) => {
   const src = sourcePath(source, folder, file);
   const ext = extname(file).toLowerCase();
-  const stem = slugify(basename(file, extname(file))) || 'photo';
+  // Inbox files drop their PREFIX_ — "ABV_p-and-id" becomes "p-and-id".
+  const stem =
+    source === 'inbox'
+      ? parseInboxName(file, await loadPrefixes(ROOT)).title
+      : slugify(basename(file, extname(file))) || 'photo';
 
   // Targeting a home-page slot: set that one field instead of adding a row.
   if (homePath) {
@@ -363,7 +517,7 @@ const pickFromLibrary = async ({ slug, source = 'library', folder, file, section
       const swap = await replaceHomeSlot(homePath, homeVideoRef(file));
       return { kind: 'video', file, reused: true, home: true, ...swap };
     }
-    if (source !== 'library') {
+    if (!COPY_SOURCES.has(source)) {
       // Already committed — point at it where it sits.
       const ref = `/src/assets/images/${[folder, file].filter(Boolean).join('/')}`;
       const swap = await replaceHomeSlot(homePath, ref);
@@ -378,9 +532,19 @@ const pickFromLibrary = async ({ slug, source = 'library', folder, file, section
     return { kind: 'image', file: outName, before: input.length, after: encoded.data.length, home: true, ...swap };
   }
 
+  // Targeting the project's main photo: set `hero` instead of adding a row.
+  if (hero) {
+    if (source === 'videos' || VIDEO_EXT.has(ext)) throw new Error('the main photo has to be an image');
+    if (!COPY_SOURCES.has(source)) {
+      return { kind: 'image', file, reused: true, ...(await setProjectHero(slug, siteRef(source, folder, file))) };
+    }
+    const { outName, before, after } = await importProjectImage(slug, await readFile(src), ext, stem);
+    return { kind: 'image', file: outName, before, after, ...(await setProjectHero(slug, astroPath(slug, outName))) };
+  }
+
   // Already committed — just reference it. Copying would duplicate the bytes
   // and leave two paths to keep in step.
-  if (source !== 'library') {
+  if (!COPY_SOURCES.has(source)) {
     const alt = stem.replace(/-/g, ' ');
     const row =
       source === 'videos'
@@ -705,9 +869,15 @@ const undoLabel = (pathname, payload = {}) => {
       return keys.length ? keys.join(' + ') : 'edit';
     case '/gallery/delete': return 'remove photo';
     case '/gallery/move': return 'reorder';
-    case '/project/patch': return keys.length === 1 ? keys[0] : 'page settings';
+    case '/project/patch':
+      if (keys.length === 1 && keys[0] === 'heroFocalPoint') return 'main photo crop';
+      if (keys.length === 1 && keys[0] === 'heroZoom') return 'main photo zoom';
+      if (keys.length === 1 && keys[0] === 'heroAspect') return 'main photo shape';
+      if (keys.length === 1 && keys[0] === 'heroAlt') return 'main photo description';
+      return keys.length === 1 ? keys[0] : 'page settings';
+    case '/project/hero': return 'main photo';
     case '/upload': return `add ${payload.filename ?? 'file'}`;
-    case '/library/pick': return `add ${payload.file ?? 'file'}`;
+    case '/library/pick': return payload.hero ? 'main photo' : `add ${payload.file ?? 'file'}`;
     case '/home/patch': return `home ${String(payload.path ?? '').split('.').pop()}`;
     case '/home/upload': return 'home photo';
     case '/home/alt': return 'home description';
@@ -802,8 +972,18 @@ const ROUTES = {
   },
   '/gallery/move': ({ slug, from, to }) =>
     withProject(slug, (file) => moveGalleryItem(file.doc, from, to)),
-  '/project/patch': ({ slug, patch }) => withProject(slug, (file) => patchTopLevel(file.doc, patch)),
+  '/project/patch': ({ slug, patch }) => {
+    // patchTopLevel treats '' as "delete the key". For these the schema says
+    // required, so a blanked field would be a build error, not a cleared one.
+    for (const key of ['title', 'summary', 'hero', 'heroAlt', 'date']) {
+      if (key in (patch ?? {}) && (patch[key] === '' || patch[key] == null)) {
+        throw new Error(`${key} can't be empty`);
+      }
+    }
+    return withProject(slug, (file) => patchTopLevel(file.doc, patch));
+  },
   '/upload': handleUpload,
+  '/project/hero': uploadHero,
   '/library/pick': pickFromLibrary,
   '/home/patch': patchHome,
   '/home/upload': uploadHome,

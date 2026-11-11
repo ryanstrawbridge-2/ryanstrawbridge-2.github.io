@@ -14,6 +14,7 @@ import {
   queryId,
 } from '../../lib/tina-visual-editing';
 import {
+  clampZoom,
   focalCss,
   groupBySection,
   normalizeGallery,
@@ -40,9 +41,9 @@ const {
   summary,
   hero,
   heroAlt,
-  tools,
   heroFocalPoint,
   heroAspect,
+  heroZoom,
   galleryLayout,
   gallery,
   figures,
@@ -63,7 +64,7 @@ const aspectCss: Record<typeof heroAspect, string> = {
   tall: '4 / 5',
   square: '1 / 1',
 };
-const heroStyle = `--hero-focal: ${focalCss(heroFocalPoint)}; --hero-aspect: ${aspectCss[heroAspect]};`;
+const heroStyle = `--hero-focal: ${focalCss(heroFocalPoint)}; --hero-aspect: ${aspectCss[heroAspect]}; --hero-zoom: ${clampZoom(heroZoom)};`;
 
 // ---------------------------------------------------------------------------
 // Gallery placement
@@ -151,14 +152,29 @@ const figureField = (index: number, key: string) => f('figures', index, key);
       </div>
     </header>
 
-    <div class="hero-image-wrap container" style={heroStyle} data-tina-field={f('hero')}>
-      <Image
-        src={hero}
-        alt={heroAlt}
-        widths={[600, 1200, 1800]}
-        sizes="(min-width: 1100px) 1100px, 100vw"
-        class="hero-image"
-      />
+    <div
+      class="hero-image-wrap container"
+      style={heroStyle}
+      data-tina-field={f('hero')}
+      {...import.meta.env.DEV && {
+        'data-studio-hero': '',
+        'data-studio-focal': heroFocalPoint,
+        'data-studio-zoom': String(clampZoom(heroZoom)),
+        'data-studio-aspect': heroAspect,
+        'data-studio-alt': heroAlt,
+      }}
+    >
+      {/* The frame clips; the image scales inside it, so zoom crops at the
+          rounded edge instead of spilling over the page. */}
+      <div class="hero-frame">
+        <Image
+          src={hero}
+          alt={heroAlt}
+          widths={[600, 1200, 1800]}
+          sizes="(min-width: 1100px) 1100px, 100vw"
+          class="hero-image"
+        />
+      </div>
     </div>
 
     {/* One lightbox root wraps body, figures and gallery — the lightbox binds
@@ -203,8 +219,9 @@ const figureField = (index: number, key: string) => f('figures', index, key);
         </div>
 
         {/* Sticky rail. Holds the facts you want while looking at a photo
-            halfway down the page — who it was for, when, what it was built
-            with — plus a jump list for the three sections. */}
+            halfway down the page — who it was for and when — plus a jump list
+            for the three sections. Tools are deliberately not shown on the
+            project page. */}
         <aside class="project-rail" aria-label="Project details">
           <div class="rail-inner">
             {
@@ -219,18 +236,6 @@ const figureField = (index: number, key: string) => f('figures', index, key);
               <p class="rail-label">When</p>
               <p class="rail-value" data-tina-field={f('date')}>{dateLabel}</p>
             </div>
-            {
-              tools.length > 0 && (
-                <div class="rail-block">
-                  <p class="rail-label">Built with</p>
-                  <ul class="rail-tools">
-                    {tools.map((t) => (
-                      <li>{t}</li>
-                    ))}
-                  </ul>
-                </div>
-              )
-            }
             {
               sectionLinks.length > 0 && (
                 <nav class="rail-block rail-jump" aria-label="Sections">
@@ -367,7 +372,6 @@ const figureField = (index: number, key: string) => f('figures', index, key);
       line-height: 1.4;
       color: var(--text);
     }
-    .rail-tools,
     .rail-jump ul {
       list-style: none;
       margin: 0;
@@ -375,10 +379,6 @@ const figureField = (index: number, key: string) => f('figures', index, key);
       display: grid;
       gap: 0.3rem;
       font-size: 0.9rem;
-    }
-    .rail-tools li {
-      color: var(--text-muted);
-      line-height: 1.35;
     }
     .rail-jump a {
       color: var(--text);
@@ -453,14 +453,22 @@ const figureField = (index: number, key: string) => f('figures', index, key);
     .hero-image-wrap {
       margin-bottom: 3rem;
     }
+    .hero-frame {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      line-height: 0;
+    }
     .hero-image-wrap :global(.hero-image) {
+      display: block;
       width: 100%;
       aspect-ratio: var(--hero-aspect, 21 / 9);
       max-height: 640px;
       object-fit: cover;
       object-position: var(--hero-focal, center center);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
+      transform: scale(var(--hero-zoom, 1));
+      transform-origin: var(--hero-focal, center center);
     }
 
     .project-body {

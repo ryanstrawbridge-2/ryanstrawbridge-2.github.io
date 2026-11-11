@@ -316,6 +316,7 @@ content:
         description: Shape of the hero image at the top of the page.
         options:
           values: [wide, standard, tall, square]
+      - { name: heroZoom, label: Hero zoom, type: number, description: "1 is fit. Set by pinching the main photo in studio; anchors on the crop position." }
       - name: galleryLayout
         label: Gallery layout
         type: select

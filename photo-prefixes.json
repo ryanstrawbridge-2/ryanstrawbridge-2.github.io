@@ -1,0 +1,15 @@
+{
+  "_readme": "Photo inbox naming: PREFIX_title.ext, e.g. ABV_p-and-id.png. Prefix is case-insensitive. Map each prefix to a project slug (the filename in src/content/projects/ without .md). null means general: shown in every project's library and imported into whichever project you are on. Edit freely; studio and npm run photos re-read this file every time.",
+  "prefixes": {
+    "gen": null,
+    "abv": "actuated-ball-valves",
+    "bend": "hydraulic-bender",
+    "lift": "lifting-frame",
+    "lay": "layerdowner",
+    "cnc": "cnc-seam-cutter",
+    "leak": "faucet-leak-ring",
+    "qfn": "qfn-fixture",
+    "itd": "underwater-mechanical-release-system",
+    "umr": "underwater-mechanical-release-system"
+  }
+}

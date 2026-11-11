@@ -252,7 +252,10 @@ const hasAside = points.length > 0;
     position: absolute;
     left: var(--cx);
     top: var(--cy);
-    transform: translate(-50%, -50%);
+    /* The DOT sits on (--cx, --cy), not the dot-plus-label box. Centring the
+       whole button put every marker half a label-width off its target. 0.8rem
+       is half the dot; each placement below anchors on the dot's own centre. */
+    transform: translate(-0.8rem, -50%);
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -329,12 +332,15 @@ const hasAside = points.length > 0;
      edge doesn't push its text off the picture. */
   .pfig-callout.place-left {
     flex-direction: row-reverse;
+    transform: translate(calc(-100% + 0.8rem), -50%);
   }
   .pfig-callout.place-up {
     flex-direction: column-reverse;
+    transform: translate(-50%, calc(-100% + 0.8rem));
   }
   .pfig-callout.place-down {
     flex-direction: column;
+    transform: translate(-50%, -0.8rem);
   }
 
   /* Labels are decoration on a small screen — the numbered list below carries

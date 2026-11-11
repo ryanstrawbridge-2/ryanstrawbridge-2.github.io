@@ -21,6 +21,9 @@ const projects = defineCollection({
       // object-position string like "37% 22%" from focal-picker.html.
       heroFocalPoint: z.string().default('center'),
       heroAspect: z.enum(['wide', 'standard', 'tall', 'square']).default('wide'),
+      // Scale inside the hero frame, anchored on heroFocalPoint. Written by
+      // studio's pinch / alt-scroll on the main photo.
+      heroZoom: z.number().min(1).max(4).default(1),
       galleryLayout: z
         .enum(['stacked', 'two-column', 'three-column'])
         .default('two-column'),
