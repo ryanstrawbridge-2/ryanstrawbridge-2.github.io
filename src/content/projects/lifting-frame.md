@@ -20,7 +20,7 @@ figures:
   - section: What I did
     kind: comparison
     title: Joint revision
-    takeaway: PLACEHOLDER COPY — rewrite. Rev 1 was a weldment; Rev 2 is one machined part.
+    takeaway: PLACEHOLDER COPY — rewrite. Rev 2 redesigned the joint to eliminate welds.
     image: ../../assets/images/projects/lifting-frame/joint-rev1.jpg
     compare: ../../assets/images/projects/lifting-frame/joint-rev2.jpg
     beforeLabel: Rev 1
@@ -34,19 +34,19 @@ figures:
   - section: What I did
     kind: photo
     title: The machined corner joint
-    takeaway: PLACEHOLDER COPY — rewrite. Each arm slides over a square spigot and is retained through a tapped cross hole.
+    takeaway: PLACEHOLDER COPY — rewrite. The arms carry the lift in compression; the pins only hold the frame together.
     image: ../../assets/images/projects/lifting-frame/joint-rev2.jpg
-    alt: Machined aluminum corner joint with two square spigots and two tapped holes on the top face
+    alt: Machined aluminum corner joint with two arm sockets and two tapped holes on the top face
     caption: PLACEHOLDER CAPTION.
     aspect: 4/3
     points:
-      - Two tapped holes on the top face. What mounts here — the hoist ring from Rev 1? CHECK AND REWRITE.
-      - Square spigot, one per arm. The arm tube slides over it — CHECK AND REWRITE.
-      - Tapped cross hole that retains the arm — bolt, pin, or screw? CHECK AND REWRITE.
+      - Tapped holes for the lifting hardware. The swivel hoist ring threads in here — CHECK AND REWRITE which hole takes what.
+      - Arm socket. The arm bears on the joint in compression during a lift — CHECK AND REWRITE.
+      - Assembly pin hole. Loose fit on purpose. The pin only holds the frame together while it is unloaded; in a lift the arm is in compression, so the pin carries no load.
     callouts:
       - { x: 51, y: 18, label: Tapped holes, place: right }
-      - { x: 72, y: 50, label: Spigot, place: right }
-      - { x: 61, y: 67, label: Cross hole, place: left }
+      - { x: 72, y: 50, label: Arm socket, place: right }
+      - { x: 61, y: 67, label: Pin hole, place: left }
   - section: What I did
     kind: diagram
     title: Load path and sling angle

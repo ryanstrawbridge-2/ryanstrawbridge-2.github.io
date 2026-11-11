@@ -1,0 +1,7 @@
+{
+  "name": "portfolio-diagrams",
+  "private": true,
+  "description": "Generators for the editable project diagram decks. Run: npm install && npm run build",
+  "scripts": { "build": "node src/build-all.js" },
+  "dependencies": { "pptxgenjs": "4.0.1" }
+}

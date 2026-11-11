@@ -43,3 +43,8 @@ resume/*.synctex.gz
 
 # studio undo: deleted media is moved here so an undo can put it back
 .photo-trash/
+
+# Diagram decks (edited in Google Slides; exported PNGs go through the photo inbox)
+diagrams/*.pptx
+diagrams/node_modules/
+diagrams/.render/
