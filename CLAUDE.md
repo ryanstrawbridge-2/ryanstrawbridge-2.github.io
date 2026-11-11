@@ -31,6 +31,7 @@ npm run model <f.glb>    # compress a CAD model into public/models/ (4 MB budget
 npm run photos:shrink    # re-encode oversized images already in src/assets
 npm run check:tina       # fragment vs tina-lock.json (catches "Unexpected Error")
 npm run check:media      # src/assets/images layout (no loose/camera-named uploads)
+npm run check:copy       # no PLACEHOLDER / TODO text in fields that publish
 # studio: theme / text / phone preview / publish / undo (⌘Z) — see HANDBOOK.md
 npm run studio           # dev server + live editor (drag-to-crop, drop-to-upload)
 ```
@@ -64,6 +65,8 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | Career roadmap (parked) | `src/pages/_roadmap.astro` + `src/data/roadmap.json` — the `_` prefix keeps Astro from routing it, so the page is NOT built and nothing links to it. To bring it back: rename to `roadmap.astro`, re-add the nav item to `src/data/navigation.json`, and restore the `roadmap` collection in `.pages.yml` (its image field needs `output: /src/assets/images/roadmap/{name}{extension}` — the version removed here wrote to the assets root, which `check:media` rejects, gotcha 27). |
 | Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs`, `scripts/lib/homejson.mjs`, `scripts/lib/orphans.mjs` |
 | Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
+| Walkthrough figures | `src/lib/figures.ts` + `src/components/ProjectFigure.astro`; authored in each project's `figures:` frontmatter |
+| Placeholder-copy guard | `scripts/check-placeholder-copy.mjs` (`npm run check:copy`) |
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
 | Media layout guard | `scripts/check-media-layout.mjs` (`npm run check:media`) |
 | Ryan's photo library (gitignored) | `portfolio-photos/<project-slug>/` — 138 originals, folders named for the site's project slugs; READ-ONLY, studio browses and copies from it, never writes. `wix-archive/` is the unsorted legacy Wix export. |
@@ -273,6 +276,44 @@ GitHub SSH push from background processes stalls on large payloads.
     gallery row in TinaCMS will discard those three fields. Pages CMS and
     studio are both safe. Whenever a field is added to
     `src/content.config.ts`, add it to BOTH CMS schemas in the same change.
+    The same now applies to the whole `figures` list: it IS in `.pages.yml`
+    and is NOT in `tina/config.ts`, so editing a project in TinaCMS discards
+    every figure on it. Until the lock is regenerated, edit project figures in
+    Pages CMS or studio, not Tina.
+
+42. **Walkthrough figures are a second list, not more gallery fields.** A
+    gallery row is a photograph; a figure is a claim with evidence — headline,
+    picture, numbered points, and callout markers pinned to the picture at
+    PERCENTAGE positions so they survive any crop or resize. `figures:` in
+    frontmatter, rendered by `ProjectFigure.astro`, placed by the same
+    heading-slug matching as the gallery. Point N pairs with callout N; that
+    pairing is the whole interaction, both on hover and on focus.
+43. **A figure with no media is a placeholder, and placeholders are dev-only.**
+    `normalizeFigures(figures, import.meta.env.DEV)` drops them from a
+    production build, so a page mid-authoring never ships a row of empty
+    frames. Figure NUMBERING is assigned before that filter, so "Fig. 4" means
+    the same thing in both builds.
+44. **The skeleton is dev-only; the COPY is not.** A figure that has a real
+    photo and still says "PLACEHOLDER COPY" renders that headline to the world
+    — the guard in gotcha 43 only hides frames with no media. That is what
+    `npm run check:copy` is for: it greps PLACEHOLDER/TODO/FIXME/ADD FS out of
+    every publishable frontmatter field, exempting `plan`, which exists to hold
+    notes-to-self and never renders outside dev. Warn-only by default,
+    `--strict` in publish.sh — same reasoning as check:media and check:tina.
+45. **`aspect-ratio` resolves against `min-height` when width is auto.** The
+    placeholder skeleton had `min-height: 220px` and `aspect-ratio: 16/9` with
+    no width, so the browser computed the WIDTH from the height — 391px inside
+    a 335px column — and put every project page into horizontal scroll on a
+    phone. `width: 100%` on that element is load-bearing: it makes the ratio
+    derive height from width, which is the direction intended. Any element
+    with both a min-height and an aspect-ratio needs a definite width.
+46. **`TinaEditBridge` serializes the whole frontmatter into production HTML.**
+    `#tina-edit-payload` carries `project.data` on the live site, so anything
+    in frontmatter is in the page source whether or not it renders. `figures`
+    is destructured out of that payload in `[slug].astro` — otherwise every
+    figure's draft `plan` notes would ship, while Tina still dropped the whole
+    list on save for want of a schema field. If a future field is notes-only,
+    keep it out of the payload too.
 
 ## macOS gotchas
 
@@ -312,6 +353,12 @@ item's own `alt`/`caption`, which is where to look when you need one.
 
 Frontmatter: `title`, `subtitle`, `organization`, `date`, `summary`, `hero`, `heroAlt`, `tools[]`, `order`.
 Body sections: **Problem** → **What I did** → **Outcome**. Don't deviate from this without asking.
+
+The page renders as a walkthrough: body text sets up each section, then the
+`figures` for that section follow as presentation-style blocks (headline,
+picture, numbered points, callouts), then any plain gallery photos. The sticky
+rail carries organization, date, tools and jump links — tools are NOT repeated
+in the page header.
 
 ## What's deliberately NOT in the repo
 

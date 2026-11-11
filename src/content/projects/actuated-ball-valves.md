@@ -17,6 +17,51 @@ gallery:
   - image: ../../assets/images/projects/actuated-ball-valves/pump-test.png
     alt: abv pumptest
     section: Outcome
+figures:
+  - section: Problem
+    kind: diagram
+    title: Where the valve sits in the feed system
+    takeaway: PLACEHOLDER COPY — rewrite. The valve replaces a regulator the vehicle cannot afford to fly.
+    plan: >-
+      Flow schematic, left to right: pressurant tank, fill/vent, the position a
+      regulator would occupy (crossed out), the actuated ball valve, then the
+      injector. Label the pressures you know at each station.
+    aspect: 16/9
+    points:
+      - Pressure regulators are too heavy to fly.
+      - Previous needle valve and stepper motor had too low Cv and high breaking torque.
+      - PLACEHOLDER — add the third point this diagram should make.
+  - section: Problem
+    kind: diagram
+    title: Architecture trade-off
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      Three columns (regulator, needle valve + stepper, actuated ball valve)
+      against four rows (mass, Cv, breakaway torque, flight-viable). Shade the
+      cell that rules each option out.
+    aspect: 4/3
+  - section: What I did
+    kind: diagram
+    title: Torque budget
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      Stacked bar: seat friction + differential-pressure term + the margin you
+      added for seat creep and breakaway, against the servo's stall torque as a
+      horizontal line. Shows the margin rather than asserting it.
+    aspect: 4/3
+    points:
+      - Derived required torque from differential pressure, seat friction and port geometry.
+      - Added margin for seat creep and breakaway torque the simplified model does not capture.
+  - section: Outcome
+    kind: data
+    title: Commanded position vs current, across pressures
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      The plot you already made. Current on Y, commanded position on X, one
+      series per test pressure up to 2300 psi. Mark the actuation threshold.
+    aspect: 16/9
+    points:
+      - Successful actuation under 2300 psi delta.
 ---
 
 ## Problem

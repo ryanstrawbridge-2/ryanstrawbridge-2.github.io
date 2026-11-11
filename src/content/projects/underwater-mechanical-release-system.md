@@ -26,6 +26,68 @@ gallery:
 tools:
   - Mechanical design
 order: 4
+figures:
+  - section: Problem
+    kind: diagram
+    title: Cost against depth rating
+    takeaway: PLACEHOLDER COPY — rewrite. The gap this design aims at.
+    plan: >-
+      Scatter: depth rating on X, unit cost on Y. Plot the commercial systems
+      above $2,000 and this one at under $400 and 300 m. One quadrant is empty
+      and that is the point.
+    aspect: 4/3
+    points:
+      - Target production cost under $400 against $2,000+ commercial systems.
+      - Rated for 300 m depth and underwater environments.
+  - section: What I did
+    kind: diagram
+    title: Seal stack at 470 psi
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      Section view through the housing: both dynamic nitrile O-rings and the
+      static face seal, each called out, with the gland dimensions you sized to
+      the Parker handbook.
+    aspect: 16/9
+    points:
+      - Sized dual dynamic nitrile O-rings and a static face seal to Parker Handbook design practice at 470 psi.
+      - Resettable without opening the housing.
+  - section: What I did
+    kind: diagram
+    title: Load path, with a factor of safety at each check
+    takeaway: PLACEHOLDER COPY — rewrite. Six hand calculations, one picture.
+    plan: >-
+      One section view, six numbered callouts — shaft bending, tensile,
+      torsional, shear tear-out, bolt pullout, face-seal clamping. Put the
+      factor of safety next to each number. Use the callout markers below
+      rather than drawing the numbers into the image.
+    aspect: 16/9
+    points:
+      - Shaft bending — ADD FS.
+      - Tensile — ADD FS.
+      - Torsional — ADD FS.
+      - Shear tear-out — ADD FS.
+      - Bolt pullout — ADD FS.
+      - Face-seal clamping force — ADD FS.
+  - section: What I did
+    kind: diagram
+    title: Release sequence
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      Four frames: armed, signal received, actuating, released and ready to
+      reset. Same section view each time so only the mechanism moves.
+    aspect: 16/9
+  - section: Outcome
+    kind: photo
+    title: Ocean test
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      A photo from the 60 ft, 5-day deployment if you have one; otherwise the
+      bench pressure test at 470 psi. Pick from portfolio-photos.
+    aspect: 3/2
+    points:
+      - Version 1 pressure-tested to 470 psi with no leaks.
+      - Released a 20 lb weight at 60 ft after 5 days in the ocean.
+      - Achieved 2.25 FS on the release arm with an 80 lb weight.
 ---
 
 ## Problem

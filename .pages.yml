@@ -375,6 +375,94 @@ content:
             options:
               values: [top-left, top, top-right, left, center, right, bottom-left, bottom, bottom-right]
 
+      # -------------------------------------------------------------------
+      # WALKTHROUGH FIGURES
+      # A figure is a claim with evidence: a headline, a picture, numbered
+      # points, and callout markers pinned to the picture. A row with no
+      # photo/video/model is a PLACEHOLDER — visible only on localhost, never
+      # on the live site.
+      # -------------------------------------------------------------------
+      - name: figures
+        label: Walkthrough figures
+        type: object
+        list: true
+        default: []
+        description: >
+          The slide-by-slide walkthrough. Drag rows to reorder. Each one sits
+          under the heading you name, after the text. A row with no image shows
+          as a labelled placeholder on localhost and is left off the live site.
+        fields:
+          - { name: section, label: "Place under which heading?", type: string, description: "A heading from the body — Problem, What I did, or Outcome. Blank puts it at the bottom." }
+          - name: kind
+            label: Kind
+            type: select
+            default: diagram
+            description: Only changes the placeholder label and the frame treatment.
+            options:
+              values: [diagram, photo, comparison, data, model]
+          - { name: title, label: Title, type: string, description: "Short name for the figure. Used as the caption and the alt text if you leave those blank." }
+          - { name: takeaway, label: Takeaway, type: text, description: "One line saying what this figure proves. Shown above it in larger type — the slide headline. **bold** works." }
+          - name: image
+            label: Photo or diagram
+            type: image
+            options:
+              input: src/assets/images/projects/{primary}
+              output: '../../assets/images/projects/{primary}/{name}{extension}'
+          - name: compare
+            label: "Second image (for a before / after)"
+            type: image
+            description: Set Kind to comparison. Shown side by side with the first.
+            options:
+              input: src/assets/images/projects/{primary}
+              output: '../../assets/images/projects/{primary}/{name}{extension}'
+          - { name: beforeLabel, label: "Left label", type: string, description: "Defaults to Before." }
+          - { name: afterLabel, label: "Right label", type: string, description: "Defaults to After." }
+          - { name: video, label: "Video instead", type: string, description: "Filename of an MP4 in public/videos/." }
+          - { name: model, label: "3D model instead", type: string, description: "Filename of a .glb in public/models/, from npm run model." }
+          - name: poster
+            label: "Video thumbnail (optional)"
+            type: image
+            options:
+              input: src/assets/images/projects/{primary}
+              output: '../../assets/images/projects/{primary}/{name}{extension}'
+          - { name: alt, label: Alt text, type: string, description: "Describes the picture for screen readers." }
+          - { name: caption, label: "Caption (optional)", type: string, description: "Shown under the figure, after its number." }
+          - { name: plan, label: "What to draw (notes to self)", type: text, description: "Shown inside the placeholder on localhost so the intent survives until the diagram exists. NEVER published." }
+          - name: aspect
+            label: Shape
+            type: select
+            default: auto
+            description: auto keeps the picture's natural height.
+            options:
+              values: [auto, "1/1", "4/3", "3/2", "16/9", "3/4", "2/3", "9/16"]
+          - name: focal
+            label: Crop position
+            type: select
+            default: center
+            options:
+              values: [top-left, top, top-right, left, center, right, bottom-left, bottom, bottom-right]
+          - { name: zoom, label: Zoom, type: number, description: "1 is fit. Anchors on the crop position." }
+          - { name: points, label: "Points (numbered beside the figure)", type: string, list: true, default: [], description: "Point 1 pairs with callout 1, point 2 with callout 2, and so on. **bold** works." }
+          - name: callouts
+            label: Callout markers
+            type: object
+            list: true
+            default: []
+            description: >
+              Numbered markers pinned to the picture. Position is a percentage
+              of the frame, so it survives any crop or resize.
+            fields:
+              - { name: x, label: "Across (%)", type: number, description: "0 is the left edge, 100 the right." }
+              - { name: y, label: "Down (%)", type: number, description: "0 is the top edge, 100 the bottom." }
+              - { name: label, label: "Short label", type: string, description: "A couple of words shown next to the marker on wide screens. The full explanation goes in Points." }
+              - name: place
+                label: Label side
+                type: select
+                default: right
+                description: Which side of the marker the label sits on. Flip it when a marker is near an edge.
+                options:
+                  values: [right, left, up, down]
+
       - { name: tools, label: "Tools / skills", type: string, list: true, default: [], description: "Listed as tags on the project page." }
       - { name: order, label: Display order, type: number, default: 0, description: "Lower numbers appear first. Ties broken by date (newer first)." }
       - { name: draft, label: "Draft (hide from live site)", type: boolean, default: false, description: "Toggle on to hide this project from the published site." }

@@ -262,6 +262,65 @@ back. The button names what it will undo, so you can tell it is the right one.
 
 ---
 
+## Project walkthroughs (figures and callouts)
+
+A project page now reads like a deck. The body still goes **Problem → What I
+did → Outcome**; under each heading sit *figures* — a headline, a picture,
+numbered points beside it, and numbered markers pinned to the picture.
+
+Hovering a point lights up its marker. Hovering a marker lights up its point.
+On a phone the little labels drop away and the numbered list carries the text.
+
+### Where the editing happens
+
+Figures live in each project's `figures:` list. Edit them in **Pages CMS**
+(Projects → a project → Walkthrough figures) or ask Claude.
+
+**Not in TinaCMS.** Tina has no schema for figures yet, so saving a project
+there would delete every figure on it. Pages CMS and studio are both safe.
+
+### The fields that matter
+
+| Field | What it does |
+|-------|--------------|
+| Takeaway | The headline. One line saying what the figure proves. |
+| Points | Numbered bullets beside the picture. Point 1 pairs with callout 1. |
+| Callouts | Markers on the picture. Position is a percentage, so it survives any crop. |
+| Kind | diagram / photo / comparison / data / model. Changes the label and the frame. |
+| Second image | For a before/after. Set Kind to comparison. |
+| What to draw | Notes to self. Shows in the placeholder on localhost. **Never published.** |
+
+`**bold**` works in takeaways and points, the same as in the body.
+
+### Placeholders
+
+Every project is seeded with empty figures marking where a diagram should go.
+They show on localhost as a dashed, hatched box saying what belongs there.
+
+**They never reach the live site.** A figure with no picture is dropped from a
+published build, so an unfinished page is safe to publish.
+
+The copy is a different matter. A figure that has a real photo and still says
+"PLACEHOLDER COPY" *will* publish that headline. `npm run check:copy` catches
+it, and `publish.sh` refuses to push while any is left.
+
+### Making the diagrams
+
+Google Slides beats Canva for these — snap-to-grid, real connectors, and one
+master you can reuse across all eight projects. Set a custom 1600×1000 page,
+export PNG, then `npm run photos`.
+
+Two things to keep them looking like one set:
+
+- Put each diagram on a light card with a thin border. The site has a dark
+  theme, and a diagram exported on bare white glares in it.
+- Use the site accent as the only colour, and label everything with units.
+
+You often don't need a drawing at all — callouts on a photo you already have
+will carry a point that would otherwise need a diagram.
+
+---
+
 ## Where each photo goes on the page
 
 Every gallery row has three placement controls beyond drag-to-reorder:

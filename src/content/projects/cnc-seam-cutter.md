@@ -20,6 +20,43 @@ tools:
   - Fixture design
 order: 5
 draft: false
+figures:
+  - section: Problem
+    kind: data
+    title: Where the shift went
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      Two horizontal bars: manual end-prep (a full shift, skilled technician
+      watching it) against the fixture (2 hours to 30 minutes). Mark what part
+      of the old bar was attended time.
+    aspect: 16/9
+    points:
+      - The previous operation was performed by hand and took an entire shift.
+      - It required a skilled technician to monitor the process constantly.
+  - section: What I did
+    kind: diagram
+    title: Eleven cable configurations, one fixture
+    takeaway: PLACEHOLDER COPY — rewrite. This is the number the whole design turns on.
+    plan: >-
+      Fan out the 11 cable cross-sections the fixture conforms to, with the
+      modular insert that handles each. The point is that one fixture covers
+      all of them.
+    aspect: 16/9
+    points:
+      - Radially conforms 11 configurations of a new cable type.
+      - Enabled qualification testing ahead of the new production line.
+  - section: What I did
+    kind: diagram
+    title: Datum scheme
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      Simplified datum sketch: the dowel-pin datums, with the position and
+      symmetry feature control frames you actually applied. Y14.5 notation, not
+      a photo.
+    aspect: 4/3
+    points:
+      - Applied ASME Y14.5 GD&T — position and symmetry controls on dowel-pin datums.
+      - Repeatable alignment to the CNC head.
 ---
 
 ## Problem

@@ -22,7 +22,8 @@
     "tina": "tinacms",
     "publish": "bash scripts/publish.sh",
     "resume": "bash scripts/update-resume.sh",
-    "resume:build": "bash scripts/update-resume.sh --local"
+    "resume:build": "bash scripts/update-resume.sh --local",
+    "check:copy": "node scripts/check-placeholder-copy.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",

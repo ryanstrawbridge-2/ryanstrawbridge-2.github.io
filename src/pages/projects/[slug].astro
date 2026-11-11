@@ -5,6 +5,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Lightbox from '../../components/Lightbox.astro';
 import StudioOverlay from '../../components/StudioOverlay.astro';
 import GalleryGrid from '../../components/GalleryGrid.astro';
+import ProjectFigure from '../../components/ProjectFigure.astro';
 import TinaEditBridge from '../../components/TinaEditBridge.astro';
 import {
   PROJECT_QUERY,
@@ -18,6 +19,7 @@ import {
   normalizeGallery,
   splitBodySections,
 } from '../../lib/gallery';
+import { groupFigures, normalizeFigures } from '../../lib/figures';
 import type { GetStaticPaths } from 'astro';
 
 export const getStaticPaths = (async () => {
@@ -43,6 +45,7 @@ const {
   heroAspect,
   galleryLayout,
   gallery,
+  figures,
 } = project.data;
 
 // Format in UTC. Frontmatter dates are UTC midnight and stand for a calendar
@@ -81,7 +84,31 @@ const bodyChunks = bodyHasImages ? [] : splitBodySections(rendered?.html ?? '');
 
 const galleryItems = normalizeGallery(gallery, galleryLayout);
 const { bySection, trailing } = groupBySection(galleryItems, bodyChunks);
-const useInlineBody = bodyChunks.length > 0 && bySection.size > 0;
+
+// Placeholders are a dev-time scaffold: they show where a diagram is going to
+// go while it's still being drawn, and are dropped from a production build so
+// an unfinished page can't ship a row of empty boxes.
+const figureItems = normalizeFigures(figures, import.meta.env.DEV);
+const { bySection: figuresBySection, trailing: trailingFigures } = groupFigures(
+  figureItems,
+  bodyChunks,
+);
+
+// Inline placement needs the body split to have worked AND something to place.
+const useInlineBody =
+  bodyChunks.length > 0 && (bySection.size > 0 || figuresBySection.size > 0);
+
+// Jump links in the sticky rail. Derived from the headings that actually
+// rendered, so a project that drops a section doesn't get a dead link.
+const HEADING_LABELS: Record<string, string> = {
+  problem: 'Problem',
+  'what-i-did': 'What I did',
+  outcome: 'Outcome',
+};
+const sectionLinks = bodyChunks
+  .map((chunk) => chunk.id)
+  .filter(Boolean)
+  .map((id) => ({ id, label: HEADING_LABELS[id] ?? id.replace(/-/g, ' ') }));
 
 const all = (await getCollection('projects', ({ data }) => !data.draft)).sort(
   (a, b) =>
@@ -94,14 +121,21 @@ const next = idx < all.length - 1 ? all[idx + 1] : null;
 
 const tinaVariables = { relativePath: `${project.id}.md` };
 const tinaId = queryId(PROJECT_QUERY, tinaVariables);
+// `figures` is deliberately NOT in this payload. TinaEditBridge serializes it
+// into the production HTML, and tina/config.ts has no `figures` field, so
+// including it would ship every figure's draft notes in the page source while
+// Tina still dropped the whole list on save (gotcha 41). Pages CMS and studio
+// edit figures; Tina does not see them.
+const { figures: _figuresNotInTina, ...tinaFields } = project.data;
 const tinaData = {
   project: asTinaDocument('Project', `${project.id}.md`, 'src/content/projects', {
-    ...project.data,
+    ...tinaFields,
     date: date.toISOString(),
   }),
 };
 const f = (...path: (string | number)[]) => projectField(project.id, ...path);
 const galleryField = (index: number, key: string) => f('gallery', index, key);
+const figureField = (index: number, key: string) => f('figures', index, key);
 ---
 
 <BaseLayout title={`${title} · Ryan Strawbridge`} description={summary}>
@@ -114,15 +148,6 @@ const galleryField = (index: number, key: string) => f('gallery', index, key);
         <h1 data-tina-field={f('title')}>{title}</h1>
         {subtitle && organization && <p class="subtitle muted" data-tina-field={f('subtitle')}>{subtitle}</p>}
         <p class="summary" data-tina-field={f('summary')}>{summary}</p>
-        {
-          tools.length > 0 && (
-            <ul class="tags">
-              {tools.map((t) => (
-                <li>{t}</li>
-              ))}
-            </ul>
-          )
-        }
       </div>
     </header>
 
@@ -136,35 +161,93 @@ const galleryField = (index: number, key: string) => f('gallery', index, key);
       />
     </div>
 
-    {/* One lightbox root wraps body and gallery — the lightbox binds to the
-        first root it finds, so they have to share it to navigate as one set. */}
+    {/* One lightbox root wraps body, figures and gallery — the lightbox binds
+        to the first root it finds, so they have to share it to navigate as one
+        set. */}
     <div data-lightbox-root data-studio-slug={import.meta.env.DEV ? project.id : undefined}>
-      <div class="container-narrow project-body" data-tina-field={f('body')}>
-        {
-          useInlineBody ? (
-            bodyChunks.map((chunk) => (
-              <>
-                <Fragment set:html={chunk.html} />
-                <GalleryGrid
-                  items={bySection.get(chunk.id) ?? []}
-                  field={galleryField}
-                  class="section-gallery"
-                />
-              </>
-            ))
-          ) : (
-            <Content />
-          )
-        }
-      </div>
-
-      {
-        trailing.length > 0 && (
-          <div class="container-narrow">
-            <GalleryGrid items={trailing} field={galleryField} class="trailing-gallery" />
+      <div class="container project-layout">
+        <div class="project-main">
+          <div class="project-body" data-tina-field={f('body')}>
+            {
+              useInlineBody ? (
+                bodyChunks.map((chunk) => (
+                  <>
+                    <Fragment set:html={chunk.html} />
+                    {/* Figures first, then plain photos: the walkthrough makes
+                        the argument, the gallery is supporting material. */}
+                    {(figuresBySection.get(chunk.id) ?? []).map((figure) => (
+                      <ProjectFigure figure={figure} field={figureField} />
+                    ))}
+                    <GalleryGrid
+                      items={bySection.get(chunk.id) ?? []}
+                      field={galleryField}
+                      class="section-gallery"
+                    />
+                  </>
+                ))
+              ) : (
+                <Content />
+              )
+            }
           </div>
-        )
-      }
+
+          {trailingFigures.map((figure) => (
+            <ProjectFigure figure={figure} field={figureField} />
+          ))}
+
+          {
+            trailing.length > 0 && (
+              <GalleryGrid items={trailing} field={galleryField} class="trailing-gallery" />
+            )
+          }
+        </div>
+
+        {/* Sticky rail. Holds the facts you want while looking at a photo
+            halfway down the page — who it was for, when, what it was built
+            with — plus a jump list for the three sections. */}
+        <aside class="project-rail" aria-label="Project details">
+          <div class="rail-inner">
+            {
+              organization && (
+                <div class="rail-block">
+                  <p class="rail-label">Where</p>
+                  <p class="rail-value" data-tina-field={f('organization')}>{organization}</p>
+                </div>
+              )
+            }
+            <div class="rail-block">
+              <p class="rail-label">When</p>
+              <p class="rail-value" data-tina-field={f('date')}>{dateLabel}</p>
+            </div>
+            {
+              tools.length > 0 && (
+                <div class="rail-block">
+                  <p class="rail-label">Built with</p>
+                  <ul class="rail-tools">
+                    {tools.map((t) => (
+                      <li>{t}</li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            }
+            {
+              sectionLinks.length > 0 && (
+                <nav class="rail-block rail-jump" aria-label="Sections">
+                  <p class="rail-label">On this page</p>
+                  <ul>
+                    {sectionLinks.map((link) => (
+                      <li>
+                        <a href={`#${link.id}`}>{link.label}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              )
+            }
+          </div>
+        </aside>
+      </div>
     </div>
 
     <TinaEditBridge query={PROJECT_QUERY} variables={tinaVariables} data={tinaData} id={tinaId} />
@@ -174,6 +257,28 @@ const galleryField = (index: number, key: string) => f('gallery', index, key);
     {/* Dev only. Renders nothing in a production build. */}
     <StudioOverlay headings={bodyChunks.map((c) => c.id).filter(Boolean)} />
 
+    {
+      next && (
+        <a href={`/projects/${next.id}/`} class="next-card container">
+          <div class="next-card-text">
+            <p class="next-card-label">Next project</p>
+            <h2>{next.data.title}</h2>
+            <p class="next-card-summary">{next.data.summary}</p>
+            {next.data.organization && <p class="next-card-org">{next.data.organization}</p>}
+          </div>
+          <div class="next-card-image">
+            <Image
+              src={next.data.hero}
+              alt=""
+              widths={[400, 800]}
+              sizes="(min-width: 900px) 420px, 100vw"
+              loading="lazy"
+            />
+          </div>
+        </a>
+      )
+    }
+
     <nav class="project-nav container" aria-label="Project navigation">
       <a href="/projects/" class="all">← All projects</a>
       <div class="adjacent">
@@ -181,12 +286,6 @@ const galleryField = (index: number, key: string) => f('gallery', index, key);
           <a href={`/projects/${prev.id}/`} class="adjacent-link">
             <span class="muted">Previous</span>
             <span>{prev.data.title}</span>
-          </a>
-        )}
-        {next && (
-          <a href={`/projects/${next.id}/`} class="adjacent-link adjacent-right">
-            <span class="muted">Next</span>
-            <span>{next.data.title}</span>
           </a>
         )}
       </div>
@@ -209,21 +308,146 @@ const galleryField = (index: number, key: string) => f('gallery', index, key);
       max-width: 720px;
       color: var(--text);
     }
-    .tags {
-      list-style: none;
-      padding: 0;
-      margin: 1.5rem 0 0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+    /* --- layout: scrolling column + sticky rail ------------------------ */
+
+    .project-layout {
+      display: grid;
+      gap: 2rem;
+      align-items: start;
     }
-    .tags li {
-      padding: 0.3rem 0.7rem;
-      background: var(--bg-elevated);
+    @media (min-width: 1000px) {
+      .project-layout {
+        grid-template-columns: minmax(0, 1fr) 250px;
+        gap: 3.5rem;
+      }
+    }
+    .project-main {
+      min-width: 0;
+    }
+
+    .project-rail {
+      /* Below 1000px the grid is one column and the rail reads as a plain
+         block above the fold of the body — sticky would pin it over the text. */
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
+    }
+    @media (min-width: 1000px) {
+      .project-rail {
+        position: sticky;
+        /* Clears the site header, which is itself sticky. */
+        top: 5.5rem;
+        border-top: 0;
+        padding-top: 0;
+        order: 2;
+      }
+    }
+    .rail-inner {
+      display: grid;
+      gap: 1.5rem;
+    }
+    @media (max-width: 999px) {
+      .rail-inner {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.25rem 2rem;
+      }
+    }
+    .rail-block p {
+      margin: 0;
+    }
+    .rail-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 0.35rem !important;
+    }
+    .rail-value {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      color: var(--text);
+    }
+    .rail-tools,
+    .rail-jump ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.3rem;
+      font-size: 0.9rem;
+    }
+    .rail-tools li {
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+    .rail-jump a {
+      color: var(--text);
+      text-decoration: none;
+      border-left: 2px solid var(--border);
+      padding-left: 0.6rem;
+      display: block;
+      line-height: 1.6;
+    }
+    .rail-jump a:hover {
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+
+    /* --- next project card --------------------------------------------- */
+
+    .next-card {
+      display: grid;
+      gap: 1.25rem;
+      align-items: center;
+      margin-top: 4rem;
+      padding: 1.5rem;
       border: 1px solid var(--border);
-      border-radius: 999px;
+      border-radius: var(--radius-lg);
+      background: var(--bg-elevated);
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color var(--transition), transform var(--transition);
+    }
+    @media (min-width: 760px) {
+      .next-card {
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+    }
+    .next-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .next-card-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+      margin: 0 0 0.4rem;
+    }
+    .next-card h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.5rem;
+    }
+    .next-card-summary {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .next-card-org {
+      margin: 0.6rem 0 0;
       font-size: 0.85rem;
       color: var(--text-muted);
+    }
+    .next-card-image :global(img) {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      object-fit: cover;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
 
     .hero-image-wrap {
@@ -240,8 +464,16 @@ const galleryField = (index: number, key: string) => f('gallery', index, key);
     }
 
     .project-body {
-      padding-block: 1rem 4rem;
+      padding-block: 1rem 2rem;
       font-size: 1.05rem;
+    }
+    /* Text keeps a comfortable measure while figures take the whole column —
+       a paragraph and a schematic do not want the same width. */
+    .project-body :global(p),
+    .project-body :global(ul),
+    .project-body :global(ol),
+    .project-body :global(blockquote) {
+      max-width: 68ch;
     }
     .project-body :global(h2) {
       margin-top: 2.5rem;

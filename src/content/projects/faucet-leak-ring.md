@@ -13,6 +13,16 @@ tools:
   - FDM 3D printing
   - Calipers
 order: 8
+figures:
+  - section: What I did
+    kind: diagram
+    title: Channel geometry
+    takeaway: PLACEHOLDER COPY — rewrite, or delete this figure. The page may be better short.
+    plan: >-
+      Section through the ring showing the channel that redirects water away
+      from the counter, and the clearance on the faucet neck. One small
+      drawing — this project does not need more than that.
+    aspect: 1/1
 ---
 
 ## Problem

@@ -74,6 +74,78 @@ const projects = defineCollection({
           }),
         )
         .default([]),
+
+      // -----------------------------------------------------------------
+      // Walkthrough figures.
+      //
+      // The presentation layer: a figure, a one-line takeaway, numbered
+      // bullets, and callout markers pinned to the image. Separate from
+      // `gallery` on purpose — a gallery row is a photo, a figure is an
+      // argument, and mixing them meant every photo grew fields it never
+      // used.
+      //
+      // Every field is optional for the same reason as gallery above: a
+      // half-filled CMS row must never be a schema error, because a CMS
+      // commit skips the pre-commit hook and surfaces as a failed deploy.
+      // A figure with no media is a PLACEHOLDER — rendered as a labelled
+      // skeleton in dev, skipped entirely in a production build.
+      // -----------------------------------------------------------------
+      figures: z
+        .array(
+          z.object({
+            // Body heading this figure follows. Same slug matching as
+            // gallery; an unknown heading falls to the bottom of the page.
+            section: z.string().optional(),
+            // Changes the placeholder label and the frame treatment only.
+            kind: z
+              .enum(['diagram', 'photo', 'comparison', 'data', 'model'])
+              .default('diagram'),
+            title: z.string().optional(),
+            // One line stating what this figure proves. Sits above the
+            // figure in larger type — the "slide headline".
+            takeaway: z.string().optional(),
+            image: image().optional(),
+            // Second image, for kind: comparison. Rendered side by side.
+            compare: image().optional(),
+            beforeLabel: z.string().optional(),
+            afterLabel: z.string().optional(),
+            video: z.string().optional(),
+            model: z.string().optional(),
+            poster: image().optional(),
+            alt: z.string().optional(),
+            caption: z.string().optional(),
+            // What to draw. Shown inside the placeholder skeleton so the
+            // intent survives until the diagram exists. Never rendered in
+            // production.
+            plan: z.string().optional(),
+            aspect: z
+              .enum(['auto', '1/1', '4/3', '3/2', '16/9', '3/4', '2/3', '9/16'])
+              .default('auto'),
+            focal: z.string().default('center'),
+            zoom: z.number().min(1).max(4).default(1),
+            // Bullets beside the figure. Numbered, and a bullet whose
+            // number matches a callout highlights it on hover/focus.
+            points: z.array(z.string()).default([]),
+            // Markers pinned to the image. x/y are PERCENTAGES of the
+            // frame, which is what makes them survive any crop or resize.
+            callouts: z
+              .array(
+                z.object({
+                  x: z.number().min(0).max(100).default(50),
+                  y: z.number().min(0).max(100).default(50),
+                  // Short label shown next to the marker on wide screens.
+                  // The full explanation belongs in `points`.
+                  label: z.string().optional(),
+                  // Which way the leader line points out of the marker.
+                  place: z
+                    .enum(['right', 'left', 'up', 'down'])
+                    .default('right'),
+                }),
+              )
+              .default([]),
+          }),
+        )
+        .default([]),
     }),
 });
 

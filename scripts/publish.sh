@@ -92,6 +92,14 @@ if ! node scripts/check-media-layout.mjs --strict; then
   exit 1
 fi
 
+# Walkthrough figures ship with placeholder headlines until the diagrams exist.
+# The empty-frame skeleton is dev-only, but the COPY is not — a figure with a
+# real photo and a "PLACEHOLDER COPY" headline renders that headline to the
+# world. Same warn-only/--strict split as the two checks above.
+if ! node scripts/check-placeholder-copy.mjs --strict; then
+  exit 1
+fi
+
 echo "→ pulling anything new from GitHub"
 git pull --rebase --autostash
 

@@ -19,6 +19,38 @@ tools:
   - Ergonomic design
 order: 2
 draft: false
+figures:
+  - section: Problem
+    kind: diagram
+    title: What the old tool could not do
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      Side by side: one bend at a time with the old plates, against both bends
+      in one press with the new ones. Show the short bend the old tool produced
+      against the required geometry.
+    aspect: 16/9
+    points:
+      - Produced bends shorter than required and formed only one bend at a time.
+      - Required multiple adjustments and relied on operators eyeballing the geometry.
+  - section: What I did
+    kind: diagram
+    title: Spring-back compensation
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: >-
+      The geometry your equation describes: bend offset, radius and arc length,
+      with the spring-back angle drawn as the difference between pressed and
+      released. This is the diagram that makes the equation readable.
+    aspect: 16/9
+    points:
+      - Derived a generalizable equation relating bend offset, radius and arc length to compensate for spring-back.
+      - Redesigned the bending plates to create both bends at once.
+      - Reconfigured the bolting and piston layout, increasing shear capacity to **44 kips**.
+  - section: Outcome
+    kind: data
+    title: A full shift to a quarter
+    takeaway: PLACEHOLDER COPY — rewrite.
+    plan: Two bars, old against new, in hours per operation. Annotate the 75% cut.
+    aspect: 16/9
 ---
 
 ## Problem
