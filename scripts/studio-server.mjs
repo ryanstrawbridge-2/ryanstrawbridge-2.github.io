@@ -469,6 +469,35 @@ const importProjectImage = async (slug, input, ext, title) => {
   return { outName, before: input.length, after: encoded.data.length };
 };
 
+/**
+ * Move, add or remove a callout marker on a walkthrough figure.
+ *
+ * `callout` is 1-based, matching the number drawn on the marker. x and y are
+ * percentages of the frame, clamped and rounded to a tenth — finer than that
+ * is noise from the pointer, and it keeps the frontmatter readable.
+ */
+const figureCallout = ({ slug, figure, callout, x, y, add, remove }) =>
+  withProject(slug, (file) => {
+    const fig = file.doc.getIn(['figures', figure]);
+    if (!fig) throw new Error(`no figure ${figure}`);
+    const pct = (v) => Math.round(Math.min(100, Math.max(0, Number(v))) * 10) / 10;
+    if (add) {
+      const node = file.doc.createNode({ x: pct(x ?? 50), y: pct(y ?? 50), label: 'New marker', place: 'right' }, { flow: true });
+      if (file.doc.getIn(['figures', figure, 'callouts'])) file.doc.addIn(['figures', figure, 'callouts'], node);
+      else file.doc.setIn(['figures', figure, 'callouts'], file.doc.createNode([node]));
+      return { added: true };
+    }
+    const i = Number(callout) - 1;
+    if (!file.doc.getIn(['figures', figure, 'callouts', i])) throw new Error(`no marker ${callout} on figure ${figure + 1}`);
+    if (remove) {
+      file.doc.deleteIn(['figures', figure, 'callouts', i]);
+      return { removed: true };
+    }
+    file.doc.setIn(['figures', figure, 'callouts', i, 'x'], pct(x));
+    file.doc.setIn(['figures', figure, 'callouts', i, 'y'], pct(y));
+    return { x: pct(x), y: pct(y) };
+  });
+
 /** Replace the hero with a file dropped on it. */
 const uploadHero = async ({ slug, filename, data }) => {
   const ext = extname(filename || '').toLowerCase();
@@ -876,6 +905,7 @@ const undoLabel = (pathname, payload = {}) => {
       if (keys.length === 1 && keys[0] === 'heroAlt') return 'main photo description';
       return keys.length === 1 ? keys[0] : 'page settings';
     case '/project/hero': return 'main photo';
+    case '/figure/callout': return payload.add ? 'add marker' : payload.remove ? 'remove marker' : `move marker ${payload.callout ?? ''}`.trim();
     case '/upload': return `add ${payload.filename ?? 'file'}`;
     case '/library/pick': return payload.hero ? 'main photo' : `add ${payload.file ?? 'file'}`;
     case '/home/patch': return `home ${String(payload.path ?? '').split('.').pop()}`;
@@ -984,6 +1014,7 @@ const ROUTES = {
   },
   '/upload': handleUpload,
   '/project/hero': uploadHero,
+  '/figure/callout': figureCallout,
   '/library/pick': pickFromLibrary,
   '/home/patch': patchHome,
   '/home/upload': uploadHome,

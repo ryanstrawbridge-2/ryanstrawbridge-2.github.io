@@ -249,12 +249,27 @@ spending that on someone who scrolled past would be rude.
 
 | Button | What it does |
 |--------|--------------|
-| **theme** | Accent colour, corner style, heading font, page width. Previews instantly, saves as you go, applies site-wide. |
-| **text** | Turns every editable string on the page purple. Click one and type. Enter saves a short field, ⌘↵ a long one, Esc cancels. |
-| **phone** | Opens the same page in a real 390px frame beside it, so you can see the phone layout without resizing anything. |
-| **publish** | Runs the publish script and shows its output. Two clicks, on purpose. |
-| **undo** | Undoes the last edit, and says which one. ⌘Z does the same. |
-| **library** | Browse `portfolio-photos/` and what is already on the site. |
+| **Media** | The library: your photo inbox (sorted by prefix), `portfolio-photos/`, and what is already on the site. |
+| **Text** | Outlines every editable string on the page. Click one and type. Enter saves a short field, ⌘↵ a long one, Esc cancels. |
+| **Theme** | Accent colour, corner style, heading font, page width. Previews instantly, saves as you go, applies site-wide. |
+| **Phone** | Opens the same page in a real 390px frame beside it, so you can see the phone layout without resizing anything. |
+| **Undo** | Undoes the last edit, and says which one. ⌘Z does the same. |
+| **?** | Hover for the gestures. |
+| **Publish** | Runs the publish script and shows its output. Two clicks, on purpose. |
+
+### The main photo
+
+Hover the big photo at the top of a project page. Drag to crop, pinch or ⌥scroll
+to zoom, pick a shape (wide, standard, tall, square), edit the description, or
+**Replace**: from the library, or drop a file straight onto the photo. A new
+photo resets the crop and zoom, then asks you to update the description.
+
+### Moving callout markers
+
+Hover a walkthrough photo. **Drag a numbered marker** to move it; it saves when
+you let go. **+ Marker** above the photo adds one in the middle. **⌥-click** a
+marker deletes it. Labels and the matching points are text; edit those in Pages
+CMS.
 
 ### Cropping
 
@@ -332,9 +347,14 @@ it, and `publish.sh` refuses to push while any is left.
 
 ### Making the diagrams
 
-Google Slides beats Canva for these — snap-to-grid, real connectors, and one
-master you can reuse across all eight projects. Set a custom 1600×1000 page,
-export PNG, then `npm run photos`.
+**Start from the decks in `diagrams/`.** There is one per project, with 36
+diagrams drawn from your pages, photos and the CFS and capstone decks. Upload
+one to Google Drive and open it with Google Slides; every shape stays editable.
+Slide 1 of each deck lists its sources and what to check. `diagrams/README.md`
+says which slide fills which placeholder.
+
+Export as PNG (16:10, so 1600×1000), name it `PREFIX_title.png`, drop it in
+`photo-inbox/`, then pick it in studio.
 
 Two things to keep them looking like one set:
 
