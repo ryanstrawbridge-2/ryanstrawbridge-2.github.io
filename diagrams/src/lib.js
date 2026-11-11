@@ -87,25 +87,37 @@ const label = (s, str, x, y, w, o = {}) =>
     size: o.size ?? 10, bold: true, color: o.color ?? C.muted, charSpacing: 1.5, align: o.align,
   });
 
-/** Rectangle, optionally rounded, optionally labelled in the middle. */
+/**
+ * Rectangle, optionally rounded, optionally labelled.
+ *
+ * A label is written INTO the shape, not as a text box on top of it. One
+ * object per box is what makes the decks easy to edit in Google Slides: drag
+ * the box and its words come with it, double-click to retype.
+ */
 const box = (s, x, y, w, h, o = {}) => {
   const shape = o.radius ? 'roundRect' : 'rect';
-  s.addShape(shape, {
+  const geom = {
     x, y, w, h,
+    shape,
     fill: { color: o.fill ?? C.fill },
     line: o.noLine ? { type: 'none' } : { color: o.line ?? C.line, width: o.lineWidth ?? 1, dashType: o.dash },
     rectRadius: o.radius,
     objectName: o.name,
-  });
-  if (o.label !== undefined) {
-    s.addText(o.label, {
-      x: x + (o.pad ?? 0.08), y, w: w - 2 * (o.pad ?? 0.08), h,
-      isTextBox: true, margin: 0, fontFace: FONT,
-      fontSize: o.size ?? 13, bold: o.bold ?? false, color: o.color ?? C.ink,
-      align: o.align ?? 'center', valign: o.valign ?? 'middle',
-      lineSpacingMultiple: 1.05, fit: 'none',
-    });
+  };
+  if (o.label === undefined) {
+    const { shape: kind, ...rest } = geom;
+    s.addShape(kind, rest);
+    return;
   }
+  const pad = (o.pad ?? 0.08) * 72; // points
+  s.addText(o.label, {
+    ...geom,
+    margin: [0, pad, 0, pad],
+    fontFace: FONT,
+    fontSize: o.size ?? 13, bold: o.bold ?? false, color: o.color ?? C.ink,
+    align: o.align ?? 'center', valign: o.valign ?? 'middle',
+    lineSpacingMultiple: 1.05, fit: 'none',
+  });
 };
 
 /**
@@ -179,19 +191,21 @@ const freeform = (s, pts, o = {}) => {
 };
 
 const circle = (s, cx, cy, r, o = {}) => {
-  s.addShape('ellipse', {
+  const geom = {
     x: cx - r, y: cy - r, w: 2 * r, h: 2 * r,
     fill: { color: o.fill ?? C.white },
     line: o.noLine ? { type: 'none' } : { color: o.line ?? C.slate, width: o.width ?? 1.25 },
     objectName: o.name,
-  });
-  if (o.label !== undefined) {
-    s.addText(o.label, {
-      x: cx - r, y: cy - r, w: 2 * r, h: 2 * r,
-      isTextBox: true, margin: 0, fontFace: FONT, fontSize: o.size ?? 10,
-      bold: o.bold ?? true, color: o.color ?? C.ink, align: 'center', valign: 'middle', fit: 'none',
-    });
+  };
+  if (o.label === undefined) {
+    s.addShape('ellipse', geom);
+    return;
   }
+  // Same rule as box(): the number lives inside the circle, one object.
+  s.addText(o.label, {
+    ...geom, shape: 'ellipse', margin: 0, fontFace: FONT, fontSize: o.size ?? 10,
+    bold: o.bold ?? true, color: o.color ?? C.ink, align: 'center', valign: 'middle', fit: 'none',
+  });
 };
 
 /** Numbered marker, matching the callout dots on the site. */

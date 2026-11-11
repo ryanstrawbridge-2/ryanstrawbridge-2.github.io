@@ -1,7 +1,10 @@
 # Project diagrams
 
 One deck per project. Every shape, arrow and label is native, so the decks
-stay editable in Google Slides, Canva or PowerPoint. Slide 1 of each deck is a
+stay editable in Google Slides, Canva or PowerPoint. A box and its words are a
+single object: drag the box and the label comes with it, double-click to
+retype. Free-standing captions are plain text boxes. Bends and sections are
+freeform shapes; right-click → Edit points to reshape them. Slide 1 of each deck is a
 read-me: where each fact came from, and what to check. Don't export it.
 
 ## Edit in Google Slides

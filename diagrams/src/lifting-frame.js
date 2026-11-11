@@ -109,9 +109,9 @@ module.exports = async (out) => {
     L.arrow(s, nx + 0.15, ny - 0.3, nx + 0.15, ty, { color: C.accent, width: 1.25, dash: 'dash' });
     L.text(s, 'T sin α', nx - 0.75, (ny + ty) / 2 - 0.3, 0.8, 0.25, { size: 12, color: C.accent, align: 'right' });
     L.arrow(s, nx + 0.15, ny - 0.3, tx, ny - 0.3, { color: C.accent, width: 1.25, dash: 'dash' });
-    L.text(s, 'T cos α  pulls the corner inward', nx + 0.55, ny - 0.62, 2.8, 0.25, { size: 11, color: C.accent });
+    L.text(s, 'T cos α  pulls the corner inward', nx + 0.85, ny - 0.62, 2.8, 0.25, { size: 11, color: C.accent });
     // angle label
-    L.text(s, 'α', nx + 0.5, ny - 1.05, 0.3, 0.25, { size: 13, color: C.accent, bold: true });
+    L.text(s, 'α', nx + 0.48, ny - 0.62, 0.3, 0.25, { size: 13, color: C.accent, bold: true });
 
     // load
     L.arrow(s, nx, ny + 0.32, nx, ny + 1.65, { color: C.ink, width: 2.75 });

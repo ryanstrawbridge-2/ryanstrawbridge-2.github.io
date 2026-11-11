@@ -38,6 +38,17 @@ const logoSizeHeight: Record<string, string> = {
 const photoShape = home.hero.headshotShape ?? 'circle';
 const photoPosition = home.aboutSection.photoPosition ?? 'left';
 const aboutFocal = focalCss(home.aboutSection.photoFocalPoint ?? 'center');
+// Crop fields studio writes. Optional: an uncropped photo renders as before.
+// Read loosely because home.json is plain JSON with no schema to type them.
+const crop = (obj: unknown, focalKey: string, zoomKey: string) => {
+  const o = (obj ?? {}) as Record<string, unknown>;
+  return {
+    focal: focalCss(typeof o[focalKey] === 'string' ? (o[focalKey] as string) : undefined),
+    zoom: clampZoom(typeof o[zoomKey] === 'number' ? (o[zoomKey] as number) : undefined),
+  };
+};
+const headshotCrop = crop(home.hero, 'headshotFocalPoint', 'headshotZoom');
+const aboutZoom = crop(home.aboutSection, 'photoFocalPoint', 'photoZoom').zoom;
 const logoH = logoSizeHeight[home.experienceSection.logoSize ?? 'medium'];
 const heroHeadshot = resolveSiteImage(home.hero.headshot);
 const aboutPhoto = resolveSiteImage(home.aboutSection.photo);
@@ -85,7 +96,10 @@ const aboutBioParagraphs = home.aboutSection.bio
         <p class="eyebrow" data-tina-field={f('hero', 'eyebrow')}>{home.hero.eyebrow}</p>
         <h1>Ryan Strawbridge</h1>
         <p class="tagline" data-tina-field={f('hero', 'tagline')} set:html={inlineEmphasis(home.hero.tagline)} />
-        <p class="lede" data-tina-field={f('hero', 'lede')} set:html={inlineEmphasis(home.hero.lede)} />
+        {/* Optional. Left blank to keep the hero to name, tagline and buttons. */}
+        {home.hero.lede?.trim() && (
+          <p class="lede" data-tina-field={f('hero', 'lede')} set:html={inlineEmphasis(home.hero.lede)} />
+        )}
         <div class="cta-row">
           <a class="btn" href={home.hero.primaryCta.href} data-tina-field={f('hero', 'primaryCta', 'label')}>{home.hero.primaryCta.label}</a>
           <a
@@ -106,7 +120,7 @@ const aboutBioParagraphs = home.aboutSection.bio
           </a>
         </div>
       </div>
-      <div class="hero-photo" style={`--headshot-radius: ${headshotShapeCss[photoShape]};`} data-tina-field={f('hero', 'headshot')}>
+      <div class="hero-photo" style={`--headshot-radius: ${headshotShapeCss[photoShape]}; --focal: ${headshotCrop.focal}; --zoom: ${headshotCrop.zoom};`} data-tina-field={f('hero', 'headshot')}>
         <Image
           src={heroHeadshot}
           alt={home.hero.headshotAlt ?? 'Headshot of Ryan Strawbridge'}
@@ -228,7 +242,7 @@ const aboutBioParagraphs = home.aboutSection.bio
   )}
 
   {home.aboutSection.show !== false && (
-  <section class={`section about-section about-photo-${photoPosition}`} id="about" style={`--about-focal: ${aboutFocal};`}>
+  <section class={`section about-section about-photo-${photoPosition}`} id="about" style={`--about-focal: ${aboutFocal}; --about-zoom: ${aboutZoom};`}>
     <div class="container">
       <div class="about-grid">
         <div class="portrait-wrap" data-tina-field={f('aboutSection', 'photo')}>
@@ -262,7 +276,11 @@ const aboutBioParagraphs = home.aboutSection.bio
               return (
                 <article class="interest-card reveal">
                   {main && (
-                    <div class="interest-image-main" data-tina-field={f('interestsSection', 'items', i, 'image')}>
+                    <div
+                      class="interest-image-main"
+                      style={`--focal: ${crop(item, 'focal', 'zoom').focal}; --zoom: ${crop(item, 'focal', 'zoom').zoom};`}
+                      data-tina-field={f('interestsSection', 'items', i, 'image')}
+                    >
                       <Image src={main} alt={item.alt} widths={[400, 800]} sizes="(min-width: 768px) 33vw, 100vw" loading="lazy" />
                     </div>
                   )}
@@ -474,13 +492,24 @@ const aboutBioParagraphs = home.aboutSection.bio
         max-width: 320px;
       }
     }
-    .hero-photo :global(.headshot) {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      object-fit: cover;
+    /* The wrapper clips and carries the frame, so zoom crops inside the circle
+       instead of scaling the border with it. */
+    .hero-photo {
+      overflow: hidden;
       border-radius: var(--headshot-radius, 50%);
       box-shadow: var(--shadow-lg);
       border: 4px solid var(--bg-elevated);
+      line-height: 0;
+      align-self: center;
+    }
+    .hero-photo :global(.headshot) {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      object-position: var(--focal, center center);
+      transform: scale(var(--zoom, 1));
+      transform-origin: var(--focal, center center);
     }
     .tagline {
       font-size: clamp(1.25rem, 2.4vw, 1.75rem);
@@ -740,13 +769,20 @@ const aboutBioParagraphs = home.aboutSection.bio
         order: 2;
       }
     }
-    .portrait-wrap :global(.portrait) {
-      width: 100%;
+    .portrait-wrap {
+      overflow: hidden;
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
+      line-height: 0;
+    }
+    .portrait-wrap :global(.portrait) {
+      display: block;
+      width: 100%;
       aspect-ratio: 4 / 5;
       object-fit: cover;
       object-position: var(--about-focal, center center);
+      transform: scale(var(--about-zoom, 1));
+      transform-origin: var(--about-focal, center center);
     }
     .about-copy h2 {
       margin: 0.5rem 0 1rem;
@@ -786,6 +822,9 @@ const aboutBioParagraphs = home.aboutSection.bio
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: var(--focal, center center);
+      transform: scale(var(--zoom, 1));
+      transform-origin: var(--focal, center center);
     }
     .interest-thumbs {
       display: grid;

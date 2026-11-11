@@ -734,13 +734,14 @@ const homeAltPath = (data, imagePath) => {
  * rather than being shadowed by a second one that means the same thing.
  */
 const homeCropPaths = (data, imagePath) => {
-  const stem = imagePath.replace(/\.(image|photo|video)$/, '');
+  // List rows (showcase.items.2.image) keep a sibling focal/zoom. Fixed slots
+  // get a suffixed pair next to the image: hero.headshotFocalPoint,
+  // aboutSection.photoZoom. The old version stripped ".photo" before adding
+  // the suffix, so the about photo's crop landed in aboutSection.focal, a
+  // field the page never read, and the crop vanished on reload.
   const parent = imagePath.split('.').slice(0, -1).join('.');
-  const suffixed = `${stem}FocalPoint`;
-  const focal = getPath(data, suffixed) !== undefined ? suffixed : `${parent}.focal`;
-  const zoomSuffixed = `${stem}Zoom`;
-  const zoom = getPath(data, zoomSuffixed) !== undefined ? zoomSuffixed : `${parent}.zoom`;
-  return { focal, zoom };
+  if (/\.items\.\d+\.[^.]+$/.test(imagePath)) return { focal: `${parent}.focal`, zoom: `${parent}.zoom` };
+  return { focal: `${imagePath}FocalPoint`, zoom: `${imagePath}Zoom` };
 };
 
 /**

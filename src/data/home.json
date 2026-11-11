@@ -2,7 +2,7 @@
   "hero": {
     "eyebrow": "Mechanical Engineer",
     "tagline": "I *bridge* gaps by inspiring confidence and engaging people.",
-    "lede": "Passionate about clean energy, aerospace innovation, and incorporating human-centered design whenever possible.",
+    "lede": "",
     "primaryCta": {
       "label": "View projects",
       "href": "/projects/"
@@ -87,13 +87,12 @@
     "photo": "/src/assets/images/home/initial-testing.jpg",
     "photoAlt": "ITD preliminary testing",
     "photoPosition": "left",
-    "photoFocalPoint": "center",
+    "photoFocalPoint": "59% 36%",
     "eyebrow": "About me",
     "heading": "Hi, I'm Ryan.",
     "lede": "I'm a mechanical engineer, focused on clean energy and aerospace. ",
     "bio": "I'm currently working on a low-cost underwater mechanical release system for underwater robotic recovery for my senior capstone. I am also working on the feed system for a liquid rocket engine on Northeastern's Aerospace Club. I've previously worked as a Manufacturing Engineer at Commonwealth Fusion Systems, where I supported the poloidal field magnets for the SPARC tokamak. ",
-    "focal": "59% 36%",
-    "zoom": 1.08
+    "photoZoom": 1.08
   },
   "interestsSection": {
     "show": true,

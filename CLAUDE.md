@@ -326,6 +326,15 @@ GitHub SSH push from background processes stalls on large payloads.
     memory. `studio.sh` now kills whatever holds 4322 before starting, so a
     hand-started writer can't block the next `npm run studio`.
 
+50. **Home crop fields: suffixed for fixed slots, sibling for list rows.**
+    `hero.headshotFocalPoint` / `headshotZoom`, `aboutSection.photoFocalPoint`
+    / `photoZoom`; list rows (`showcase.items.N`, `interestsSection.items.N`)
+    use `focal` / `zoom` beside the image. `homeCropPaths` used to strip
+    `.photo` first, so about-photo crops landed in `aboutSection.focal` and the
+    headshot in `hero.focal`, fields `index.astro` never read: the crop showed
+    while dragging and vanished on reload. Any new home image slot needs its
+    crop wired in the template too, or it repeats this. Logos are not croppable.
+
 ## macOS gotchas
 
 - `/usr/bin/timeout` doesn't exist. Use the `timeout_cmd` perl wrapper in `scripts/auto-sync.sh`.

@@ -279,63 +279,73 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-input::placeholder,
   .studio-alt-edit input::placeholder { color: var(--st-faint); }
 
-  /* --- toolbar ----------------------------------------------------------- */
+  /* --- toolbar: a vertical rail on the right edge ----------------------- */
 
   .studio-bar {
-    position: fixed; left: 50%; bottom: 1.1rem; transform: translateX(-50%);
+    position: fixed; right: 12px; top: 50%; transform: translateY(-50%);
     z-index: 900;
-    display: flex; align-items: center; gap: 2px;
-    padding: 5px;
+    display: flex; flex-direction: column; align-items: stretch; gap: 2px;
+    padding: 6px;
     border-radius: var(--st-r-lg);
     background: var(--st-surface); color: var(--st-text);
     box-shadow: var(--st-shadow);
     backdrop-filter: blur(16px) saturate(1.4);
     -webkit-backdrop-filter: blur(16px) saturate(1.4);
-    max-width: calc(100vw - 1.5rem);
+    max-height: calc(100vh - 24px);
   }
   .studio-brand {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0 0.6rem 0 0.55rem;
-    font: 600 12.5px/1 var(--st-font); letter-spacing: 0.01em;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 6px 0 4px;
+    font: 600 10px/1 var(--st-font); letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--st-muted);
   }
   .studio-dot {
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--st-ok); box-shadow: 0 0 0 3px rgb(34 197 94 / 0.22);
   }
   .studio-bar.is-offline .studio-dot { background: var(--st-danger); box-shadow: 0 0 0 3px var(--st-danger-tint); }
-  .studio-sep { width: 1px; height: 18px; margin: 0 4px; background: var(--st-line-strong); }
-  .studio-undo-label { max-width: 11rem; overflow: hidden; text-overflow: ellipsis; }
+  .studio-sep { height: 1px; width: 28px; margin: 4px auto; background: var(--st-line-strong); }
 
-  .studio-help { position: relative; display: inline-flex; }
+  /* Icon over a short label, so the rail stays narrow but nothing is a guess. */
+  .studio-bar .studio-btn {
+    flex-direction: column; gap: 4px;
+    width: 58px; height: 50px; padding: 0;
+    font-size: 10.5px; font-weight: 500;
+  }
+  .studio-bar .studio-btn svg { width: 18px; height: 18px; }
+  .studio-bar .studio-icon { height: 36px; }
+  .studio-bar .studio-primary { margin-top: 2px; }
+  .studio-undo-label { max-width: 54px; overflow: hidden; text-overflow: ellipsis; }
+
+  .studio-help { position: relative; display: flex; }
+  .studio-help .studio-btn { width: 58px; }
   .studio-hint {
-    position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translate(-50%, 4px);
-    width: max-content; max-width: min(360px, 80vw);
-    padding: 0.55rem 0.75rem; border-radius: var(--st-r);
+    position: absolute; right: calc(100% + 14px); top: 50%; transform: translate(4px, -50%);
+    width: max-content; max-width: min(320px, 70vw);
+    padding: 0.6rem 0.8rem; border-radius: var(--st-r);
     background: var(--st-solid); color: var(--st-muted); box-shadow: var(--st-shadow);
-    font: 12px/1.5 var(--st-font); text-align: center;
+    font: 12px/1.5 var(--st-font); text-align: left;
     opacity: 0; pointer-events: none;
     transition: opacity 140ms var(--st-ease), transform 140ms var(--st-ease);
   }
   .studio-help:hover .studio-hint,
-  .studio-help:focus-within .studio-hint { opacity: 1; transform: translate(-50%, 0); }
+  .studio-help:focus-within .studio-hint { opacity: 1; transform: translate(0, -50%); }
   /* Offline is the one message that must be seen without hovering. */
   .studio-bar.is-offline .studio-hint {
-    opacity: 1; transform: translate(-50%, 0);
+    opacity: 1; transform: translate(0, -50%);
     color: #fecaca; background: #3f1d1d;
   }
 
-  /* Narrow windows: icons only, so the bar never wraps over the page. */
-  @media (max-width: 760px) {
-    .studio-bar .studio-btn > span:not(.studio-undo-label) { display: none; }
-    .studio-bar .studio-btn { width: 32px; padding: 0; }
-    .studio-undo-label { display: none; }
-    .studio-brand { padding-right: 0.3rem; }
+  /* Short windows: drop the labels so the rail still fits. */
+  @media (max-height: 640px) {
+    .studio-bar .studio-btn > span { display: none; }
+    .studio-bar .studio-btn { height: 36px; }
   }
 
   /* --- toast ------------------------------------------------------------- */
 
   .studio-toast {
-    position: fixed; left: 50%; bottom: 4.6rem; transform: translateX(-50%);
+    position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%);
     z-index: 901;
     display: flex; align-items: center; gap: 0.55rem;
     padding: 0.55rem 0.85rem 0.55rem 0.7rem; border-radius: var(--st-r);
@@ -364,7 +374,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     animation: studio-pop 160ms var(--st-ease);
   }
   .studio-panel[hidden] { display: none; }
-  @keyframes studio-pop { from { opacity: 0; transform: translateY(6px) scale(0.985); } }
+  @keyframes studio-pop { from { opacity: 0; } }
   .studio-panel > header,
   .studio-panel > footer {
     display: flex; align-items: center; gap: 0.5rem;
@@ -374,7 +384,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-panel > footer { border-top: 1px solid var(--st-line); padding: 0.65rem 0.65rem 0.65rem 0.95rem; }
   .studio-panel > header strong { flex: 1; font-weight: 600; font-size: 13.5px; }
 
-  .studio-theme-panel { left: 1rem; bottom: 5rem; width: min(320px, calc(100vw - 2rem)); }
+  .studio-theme-panel { right: 88px; top: 50%; transform: translateY(-50%); width: min(320px, calc(100vw - 2rem)); }
   .studio-theme-note { color: var(--st-faint); font-size: 12px; }
   .studio-theme-state { color: var(--st-faint); font-size: 12px; }
   .studio-theme-body { display: grid; gap: 1rem; padding: 1rem 0.95rem; }
@@ -398,7 +408,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   .studio-swatches button:hover { transform: scale(1.1); }
   .studio-swatches button[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--st-solid), 0 0 0 4px var(--st-text); }
 
-  .studio-phone-panel { right: 1rem; top: 1rem; z-index: 906; }
+  .studio-phone-panel { right: 88px; top: 1rem; z-index: 906; }
   .studio-phone-panel select { max-width: 13rem; }
   /* Scaled down so a 844px-tall phone still fits beside the page on a laptop.
      The iframe keeps its real pixel size, so media queries inside it fire at
@@ -409,7 +419,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   }
   .studio-phone-shell { overflow: hidden; }
 
-  .studio-publish-panel { right: 1rem; bottom: 5rem; width: min(520px, calc(100vw - 2rem)); }
+  .studio-publish-panel { right: 88px; bottom: 1rem; width: min(520px, calc(100vw - 2rem)); }
   .studio-publish-panel > footer { justify-content: space-between; }
   .studio-pub-state { color: var(--st-muted); flex: 1; font-size: 12px; }
   .studio-pub-msg { display: grid; gap: 0.45rem; padding: 0.95rem; }
@@ -468,7 +478,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
   /* --- library ----------------------------------------------------------- */
 
   .studio-library {
-    position: fixed; left: 0.75rem; right: 0.75rem; bottom: 0.75rem;
+    position: fixed; left: 0.75rem; right: 88px; bottom: 0.75rem;
     height: min(64vh, 580px);
     z-index: 902;
     display: flex; flex-direction: column;
@@ -820,7 +830,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       if (!undoBtn || !state) return;
       undoBtn.disabled = !state.depth;
       const labelEl = undoBtn.querySelector('.studio-undo-label');
-      if (labelEl) labelEl.textContent = state.next ? `Undo ${state.next}` : 'Undo';
+      if (labelEl) labelEl.textContent = 'Undo';
       undoBtn.title = state.next
         ? `Undo: ${state.next} (⌘Z)`
         : 'Nothing to undo yet';
@@ -2057,7 +2067,9 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       // differ per section (aboutSection has photoFocalPoint, list rows take a
       // sibling focal), so the server resolves them from the slot path rather
       // than the client carrying a second copy of that table.
-      if (media.tagName !== 'IMG') continue;
+      // Logos are scaled to fit a light plate, never cropped, so a crop
+      // gesture there would save a value nothing renders.
+      if (media.tagName !== 'IMG' || path.endsWith('.logo')) continue;
 
       const dot = document.createElement('span');
       dot.className = 'studio-crosshair';
@@ -2070,7 +2082,8 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       })();
 
       const readZoom = () => {
-        const v = parseFloat(getComputedStyle(el).getPropertyValue('--zoom'));
+        const cs = getComputedStyle(el);
+        const v = parseFloat(cs.getPropertyValue('--zoom') || cs.getPropertyValue('--about-zoom'));
         return Number.isFinite(v) && v >= 1 ? v : 1;
       };
       let zoom = readZoom();
