@@ -1,16 +1,20 @@
 #!/bin/bash
-# Portfolio auto-sync: pulls remote changes and pushes any local commits.
-# Run hourly by ~/Library/LaunchAgents/com.ryanstrawbridge.portfolio-sync.plist.
+# Portfolio watch: hourly, READ-ONLY. Run by
+# ~/Library/LaunchAgents/com.ryanstrawbridge.portfolio-sync.plist.
 #
-# Behavior:
-# - If working tree has uncommitted changes: log it (don't auto-commit), still
-#   try to absorb remote changes if any.
-# - If local is behind: rebase to absorb remote commits.
-# - If local is ahead: push (with a 90s timeout so it can't hang for hours).
-# - If diverged: rebase first, then push.
-# - On success: verify live site returns 200.
-# - On failure: post a macOS notification so you see it (silently if Mac is off).
-# - All output goes to ~/Library/Logs/portfolio-sync/sync.log.
+# It used to pull, rebase and push on its own. That predates studio's Save /
+# Go live and fought them: when GitHub had new commits it rebased whatever
+# branch was checked out (your working branch included), and it pushed main
+# whenever main was ahead, i.e. it could publish without anyone pressing Go
+# live. Go live now syncs with GitHub itself, safely, while you watch.
+#
+# What it does now, and nothing else:
+# - fetches, and tells you (log + notification) if GitHub's main has commits
+#   this Mac doesn't, e.g. a Pages CMS edit. Go live will merge them in.
+# - tells you if local main has commits GitHub doesn't (a Go live whose push
+#   failed). It does NOT push them; press Go live again.
+# - checks the live site answers 200.
+# All output goes to ~/Library/Logs/portfolio-sync/sync.log.
 
 set -u
 set -o pipefail
@@ -68,115 +72,29 @@ export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o IdentitiesOnly=yes -o ConnectTimeout=
 
 # Fetch remote (with timeout so DNS or network blips don't hang us).
 if ! timeout_cmd 30 git fetch origin main 2>>"$LOG_FILE"; then
-  log "ERROR: git fetch timed out or failed"
-  # Don't notify on transient network errors. Just log and try again next hour.
-  exit 1
+  log "fetch failed (offline?); will try next hour"
+  exit 0
 fi
 
-# Note uncommitted changes but still try to sync if we can.
-HAS_UNCOMMITTED=0
-if [ -n "$(git status --porcelain)" ]; then
-  HAS_UNCOMMITTED=1
-  log "note: uncommitted changes in working tree (skipping rebase if remote also moved)"
+BEHIND=$(git rev-list --count main..origin/main 2>/dev/null || echo 0)
+AHEAD=$(git rev-list --count origin/main..main 2>/dev/null || echo 0)
+
+if [ "$BEHIND" -gt 0 ]; then
+  log "GitHub has $BEHIND commit(s) this Mac doesn't (CMS edit?). Not touching anything; Go live merges them in."
+  notify "Changes on GitHub" "$BEHIND commit(s) on the live branch that aren't on this Mac. Go live will merge them."
+fi
+if [ "$AHEAD" -gt 0 ]; then
+  log "local main is $AHEAD commit(s) ahead of GitHub: a Go live push didn't finish. Not pushing; press Go live again."
+  notify "Go live didn't finish" "$AHEAD saved change(s) never reached the live site. Press Go live again."
 fi
 
-LOCAL=$(git rev-parse main)
-REMOTE=$(git rev-parse origin/main)
-BASE=$(git merge-base main origin/main)
-
-if [ "$LOCAL" = "$REMOTE" ]; then
-  exit 0  # nothing to do, no log noise
-fi
-
-did_change=0
-
-# Local is behind (remote ahead) → fast-forward / rebase
-if [ "$LOCAL" = "$BASE" ]; then
-  if [ "$HAS_UNCOMMITTED" = 1 ]; then
-    log "skip: remote has new commits but local has uncommitted changes — won't risk a rebase conflict"
-    exit 0
-  fi
-  log "remote ahead — rebasing local main onto origin/main"
-  if timeout_cmd 60 git pull --rebase origin main >>"$LOG_FILE" 2>&1; then
-    log "rebase OK; local is now at $(git rev-parse --short HEAD)"
-    did_change=1
-  else
-    log "ERROR: rebase failed; aborting and bailing"
-    git rebase --abort 2>>"$LOG_FILE" || true
-    notify "Rebase conflict" "Manual resolution needed in portfolio repo"
-    exit 1
-  fi
-
-# Local is ahead → push
-elif [ "$REMOTE" = "$BASE" ]; then
-  COMMITS_AHEAD=$(git rev-list --count origin/main..main)
-  log "local ahead by $COMMITS_AHEAD commit(s) — pushing"
-
-# Diverged → rebase then push
+CODE=$(curl -sS -o /dev/null -w "%{http_code}" -L --max-time 15 "$LIVE_URL" || echo "000")
+if [ "$CODE" != "200" ]; then
+  log "WARN: live site returned $CODE"
+  SITE_FAIL_FILE="$LOG_DIR/.consecutive-site-failures"
+  SITE_FAILS=$(( $(cat "$SITE_FAIL_FILE" 2>/dev/null || echo 0) + 1 ))
+  echo "$SITE_FAILS" > "$SITE_FAIL_FILE"
+  [ "$SITE_FAILS" -ge 2 ] && notify "Site down" "Live site returned $CODE for $SITE_FAILS checks in a row"
 else
-  if [ "$HAS_UNCOMMITTED" = 1 ]; then
-    log "skip: history diverged AND uncommitted changes — too risky to auto-resolve"
-    notify "Sync skipped" "Diverged history with uncommitted local changes — manual review needed"
-    exit 0
-  fi
-  log "diverged — rebasing then pushing"
-  if ! timeout_cmd 60 git pull --rebase origin main >>"$LOG_FILE" 2>&1; then
-    log "ERROR: divergent rebase failed"
-    git rebase --abort 2>>"$LOG_FILE" || true
-    notify "Rebase conflict" "Manual resolution needed in portfolio repo"
-    exit 1
-  fi
-fi
-
-# If we still have commits to push, push them with a timeout.
-if [ "$(git rev-list --count origin/main..main)" -gt 0 ]; then
-  if timeout_cmd "$PUSH_TIMEOUT" git push origin main >>"$LOG_FILE" 2>&1; then
-    log "push OK"
-    did_change=1
-  else
-    rc=$?
-    log "ERROR: push timed out after ${PUSH_TIMEOUT}s or failed (rc=$rc, will retry next run)"
-    # Don't notify on first failure — retry next hour and only notify if persistent.
-    # Track consecutive failures.
-    FAIL_FILE="$LOG_DIR/.consecutive-push-failures"
-    FAILS=$(cat "$FAIL_FILE" 2>/dev/null || echo 0)
-    FAILS=$((FAILS + 1))
-    echo "$FAILS" > "$FAIL_FILE"
-    if [ "$FAILS" -ge 3 ]; then
-      notify "Push stuck" "Pushes have failed $FAILS times in a row — manual look needed"
-    fi
-    exit 1
-  fi
-  # Reset consecutive-failure counter on success.
-  rm -f "$LOG_DIR/.consecutive-push-failures"
-fi
-
-# After a successful sync, verify the live site. Wait a bit for Actions to deploy.
-if [ "$did_change" = 1 ]; then
-  /bin/sleep 90
-  CODE=$(curl -sS -o /dev/null -w "%{http_code}" -L --max-time 30 "$LIVE_URL" || echo "000")
-  if [ "$CODE" = "200" ]; then
-    log "live site: 200 OK"
-  else
-    log "WARN: live site returned $CODE (deploy may still be running, will recheck next run)"
-    # Track consecutive site failures too.
-    SITE_FAIL_FILE="$LOG_DIR/.consecutive-site-failures"
-    SITE_FAILS=$(cat "$SITE_FAIL_FILE" 2>/dev/null || echo 0)
-    SITE_FAILS=$((SITE_FAILS + 1))
-    echo "$SITE_FAILS" > "$SITE_FAIL_FILE"
-    if [ "$SITE_FAILS" -ge 2 ]; then
-      notify "Site down" "Live site returned $CODE for $SITE_FAILS consecutive checks"
-    fi
-  fi
-fi
-
-# Always do a passive site check at the end (even if we didn't change anything).
-# Useful for catching site-down without any local activity.
-if [ "$did_change" != 1 ]; then
-  CODE=$(curl -sS -o /dev/null -w "%{http_code}" -L --max-time 15 "$LIVE_URL" || echo "000")
-  if [ "$CODE" != "200" ]; then
-    log "WARN: passive uptime check — live site returned $CODE"
-  else
-    rm -f "$LOG_DIR/.consecutive-site-failures"
-  fi
+  rm -f "$LOG_DIR/.consecutive-site-failures"
 fi

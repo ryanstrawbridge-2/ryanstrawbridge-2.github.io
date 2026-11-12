@@ -74,7 +74,7 @@ GitHub SSH push from background processes stalls on large payloads.
 
 - **Hard rules:** never push >5 MB of new binary content in one commit; never re-init `.git` to clean history (creates 50 MB+ pushes).
 - If a push stalls: `pkill -9 -f "git push"`, retry with timeout, or ask Ryan to push from his Terminal.
-- Hourly `launchd` auto-sync runs `scripts/auto-sync.sh` with a 90-second push timeout.
+- Hourly `launchd` job runs `scripts/auto-sync.sh`, now READ-ONLY (2026-11-12): fetch, notify about commits on GitHub's main not on this Mac or an unfinished Go live, check the site is up. It never pulls, rebases or pushes; Go live owns syncing.
 
 ## Content and build gotchas (learned the hard way)
 
@@ -310,8 +310,7 @@ GitHub SSH push from background processes stalls on large payloads.
 
 51. **Save and Go live are separate steps.** Studio's Save button is
     `git add -A && git commit --no-verify` on the current branch: a local
-    checkpoint, never a push. It refuses on `main`, because auto-sync pushes
-    `main` hourly whenever it is ahead of GitHub. Go live runs
+    checkpoint, never a push. It refuses on `main` (the branch that deploys). Go live runs
     `scripts/publish.sh` behind a confirm popup. The script works from any
     branch: saves unsaved edits, merges in anything new on GitHub's main,
     builds, pushes `HEAD` to `origin/main` (one save at a time if over 5 MB of

@@ -464,7 +464,7 @@ The site accepts both formats — schema is `string`, so any valid CSS `object-p
 
 | What | When | Where to look if it breaks |
 |------|------|----------------------------|
-| Hourly auto-sync (pull + push) | Every hour, on Mac wake | `~/Library/Logs/portfolio-sync/sync.log` |
+| Hourly watch (read-only: notices CMS edits on GitHub, an unfinished Go live, or the site being down; never pulls or pushes) | Every hour, on Mac wake | `~/Library/Logs/portfolio-sync/sync.log` |
 | Pre-commit build check | Every `git commit` | Aborts commit with build error |
 | GitHub Actions deploy | Every push to `main` | Build status badge in `README.md`, or repo Actions tab |
 | macOS notifications on real failures | Auto-sync hits a wall 3+ times | Notification Center |
