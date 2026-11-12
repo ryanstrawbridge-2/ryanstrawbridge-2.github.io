@@ -68,9 +68,30 @@ const renderSave = (info) => {
   }
 };
 
+/** Changes in words, grouped by project: "Lifting Frame — Deleted figure …". */
+const renderReview = (list, groups, empty) => {
+  list.replaceChildren();
+  if (!groups.length) { list.append(li([['empty', empty]])); return; }
+  for (const g of groups) {
+    const row = document.createElement('li');
+    row.className = 'studio-review-group';
+    row.append(Object.assign(document.createElement('strong'), { textContent: g.area }));
+    const items = document.createElement('ul');
+    for (const text of g.items.slice(0, 12)) items.append(Object.assign(document.createElement('li'), { textContent: text }));
+    if (g.items.length > 12) items.append(Object.assign(document.createElement('li'), { textContent: `and ${g.items.length - 12} more` }));
+    row.append(items);
+    list.append(row);
+  }
+};
+
+const fetchReview = async (base) => (await (await fetch(`${API}/save/review?base=${base}`)).json()).groups ?? [];
+
 const refreshSave = async () => {
   try {
     renderSave(await (await fetch(`${API}/save/status`)).json());
+    if (!savePanel.hidden && saveInfo?.changes.length) {
+      renderReview(root.querySelector('.studio-save-changes'), await fetchReview('saved'), 'Everything is saved.');
+    }
   } catch { /* writer not up yet */ }
 };
 
@@ -117,6 +138,13 @@ window.addEventListener('focus', refreshSave);
 // a second, separate click. This pushes to a public site, so it shouldn't
 // be one stray click away from the undo button next to it.
 const pubPanel = root.querySelector('.studio-publish-panel');
+const pubReview = Object.assign(document.createElement('ul'), { className: 'studio-save-changes studio-pub-review' });
+pubPanel.querySelector('header')?.after(Object.assign(document.createElement('section'), { className: 'studio-save-section' }));
+pubPanel.querySelector('.studio-save-section')?.append(
+  Object.assign(document.createElement('h4'), { className: 'studio-save-h', textContent: 'What goes live' }),
+  pubReview,
+);
+let liveGroups = [];
 const pubLog = pubPanel.querySelector('.studio-pub-log');
 const pubState = pubPanel.querySelector('.studio-pub-state');
 const pubGo = pubPanel.querySelector('.studio-pub-go');
@@ -158,6 +186,10 @@ root.querySelector('.studio-publish')?.addEventListener('click', () => {
     pubGo.textContent = 'Go live';
     pubMsg.focus();
     poll();
+    pubReview.replaceChildren(li([['empty', 'Comparing with the live site…']]));
+    fetchReview('live')
+      .then((groups) => { liveGroups = groups; renderReview(pubReview, groups, 'The live site already has all of this.'); })
+      .catch(() => pubReview.replaceChildren(li([['empty', 'Could not compare with the live site.']])));
   }
 });
 root.querySelector('.studio-pub-close')?.addEventListener('click', () => { pubPanel.hidden = true; });
@@ -172,7 +204,9 @@ pubGo?.addEventListener('click', async () => {
     saves ? `${saves} save${saves === 1 ? '' : 's'}` : '',
     unsaved ? `${unsaved} unsaved change${unsaved === 1 ? '' : 's'}` : '',
   ].filter(Boolean).join(' and ') || 'everything on this Mac';
-  if (!confirm(`Go live?\n\nThis puts ${what} on the public site (ryanstrawbridge-2.github.io). It's visible to anyone in about 2 minutes.`)) {
+  const areas = liveGroups.map((g) => g.area).filter((a) => !/^(Photo files|Site code)/.test(a));
+  const touched = areas.length ? `\n\nPages that change: ${areas.slice(0, 8).join(', ')}${areas.length > 8 ? `, and ${areas.length - 8} more` : ''}.` : '';
+  if (!confirm(`Go live?\n\nThis puts ${what} on the public site (ryanstrawbridge-2.github.io). It's visible to anyone in about 2 minutes.${touched}`)) {
     pubState.textContent = 'Cancelled. Nothing was sent.';
     return;
   }

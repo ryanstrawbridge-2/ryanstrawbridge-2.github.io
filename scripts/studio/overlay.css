@@ -729,3 +729,11 @@ body.studio-preview .studio-slot:hover video { outline: none; }
 /* The site's own form styles give inputs a 12px/20px margin; not in here. */
 .studio-inspector input, .studio-inspector select, .studio-inspector textarea,
 .studio-panel input, .studio-panel select, .studio-panel textarea { margin: 0; }
+
+/* --- change review ------------------------------------------------------ */
+.studio-save-changes li.studio-review-group { display: block; padding: 0.5rem 0.55rem; }
+.studio-review-group strong { display: block; font: 600 12.5px/1.3 var(--st-font); margin-bottom: 0.25rem; }
+.studio-review-group ul { margin: 0; padding-left: 1rem; display: grid; gap: 0.15rem; color: var(--st-muted); font-size: 12px; }
+.studio-review-group ul li { display: list-item; padding: 0; background: none !important; }
+.studio-pub-review { max-height: 38vh; overflow: auto; }
+.studio-publish-panel { max-height: calc(100vh - 2rem); overflow: auto; }

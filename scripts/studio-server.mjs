@@ -44,6 +44,7 @@ import { cleanupDisplaced } from './lib/orphans.mjs';
 import { loadPrefixes, parseInboxName } from './lib/prefixes.mjs';
 import * as journal from './lib/journal.mjs';
 import { fileInbox } from './lib/inbox-file.mjs';
+import { review } from './lib/review.mjs';
 import {
   readProject,
   writeProject,
@@ -1099,6 +1100,18 @@ const server = createServer(async (req, res) => {
       res.end(body);
     } catch {
       json(res, 404, { error: 'no such file' });
+    }
+    return;
+  }
+
+  // Plain-English summary of what changed: since the last save, or against
+  // what's on the live site.
+  if (url.pathname === '/save/review') {
+    try {
+      const base = url.searchParams.get('base') === 'live' ? 'origin/main' : 'HEAD';
+      json(res, 200, { ok: true, base, groups: await review(ROOT, base) });
+    } catch (error) {
+      json(res, 500, { error: error.message });
     }
     return;
   }
