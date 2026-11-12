@@ -240,6 +240,12 @@ export const undo = async (root, steps = 1) => {
   return result;
 };
 
+/** Forget everything that could be redone (the self-test uses this to leave no trace). */
+export const clearRedo = async () => {
+  redos.length = 0;
+  await persist();
+};
+
 /** Re-apply the most recently undone edit. */
 export const redo = (root) => step(root, redos, entries, 'nothing to redo');
 

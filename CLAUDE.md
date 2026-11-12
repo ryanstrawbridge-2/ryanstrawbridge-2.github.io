@@ -32,6 +32,7 @@ npm run check:media      # src/assets/images layout (no loose/camera-named uploa
 npm run check:copy       # no PLACEHOLDER / TODO text in fields that publish
 # studio: theme / text / phone preview / publish / undo (⌘Z) — see HANDBOOK.md
 npm run studio           # dev server + live editor (drag-to-crop, drop-to-upload)
+npm run studio:test      # with studio running: every editor route, undone, files proven identical (--build adds the dist check)
 ```
 
 - Pre-commit hook runs `npm run build`. Skip with `--no-verify` only when truly necessary.
@@ -320,8 +321,10 @@ GitHub SSH push from background processes stalls on large payloads.
     `scripts/publish.sh` behind a confirm popup. The script works from any
     branch: saves unsaved edits, merges in anything new on GitHub's main,
     builds, pushes `HEAD` to `origin/main` (one save at a time if over 5 MB of
-    media), then `git branch -f main HEAD`. `PUBLISH_DRY_RUN=1` does every
-    step but the push. check:copy ignores figures with no picture and draft
+    media), then `git branch -f main HEAD`. Over 5 MB of new media it uploads in
+    ~4 MB steps to a scratch branch `golive-upload` first, so `main` moves
+    once and the site deploys once. `PUBLISH_DRY_RUN=1` does every step but
+    the save and the push. check:copy ignores figures with no picture and draft
     projects, since neither can render in production.
 52. **Figure text edits are dotted paths; `patchTopLevel` must not write
     them as keys.** Studio's Text mode sends `figures.0.takeaway` to

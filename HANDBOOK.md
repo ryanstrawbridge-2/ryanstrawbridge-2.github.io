@@ -555,7 +555,10 @@ tail -50 ~/Library/Logs/portfolio-sync/sync.log
 # Go live from Terminal (same as the studio button; asks nothing, so be sure):
 cd ~/Documents/Projects/portfolio && npm run publish -- "your note"
 
-# Rehearse a Go live without pushing anything:
+# Check the editor end to end (studio must be running; undoes everything it does):
+cd ~/Documents/Projects/portfolio && npm run studio:test
+
+# Rehearse a Go live without saving or pushing anything:
 cd ~/Documents/Projects/portfolio && PUBLISH_DRY_RUN=1 npm run publish
 
 # See what was committed via CMS while you weren't watching:

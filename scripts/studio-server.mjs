@@ -1074,6 +1074,13 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  if (url.pathname === '/redo/clear' && req.method === 'POST') {
+    if (!origin || !DEV_ORIGINS.has(origin)) { json(res, 403, { error: 'local dev server only' }); return; }
+    await journal.clearRedo();
+    json(res, 200, { ok: true, undo: journal.state() });
+    return;
+  }
+
   if ((url.pathname === '/undo' || url.pathname === '/redo') && req.method === 'POST') {
     if (!origin || !DEV_ORIGINS.has(origin)) {
       json(res, 403, { error: 'studio only accepts requests from the local dev server' });

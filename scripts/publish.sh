@@ -56,12 +56,21 @@ timeout_cmd 30 git fetch origin main --quiet
 if [ -n "$(git status --porcelain)" ]; then
   echo "→ saving unsaved edits first"
   git status --short
-  git add -A
-  git commit -q --no-verify -m "$MSG"
+  if [ -n "${PUBLISH_DRY_RUN:-}" ]; then
+    # A rehearsal must not change anything, including making a save.
+    echo "  (dry run) would save these first; not saving"
+  else
+    git add -A
+    git commit -q --no-verify -m "$MSG"
+  fi
 fi
 
 # Bring in anything that landed on GitHub's main since this work started.
 if ! git merge-base --is-ancestor origin/main HEAD; then
+  if [ -n "${PUBLISH_DRY_RUN:-}" ]; then
+    echo "  (dry run) GitHub has changes this branch doesn't; a real Go live would merge them in"
+    exit 0
+  fi
   echo "→ GitHub has changes this branch doesn't; merging them in"
   if ! git merge --no-edit -q origin/main; then
     git merge --abort 2>/dev/null || true
@@ -86,26 +95,39 @@ echo
 echo "→ building (a failure here means the site would break)"
 npm run build >/dev/null
 
-# The repo's rule: never more than 5 MB of new binary in one push. Under that,
-# push in one go; over it, push one save at a time so each payload stays small.
+# The repo's rule: never more than 5 MB of new binary in one push (SSH stalls).
+# Over that, upload the saves in steps to a scratch branch first. Only main
+# deploys, so the steps don't each trigger a deploy; then main moves once,
+# with nothing left to upload, and the site deploys exactly once.
 BIN=$(git diff --name-only --diff-filter=AM origin/main HEAD \
   | { grep -E '\.(png|jpe?g|webp|gif|heic|mp4|m4v|mov|glb|pdf)$' || true; } \
   | while read -r f; do [ -f "$f" ] && wc -c <"$f"; done | awk '{s+=$1} END {print s+0}')
 
-# PUBLISH_DRY_RUN=1 runs every step except the push itself.
-push_to_main() {
-  if [ -n "${PUBLISH_DRY_RUN:-}" ]; then echo "  (dry run) would push $(git rev-parse --short "$1") to main"; return; fi
-  timeout_cmd 120 git push --progress origin "$1:refs/heads/main"
+STAGING="golive-upload"
+push_ref() {
+  if [ -n "${PUBLISH_DRY_RUN:-}" ]; then echo "  (dry run) would push $(git rev-parse --short "$1") to $2"; return; fi
+  timeout_cmd 120 git push --progress origin "$1:refs/heads/$2"
 }
 
 echo "→ pushing to GitHub"
-if [ "$BIN" -le 5242880 ]; then
-  push_to_main HEAD
-else
-  echo "  ($(awk -v b="$BIN" 'BEGIN{printf "%.1f", b/1048576}') MB of images/video: pushing one save at a time)"
+if [ "$BIN" -gt 5242880 ]; then
+  echo "  ($(awk -v b="$BIN" 'BEGIN{printf "%.1f", b/1048576}') MB of images/video: uploading in steps first)"
+  # Group saves into chunks of ~4 MB of new media each.
+  CHUNK=0
   for c in $(git rev-list --reverse origin/main..HEAD); do
-    push_to_main "$c"
+    SIZE=$(git diff --name-only --diff-filter=AM "$c~1" "$c" 2>/dev/null \
+      | { grep -E '\.(png|jpe?g|webp|gif|heic|mp4|m4v|mov|glb|pdf)$' || true; } \
+      | while read -r f; do git cat-file -s "$c:$f" 2>/dev/null; done | awk '{s+=$1} END {print s+0}')
+    CHUNK=$((CHUNK + SIZE))
+    if [ "$CHUNK" -gt 4194304 ]; then
+      push_ref "$c" "$STAGING"
+      CHUNK=0
+    fi
   done
+fi
+push_ref HEAD main
+if [ "$BIN" -gt 5242880 ] && [ -z "${PUBLISH_DRY_RUN:-}" ]; then
+  timeout_cmd 60 git push origin --delete "$STAGING" >/dev/null 2>&1 || true
 fi
 
 # Keep the local main in step, so auto-sync sees nothing left to push.

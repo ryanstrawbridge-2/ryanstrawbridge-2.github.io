@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "node scripts/fix-cms-paths.mjs && astro dev",
     "studio": "bash scripts/studio.sh",
+    "studio:test": "node scripts/test-studio.mjs",
     "build": "node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs",
     "fix:paths": "node scripts/fix-cms-paths.mjs",
     "photos": "node scripts/media-intake.mjs",
