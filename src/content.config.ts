@@ -126,6 +126,10 @@ const projects = defineCollection({
               .default('auto'),
             focal: z.string().default('center'),
             zoom: z.number().min(1).max(4).default(1),
+            // Crop of the second (after) image on a comparison. Each side of
+            // a before/after is a different photo, so each gets its own.
+            compareFocal: z.string().default('center'),
+            compareZoom: z.number().min(1).max(4).default(1),
             // Bullets beside the figure. Numbered, and a bullet whose
             // number matches a callout highlights it on hover/focus.
             points: z.array(z.string()).default([]),

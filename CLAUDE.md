@@ -354,6 +354,10 @@ GitHub SSH push from background processes stalls on large payloads.
     placeholders are click-or-drop zones. `/figure/upload`, `/figure/delete`
     and `/library/pick` with `figure` + `figureSlot` (`image` | `compare`)
     back them, all journalled.
+    Figure photos crop like gallery photos (drag / pinch). A comparison's
+    after side has its own `compareFocal` / `compareZoom`. `.project-body img`
+    carries a 1.5rem prose margin; `.pfig-frame img` must zero it or the photo
+    drops 24px out of its frame and over the caption.
 
 ## macOS gotchas
 

@@ -436,13 +436,10 @@ content:
             description: auto keeps the picture's natural height.
             options:
               values: [auto, "1/1", "4/3", "3/2", "16/9", "3/4", "2/3", "9/16"]
-          - name: focal
-            label: Crop position
-            type: select
-            default: center
-            options:
-              values: [top-left, top, top-right, left, center, right, bottom-left, bottom, bottom-right]
+          - { name: focal, label: Crop position, type: string, description: "Set by dragging the photo in studio, e.g. 50% 40%. Keywords like top or center also work." }
           - { name: zoom, label: Zoom, type: number, description: "1 is fit. Anchors on the crop position." }
+          - { name: compareFocal, label: "Crop position (second image)", type: string, description: "Set by dragging the after photo in studio." }
+          - { name: compareZoom, label: "Zoom (second image)", type: number, description: "1 is fit." }
           - { name: points, label: "Points (numbered beside the figure)", type: string, list: true, default: [], description: "Point 1 pairs with callout 1, point 2 with callout 2, and so on. **bold** works." }
           - name: callouts
             label: Callout markers

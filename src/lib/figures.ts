@@ -43,6 +43,8 @@ export interface RawFigure {
   aspect?: GalleryAspect;
   focal?: string;
   zoom?: number;
+  compareFocal?: string;
+  compareZoom?: number;
   points?: string[];
   callouts?: RawCallout[];
 }
@@ -79,6 +81,8 @@ export interface Figure {
   ratio: string;
   /** Ready-made `style` value for the frame. */
   frameStyle: string;
+  /** Same, for the after side of a comparison. */
+  compareStyle: string;
   points: string[];
   callouts: Callout[];
   /** No media yet: show the skeleton in dev, drop it in production. */
@@ -163,6 +167,13 @@ export const normalizeFigures = (
         frameStyle: [
           `--figure-focal: ${focalCss(figure.focal)}`,
           `--figure-zoom: ${clampZoom(figure.zoom)}`,
+          ratio ? `--figure-ratio: ${ratio}` : '',
+        ]
+          .filter(Boolean)
+          .join('; '),
+        compareStyle: [
+          `--figure-focal: ${focalCss(figure.compareFocal)}`,
+          `--figure-zoom: ${clampZoom(figure.compareZoom)}`,
           ratio ? `--figure-ratio: ${ratio}` : '',
         ]
           .filter(Boolean)

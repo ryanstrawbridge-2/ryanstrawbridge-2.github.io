@@ -514,6 +514,11 @@ const figureField = (index: number, key: string) => f('figures', index, key);
       display: flex;
       flex-direction: column;
     }
+    /* Walkthrough figure frames size and clip their own photos; the prose
+       margin above pushed them 24px down and over the caption. */
+    .project-body :global(.pfig-frame img) {
+      margin: 0;
+    }
     .project-body :global(figure.gallery-figure) :global(img) {
       margin: 0;
       width: 100%;
