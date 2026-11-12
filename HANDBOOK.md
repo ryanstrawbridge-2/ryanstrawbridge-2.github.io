@@ -546,24 +546,23 @@ nothing to publish, and asks before committing anything over 5 MB.
 ~/Documents/Projects/portfolio/scripts/dev-server.sh
 # then open http://localhost:4321/
 
-# Force the auto-sync to run right now:
+# Run the hourly watch right now (read-only: it reports, never pushes):
 launchctl start com.ryanstrawbridge.portfolio-sync
 
-# Check sync log:
+# Check its log:
 tail -50 ~/Library/Logs/portfolio-sync/sync.log
 
-# Manual push (if auto-sync didn't fire):
-cd ~/Documents/Projects/portfolio && \
-  GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519_portfolio -o IdentitiesOnly=yes" \
-  git push --progress
+# Go live from Terminal (same as the studio button; asks nothing, so be sure):
+cd ~/Documents/Projects/portfolio && npm run publish -- "your note"
+
+# Rehearse a Go live without pushing anything:
+cd ~/Documents/Projects/portfolio && PUBLISH_DRY_RUN=1 npm run publish
 
 # See what was committed via CMS while you weren't watching:
-cd ~/Documents/Projects/portfolio && git log --oneline -10
+cd ~/Documents/Projects/portfolio && git log --oneline -10 origin/main
 
-# Pause auto-sync (e.g. mid-edit):
+# Stop / restart the hourly watch:
 launchctl unload ~/Library/LaunchAgents/com.ryanstrawbridge.portfolio-sync.plist
-
-# Resume:
 launchctl load -w ~/Library/LaunchAgents/com.ryanstrawbridge.portfolio-sync.plist
 ```
 

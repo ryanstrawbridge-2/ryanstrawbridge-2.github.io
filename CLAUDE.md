@@ -86,7 +86,13 @@ GitHub SSH push from background processes stalls on large payloads.
     script and the `/admin/` route. Pages CMS remains. If TinaCloud or the
     `TINA_TOKEN` / `TINA_PUBLIC_CLIENT_ID` GitHub secrets still exist, they
     are unused and can be deleted. Numbers kept so references below hold.
-10. **`image()` fields emit their full-size original.** Astro ships the untouched source for every content-collection `image()` field even when only resized variants are used — that's ~18 MB across the gallery, and why `dist` is ~63 MB rather than ~36 MB. Not a leak, and not worth chasing unless deploy time becomes a problem; the escape hatch is storing paths as `z.string()` and resolving them with `import.meta.glob`.
+10. **`image()` fields emit their full-size original; the build prunes them.**
+    Astro copies every `image()` source into `dist` even when only resized
+    variants are used. `scripts/prune-unreferenced-assets.mjs` (last step of
+    `npm run build`) deletes the ones no page references: about 45 MB on
+    2026-11-12, leaving `dist` at ~46 MB, of which ~20 MB is video and ~21 MB
+    resized images. If deploys get slow, the next wins are re-encoding the
+    three ~5 MB videos and capping image widths, not this.
 
 11. **Gallery placement is a body split, not a layout trick.** `[slug].astro`
     cuts `project.rendered.html` at each `<h2 id=...>` and drops the matching
