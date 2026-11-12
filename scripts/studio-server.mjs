@@ -530,6 +530,45 @@ const uploadFigure = async ({ slug, figure, slot, filename, data }) => {
   return { kind: 'image', file: outName, before, after, ...(await setFigureImage(slug, Number(figure), astroPath(slug, outName), slot)) };
 };
 
+/**
+ * Read or rewrite one body section (the markdown under a `## Heading`).
+ *
+ * The heading line itself never changes: Problem / What I did / Outcome is
+ * the page's structure, and figures and gallery rows attach to it by name.
+ * `section` is the heading's id as rendered ("what-i-did"). With no `value`
+ * this is a read.
+ */
+const sectionBounds = (body, id) => {
+  const lines = body.split('\n');
+  const heads = [];
+  lines.forEach((line, i) => {
+    const m = line.match(/^##\s+(.+?)\s*#*\s*$/);
+    if (m) heads.push({ i, id: slugify(m[1]) });
+  });
+  const at = heads.findIndex((h) => h.id === id);
+  if (at === -1) throw new Error(`no "${id}" section in the body`);
+  const start = heads[at].i + 1;
+  const end = at + 1 < heads.length ? heads[at + 1].i : lines.length;
+  return { lines, start, end };
+};
+
+const projectSection = async ({ slug, section, value }) => {
+  const slugs = await projectSlugs(CONTENT);
+  if (!slugs.includes(slug)) throw new Error(`unknown project "${slug}"`);
+  const file = await readProject(CONTENT, slug);
+  const body = file.source.slice(file.header.length);
+  const { lines, start, end } = sectionBounds(body, String(section));
+  if (value === undefined) return { section, value: lines.slice(start, end).join('\n').trim() };
+  const text = String(value).replace(/\r\n/g, '\n').trim();
+  const isLast = end === lines.length;
+  const next = [...lines.slice(0, start), '', ...(text ? [text] : []), ...(isLast ? [''] : ['', '']), ...lines.slice(end)];
+  // Collapse runs of blank lines the splice may have doubled.
+  const out = next.join('\n').replace(/\n{3,}/g, '\n\n');
+  await writeFile(file.path, file.header + out, 'utf8');
+  nudgeAstro();
+  return { section, saved: true };
+};
+
 /** Append a numbered point to a figure. Edit or blank it in Text mode. */
 const addFigurePoint = ({ slug, figure }) =>
   withProject(slug, (file) => {
@@ -983,6 +1022,7 @@ const undoLabel = (pathname, payload = {}) => {
       return keys.length === 1 ? keys[0] : 'page settings';
     case '/project/hero': return 'main photo';
     case '/figure/upload': return `photo into figure ${Number(payload.figure) + 1}`;
+    case '/project/section': return `${String(payload.section ?? 'section').replace(/-/g, ' ')} text`;
     case '/figure/point': return `add point to figure ${Number(payload.figure) + 1}`;
     case '/figure/delete': return `delete figure ${Number(payload.figure) + 1}`;
     case '/figure/callout': return payload.add ? 'add marker' : payload.remove ? 'remove marker' : `move marker ${payload.callout ?? ''}`.trim();
@@ -1158,7 +1198,7 @@ const saveLocal = async ({ message }) => {
 };
 
 // Reads that happen to be POSTs (they take a body); nothing to undo.
-const NOT_JOURNALLED = new Set(['/publish', '/save', '/home/value', '/project/value', '/site/read']);
+const NOT_JOURNALLED = new Set(['/publish', '/save', '/project/section/read', '/home/value', '/project/value', '/site/read']);
 
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
@@ -1192,6 +1232,8 @@ const ROUTES = {
   '/figure/upload': uploadFigure,
   '/figure/delete': deleteFigure,
   '/figure/point': addFigurePoint,
+  '/project/section': (p) => projectSection(p),
+  '/project/section/read': ({ slug, section }) => projectSection({ slug, section }),
   '/library/pick': pickFromLibrary,
   '/home/patch': patchHome,
   '/home/upload': uploadHome,

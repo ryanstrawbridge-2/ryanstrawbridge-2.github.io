@@ -96,8 +96,10 @@ const { bySection: figuresBySection, trailing: trailingFigures } = groupFigures(
 );
 
 // Inline placement needs the body split to have worked AND something to place.
+// In dev it always splits, so studio can edit each section on its own.
 const useInlineBody =
-  bodyChunks.length > 0 && (bySection.size > 0 || figuresBySection.size > 0);
+  bodyChunks.length > 0 &&
+  (bySection.size > 0 || figuresBySection.size > 0 || import.meta.env.DEV);
 
 // Jump links in the sticky rail. Derived from the headings that actually
 // rendered, so a project that drops a section doesn't get a dead link.
@@ -188,7 +190,11 @@ const figureField = (index: number, key: string) => f('figures', index, key);
               useInlineBody ? (
                 bodyChunks.map((chunk) => (
                   <>
-                    <Fragment set:html={chunk.html} />
+                    {import.meta.env.DEV ? (
+                      <div class="body-chunk" data-studio-section={chunk.id} set:html={chunk.html} />
+                    ) : (
+                      <Fragment set:html={chunk.html} />
+                    )}
                     {/* Figures first, then plain photos: the walkthrough makes
                         the argument, the gallery is supporting material. */}
                     {(figuresBySection.get(chunk.id) ?? []).map((figure) => (
@@ -498,6 +504,10 @@ const figureField = (index: number, key: string) => f('figures', index, key);
     .project-body :global(ul),
     .project-body :global(ol) {
       padding-left: 1.25rem;
+    }
+    /* Dev-only wrapper so studio can find each section; no layout of its own. */
+    .project-body :global(.body-chunk) {
+      display: contents;
     }
     .project-body :global(li) {
       margin-bottom: 0.4rem;

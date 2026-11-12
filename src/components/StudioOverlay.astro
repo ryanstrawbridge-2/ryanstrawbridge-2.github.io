@@ -294,6 +294,23 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
 
   .studio-input,
   .studio-alt-edit input,
+  .studio-section-edit {
+    display: grid; gap: 0.5rem; margin: 0.75rem 0 1.25rem; padding: 0.6rem;
+    background: var(--st-solid); color: var(--st-text);
+    border-radius: var(--st-r); box-shadow: var(--st-shadow); font-size: 13px;
+  }
+  .studio-section-edit textarea {
+    width: 100%; box-sizing: border-box; resize: vertical; padding: 0.7rem 0.8rem;
+    background: var(--st-well, #0c0c0e); color: var(--st-text); border: 1px solid var(--st-line);
+    border-radius: var(--st-r-sm); font: 13px/1.6 var(--st-mono);
+  }
+  .studio-section-edit > div { display: flex; align-items: center; gap: 0.4rem; }
+  .studio-section-edit span { flex: 1; color: var(--st-faint); font-size: 11.5px; }
+  .studio-section-edit button {
+    height: 30px; padding: 0 0.85rem; background: var(--st-accent); color: white; border: 0;
+    border-radius: var(--st-r-sm); font: 500 12.5px/1 var(--st-font); cursor: pointer;
+  }
+  .studio-section-edit button.is-quiet { background: transparent; color: var(--st-muted); }
   .studio-text-edit textarea {
     width: 100%; box-sizing: border-box;
     padding: 0.55rem 0.65rem;
@@ -1217,6 +1234,74 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     let textOn = false;
     const textBtn = root.querySelector('.studio-text');
 
+    // Body sections (Problem / What I did / Outcome): click any paragraph or
+    // bullet to edit that section's markdown in a box. The heading stays put.
+    const sectionChunks = () =>
+      [...document.querySelectorAll('[data-studio-section]')].filter((c) => c.dataset.studioSection);
+
+    const editSection = async (chunk) => {
+      if (chunk.querySelector('.studio-section-edit')) return;
+      const section = chunk.dataset.studioSection;
+      let source;
+      try {
+        source = (await post('/project/section/read', { section })).value ?? '';
+      } catch (error) { toast(error.message, true); return; }
+
+      const kids = [...chunk.children].filter((el) => el.tagName !== 'H2');
+      for (const el of kids) el.hidden = true;
+      const box = document.createElement('form');
+      box.className = 'studio-section-edit';
+      const area = document.createElement('textarea');
+      area.value = source;
+      area.rows = Math.min(18, Math.max(4, source.split('\n').length + 2));
+      area.setAttribute('aria-label', `Edit the ${section.replace(/-/g, ' ')} section`);
+      const foot = document.createElement('div');
+      const hint = document.createElement('span');
+      hint.textContent = 'Markdown: * starts a bullet, **bold**. ⌘↵ saves, Esc cancels.';
+      const cancel = Object.assign(document.createElement('button'), { type: 'button', textContent: 'Cancel', className: 'is-quiet' });
+      const ok = Object.assign(document.createElement('button'), { type: 'submit', textContent: 'Save section' });
+      foot.append(hint, cancel, ok);
+      box.append(area, foot);
+      chunk.appendChild(box);
+      area.focus();
+
+      const close = () => { box.remove(); for (const el of kids) el.hidden = false; };
+      cancel.addEventListener('click', close);
+      box.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (area.value.trim() === source.trim()) { close(); return; }
+        ok.disabled = true;
+        try {
+          await post('/project/section', { section, value: area.value });
+          toast('section saved');
+        } catch (error) { toast(error.message, true); ok.disabled = false; return; }
+        close();
+      });
+      area.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { event.preventDefault(); close(); }
+        if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); box.requestSubmit(); }
+      });
+      for (const type of ['pointerdown', 'click']) box.addEventListener(type, (event) => event.stopPropagation());
+    };
+
+    const bindSections = (on) => {
+      for (const chunk of MODE === 'project' ? sectionChunks() : []) {
+        for (const el of chunk.children) {
+          if (el.tagName === 'H2' || el.classList.contains('studio-section-edit')) continue;
+          el.classList.toggle('studio-text-slot', on);
+          if (on && !el.dataset.studioSectionBound) {
+            el.dataset.studioSectionBound = '1';
+            el.addEventListener('click', (event) => {
+              if (!textOn) return;
+              event.preventDefault();
+              event.stopPropagation();
+              editSection(chunk);
+            });
+          }
+        }
+      }
+    };
+
     const setTextMode = (on) => {
       textOn = on;
       textBtn?.setAttribute('aria-pressed', String(on));
@@ -1234,6 +1319,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           });
         }
       }
+      bindSections(on);
       toast(on ? 'text mode — click any text to edit' : 'text mode off');
     };
 
