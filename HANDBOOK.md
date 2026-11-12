@@ -255,7 +255,8 @@ spending that on someone who scrolled past would be rude.
 | **Phone** | Opens the same page in a real 390px frame beside it, so you can see the phone layout without resizing anything. |
 | **Undo** | Undoes the last edit, and says which one. ⌘Z does the same. |
 | **?** | Hover for the gestures. |
-| **Publish** | Runs the publish script and shows its output. Two clicks, on purpose. |
+| **Save** | Saves a checkpoint on this Mac (⌘S). Lists what changed since the last save and shows your recent saves. Never touches the live site. The yellow badge counts unsaved changes. |
+| **Publish** | Runs the publish script and shows its output. Two clicks, on purpose. Greyed out and refuses while publishing is locked (see below). |
 
 ### The main photo
 
@@ -553,6 +554,16 @@ cd ~/Documents/Projects/portfolio && npm run publish -- "Update resume"
 ---
 
 ## Publishing local edits
+
+**Save is not Publish.** Studio's Save button keeps a checkpoint on your Mac
+and nothing else. The live site changes only when Publish pushes `main`.
+
+**Publishing is locked right now** (since 11 Nov 2026), so everything stays local.
+The lock is a file called `.publish-lock` in the project folder. While it
+exists, both the Publish button and `npm run publish` refuse to push. Delete
+it, or ask Claude, when you're ready to go live. Publish also refuses on any
+branch other than `main`, so work saved on a branch like `project-walkthrough`
+reaches the site only after it's merged.
 
 After editing at `localhost:4321/admin/`, nothing is live until you publish.
 One command does it:

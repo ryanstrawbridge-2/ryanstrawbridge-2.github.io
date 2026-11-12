@@ -335,6 +335,16 @@ GitHub SSH push from background processes stalls on large payloads.
     while dragging and vanished on reload. Any new home image slot needs its
     crop wired in the template too, or it repeats this. Logos are not croppable.
 
+51. **Save and Publish are separate steps, and Publish can be locked.**
+    Studio's Save button is `git add -A && git commit --no-verify` on the
+    current branch: a local checkpoint, never a push. It refuses on `main`,
+    because auto-sync pushes `main` hourly whenever it is ahead of GitHub, so a
+    save there would go live within the hour. Publish (`scripts/publish.sh`,
+    the same script as the button) refuses while `.publish-lock` exists
+    (gitignored, first line is the reason) and refuses on any branch but
+    `main`. Ryan asked on 2026-11-11 for nothing to go live; the lock is in
+    place. Don't delete it without him saying so.
+
 ## macOS gotchas
 
 - `/usr/bin/timeout` doesn't exist. Use the `timeout_cmd` perl wrapper in `scripts/auto-sync.sh`.

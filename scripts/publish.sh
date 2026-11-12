@@ -14,6 +14,25 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Publishing is switched off while .publish-lock exists (gitignored, local
+# only). Studio's Save button commits locally either way; this only guards
+# the push. Delete the file to publish again.
+if [ -f .publish-lock ]; then
+  echo "Publishing is locked — nothing was pushed."
+  echo "Reason: $(head -1 .publish-lock)"
+  echo "Your edits are safe locally. Delete .publish-lock to publish again."
+  exit 1
+fi
+
+# The live site deploys from main. Pushing any other branch from here would
+# either fail (no upstream) or create a remote branch that deploys nothing.
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ "$BRANCH" != "main" ]; then
+  echo "On branch '$BRANCH', not main — nothing was pushed."
+  echo "Local saves on this branch go live only when it is merged into main."
+  exit 1
+fi
+
 MSG="${1:-Content update}"
 KEY="$HOME/.ssh/id_ed25519_portfolio"
 export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes"

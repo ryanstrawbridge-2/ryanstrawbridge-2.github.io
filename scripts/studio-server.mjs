@@ -938,6 +938,9 @@ let job = null;
 
 const startPublish = ({ message }) => {
   if (job && job.running) throw new Error('a publish is already running');
+  if (existsSync(join(ROOT, '.publish-lock'))) {
+    throw new Error('publishing is locked: everything stays on this Mac. Delete .publish-lock to turn it back on.');
+  }
 
   const note = String(message ?? '').trim() || 'Content update';
   // The message reaches git as a single argv entry, never a shell string, so
@@ -984,8 +987,94 @@ const publishStatus = () =>
       }
     : { running: false, code: null, lines: [], idle: true };
 
+// ---------------------------------------------------------------------------
+// Save: a local checkpoint. `git add -A && git commit`, never a push.
+//
+// The live site only changes when main is pushed, and the hourly auto-sync
+// pushes main whenever it is ahead of GitHub — so a save made ON main would go
+// live within the hour. Save therefore refuses on main: checkpoints belong on
+// a working branch, and reaching the site stays a separate, deliberate step.
+//
+// --no-verify skips the pre-commit build. A checkpoint should take a second,
+// not a minute, and a half-finished page is exactly what it exists to keep;
+// publish.sh builds before anything leaves the machine.
+// ---------------------------------------------------------------------------
+const git = (args) =>
+  new Promise((resolvePromise, reject) => {
+    const child = spawn('git', args, { cwd: ROOT });
+    let out = '';
+    let err = '';
+    child.stdout.on('data', (c) => { out += c; });
+    child.stderr.on('data', (c) => { err += c; });
+    child.on('error', reject);
+    child.on('close', (code) =>
+      code === 0 ? resolvePromise(out) : reject(new Error(err.trim() || `git ${args[0]} failed`)));
+  });
+
+// Plain-English name for a changed path, for the Save panel.
+const describePath = (path) => {
+  let m;
+  if ((m = path.match(/^src\/content\/projects\/(.+)\.md$/))) return { area: 'Project', name: m[1].replace(/-/g, ' ') };
+  if (path === 'src/data/home.json') return { area: 'Home page', name: 'text, photos and crops' };
+  if (path === 'src/data/site.json') return { area: 'Theme', name: 'colours, corners, type' };
+  if (path === 'src/data/navigation.json') return { area: 'Navigation', name: 'menu' };
+  if ((m = path.match(/^src\/assets\/images\/(?:projects\/)?([^/]+)\/(.+)$/))) return { area: 'Photo', name: `${m[1]} / ${m[2]}` };
+  if ((m = path.match(/^public\/videos\/(.+)$/))) return { area: 'Video', name: m[1] };
+  return { area: 'File', name: path };
+};
+
+const STATUS_WORD = { M: 'changed', A: 'added', D: 'removed', R: 'renamed', '?': 'added' };
+
+const saveStatus = async () => {
+  const branch = (await git(['rev-parse', '--abbrev-ref', 'HEAD'])).trim();
+  const porcelain = await git(['status', '--porcelain', '--untracked-files=all']);
+  const changes = porcelain
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const code = line.slice(0, 2).trim()[0] ?? 'M';
+      const path = line.slice(3).replace(/^"|"$/g, '').split(' -> ').pop();
+      return { path, status: STATUS_WORD[code] ?? 'changed', ...describePath(path) };
+    });
+  // Saves that are on this machine and not on the live site.
+  let notLive = 0;
+  try {
+    notLive = Number((await git(['rev-list', '--count', 'origin/main..HEAD'])).trim()) || 0;
+  } catch { /* no origin/main fetched yet */ }
+  const log = await git(['log', '-8', '--format=%h%x09%cr%x09%s']);
+  const saves = log
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [hash, when, ...subject] = line.split('\t');
+      return { hash, when, subject: subject.join('\t') };
+    });
+  return {
+    branch,
+    onMain: branch === 'main',
+    changes,
+    notLive,
+    saves,
+    publishLocked: existsSync(join(ROOT, '.publish-lock')),
+  };
+};
+
+const saveLocal = async ({ message }) => {
+  const status = await saveStatus();
+  if (status.onMain) {
+    throw new Error("you're on main, where a save would go live within the hour (auto-sync). Switch to a working branch first.");
+  }
+  if (!status.changes.length) throw new Error('nothing new to save');
+  const note = String(message ?? '').trim()
+    || `Save: ${[...new Set(status.changes.map((c) => (c.area === 'Project' ? c.name : c.area)))].slice(0, 4).join(', ')}`;
+  await git(['add', '-A']);
+  // Message as one argv entry, so quotes and newlines are data.
+  await git(['commit', '--no-verify', '-q', '-m', note]);
+  return { saved: true, message: note, count: status.changes.length };
+};
+
 // Reads that happen to be POSTs (they take a body); nothing to undo.
-const NOT_JOURNALLED = new Set(['/publish', '/home/value', '/project/value', '/site/read']);
+const NOT_JOURNALLED = new Set(['/publish', '/save', '/home/value', '/project/value', '/site/read']);
 
 const ROUTES = {
   '/gallery/patch': ({ slug, index, patch }) =>
@@ -1029,6 +1118,7 @@ const ROUTES = {
   '/home/value': homeValue,
   '/project/value': projectValue,
   '/publish': startPublish,
+  '/save': saveLocal,
 };
 
 const server = createServer(async (req, res) => {
@@ -1066,6 +1156,15 @@ const server = createServer(async (req, res) => {
     const result = await journal.undo(ROOT);
     if (result.ok) nudgeAstro();
     json(res, result.ok ? 200 : 409, result);
+    return;
+  }
+
+  if (url.pathname === '/save/status') {
+    try {
+      json(res, 200, { ok: true, ...(await saveStatus()) });
+    } catch (error) {
+      json(res, 500, { error: error.message });
+    }
     return;
   }
 

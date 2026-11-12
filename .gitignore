@@ -48,3 +48,6 @@ resume/*.synctex.gz
 diagrams/*.pptx
 diagrams/node_modules/
 diagrams/.render/
+
+# studio: while this exists, Publish refuses to push (local saves only)
+.publish-lock

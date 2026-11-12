@@ -57,7 +57,12 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           </button>
           <span class="studio-hint" id="studio-hint" role="tooltip">{mode === 'home' ? 'Drag a photo to crop · pinch or ⌥scroll to zoom · hover a photo to replace it' : 'Drag a photo to crop · pinch or ⌥scroll to zoom · drop files anywhere to add them · drop on the main photo to replace it'}</span>
         </span>
-        <button type="button" class="studio-btn studio-primary studio-publish" title="Commit and push to the live site">
+        <button type="button" class="studio-btn studio-primary studio-save" title="Save a checkpoint on this Mac. Nothing goes live.">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3.5h11l3.5 3.5v11.5A2 2 0 0 1 17.5 20.5h-11A2 2 0 0 1 4.5 18.5V5.5a2 2 0 0 1 .5-2Z" /><path d="M8 3.5v5h7v-5" /><path d="M8 20.5v-6h8v6" /></svg>
+          <span>Save</span>
+          <b class="studio-save-count" hidden />
+        </button>
+        <button type="button" class="studio-btn studio-publish" title="Push saved work to the live site">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14V3.5" /><path d="m7.5 8 4.5-4.5L16.5 8" /><path d="M4 14.5v4A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5v-4" /></svg>
           <span>Publish</span>
         </button>
@@ -122,6 +127,32 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           </button>
         </header>
         <iframe class="studio-phone-frame" title="Phone preview" />
+      </div>
+
+      <div class="studio-panel studio-save-panel" hidden>
+        <header>
+          <strong>Save on this Mac</strong>
+          <span class="studio-save-branch" />
+          <button type="button" class="studio-btn studio-icon studio-save-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </header>
+        <section class="studio-save-section">
+          <h4 class="studio-save-h">Not saved yet</h4>
+          <ul class="studio-save-changes" />
+        </section>
+        <label class="studio-pub-msg">
+          <span>Note <em>optional</em></span>
+          <input type="text" class="studio-input studio-save-msg" placeholder="Named after what changed if left blank" />
+        </label>
+        <footer>
+          <span class="studio-pub-state studio-save-state">A checkpoint on this Mac. Nothing goes to the live site.</span>
+          <button type="button" class="studio-btn studio-primary studio-save-go">Save</button>
+        </footer>
+        <section class="studio-save-section studio-save-history">
+          <h4 class="studio-save-h">Saved <span class="studio-save-notlive" /></h4>
+          <ol class="studio-save-list" />
+        </section>
       </div>
 
       <div class="studio-panel studio-publish-panel" hidden>
@@ -430,6 +461,43 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     font: 11.5px/1.55 var(--st-mono); white-space: pre-wrap; color: #d4d4d8;
   }
   .studio-pub-log[hidden] { display: none; }
+
+  .studio-save-panel { right: 88px; bottom: 1rem; width: min(440px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; }
+  .studio-save-panel > footer { justify-content: space-between; border-bottom: 1px solid var(--st-line); }
+  .studio-save-branch {
+    margin-left: auto; margin-right: 0.35rem; padding: 2px 7px; border: 1px solid var(--st-line);
+    border-radius: 99px; color: var(--st-muted); font: 11px/1.4 var(--st-mono);
+  }
+  .studio-save-section { padding: 0.85rem 0.95rem 0.2rem; }
+  .studio-save-h {
+    margin: 0 0 0.5rem; color: var(--st-muted); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase; display: flex; gap: 0.5rem;
+  }
+  .studio-save-h span { text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .studio-save-changes, .studio-save-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .studio-save-changes li, .studio-save-list li {
+    display: grid; grid-template-columns: 5.6rem 1fr auto; gap: 0.6rem; align-items: baseline;
+    padding: 0.4rem 0.5rem; border-radius: var(--st-r-sm); font-size: 12.5px;
+  }
+  .studio-save-changes li:nth-child(odd), .studio-save-list li:nth-child(odd) { background: rgb(255 255 255 / 0.03); }
+  .studio-save-changes .area { color: var(--st-muted); font-size: 11.5px; }
+  .studio-save-changes .name, .studio-save-list .subj { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .studio-save-changes .what { color: var(--st-muted); font-size: 11.5px; }
+  .studio-save-changes .empty { display: block; color: var(--st-muted); background: none; padding-left: 0; }
+  .studio-save-list li { grid-template-columns: 1fr auto; }
+  .studio-save-list .when { color: var(--st-muted); font-size: 11.5px; white-space: nowrap; }
+  .studio-save-history { padding-bottom: 0.9rem; }
+  .studio-pub-msg em { font-style: normal; opacity: 0.7; font-weight: 400; }
+
+  .studio-save { position: relative; }
+  .studio-save-count {
+    position: absolute; top: 4px; right: 6px; min-width: 16px; height: 16px; padding: 0 4px;
+    box-sizing: border-box; border-radius: 99px; background: #fbbf24; color: #111;
+    font: 600 10px/16px var(--st-sans, system-ui); text-align: center;
+  }
+  .studio-save-count[hidden] { display: none; }
+  .studio-publish.is-locked { opacity: 0.55; }
+  .studio-pub-go[disabled] { cursor: not-allowed; }
 
   /* --- inline text editing ----------------------------------------------- */
 
@@ -1199,15 +1267,116 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       phoneFrame.src = 'about:blank';
     });
 
+    // -- save -------------------------------------------------------------
+    // A local checkpoint (git commit on the working branch). Never pushes.
+    const savePanel = root.querySelector('.studio-save-panel');
+    const saveBtn = root.querySelector('.studio-save');
+    const saveCount = root.querySelector('.studio-save-count');
+    const saveGo = root.querySelector('.studio-save-go');
+    const saveMsg = root.querySelector('.studio-save-msg');
+    const saveState = root.querySelector('.studio-save-state');
+    const publishBtn = root.querySelector('.studio-publish');
+    let saveInfo = null;
+
+    const li = (cells) => {
+      const row = document.createElement('li');
+      for (const [cls, text] of cells) {
+        const span = document.createElement('span');
+        span.className = cls;
+        span.textContent = text;
+        row.append(span);
+      }
+      return row;
+    };
+
+    const renderSave = (info) => {
+      saveInfo = info;
+      const n = info.changes.length;
+      saveCount.hidden = n === 0;
+      saveCount.textContent = n > 99 ? '99+' : String(n);
+      saveBtn.title = n
+        ? `${n} unsaved change${n === 1 ? '' : 's'}. Save a checkpoint on this Mac.`
+        : 'Everything is saved on this Mac';
+      publishBtn?.classList.toggle('is-locked', info.publishLocked);
+      if (publishBtn) {
+        publishBtn.title = info.publishLocked
+          ? 'Publishing is locked: everything stays on this Mac'
+          : 'Push saved work to the live site';
+      }
+
+      root.querySelector('.studio-save-branch').textContent = info.branch;
+      const list = root.querySelector('.studio-save-changes');
+      list.replaceChildren();
+      if (!n) {
+        list.append(li([['empty', 'Everything is saved.']]));
+      } else {
+        for (const c of info.changes.slice(0, 30)) list.append(li([['area', c.area], ['name', c.name], ['what', c.status]]));
+        if (n > 30) list.append(li([['empty', `and ${n - 30} more`]]));
+      }
+      const saves = root.querySelector('.studio-save-list');
+      saves.replaceChildren(...info.saves.map((sv) => li([['subj', sv.subject], ['when', sv.when]])));
+      root.querySelector('.studio-save-notlive').textContent = info.notLive
+        ? `${info.notLive} not on the live site`
+        : '';
+
+      if (info.onMain) {
+        saveGo.disabled = true;
+        saveState.textContent = "On main, a save would go live within the hour. Switch to a working branch.";
+      } else {
+        saveGo.disabled = n === 0;
+        saveState.textContent = 'A checkpoint on this Mac. Nothing goes to the live site.';
+      }
+    };
+
+    const refreshSave = async () => {
+      try {
+        renderSave(await (await fetch(`${API}/save/status`)).json());
+      } catch { /* writer not up yet */ }
+    };
+
+    saveBtn?.addEventListener('click', () => {
+      savePanel.hidden = !savePanel.hidden;
+      if (!savePanel.hidden) { pubPanel.hidden = true; refreshSave(); saveMsg.focus(); }
+    });
+    root.querySelector('.studio-save-close')?.addEventListener('click', () => { savePanel.hidden = true; });
+    saveMsg?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !saveGo.disabled) saveGo.click(); });
+
+    saveGo?.addEventListener('click', async () => {
+      saveGo.disabled = true;
+      saveState.textContent = 'saving…';
+      try {
+        const data = await post('/save', { message: saveMsg.value });
+        saveMsg.value = '';
+        toast(`saved ${data.count} change${data.count === 1 ? '' : 's'} on this Mac`);
+      } catch (error) {
+        toast(error.message, true);
+      }
+      refreshSave();
+    });
+
+    // ⌘S saves, like everywhere else. Only while studio is showing.
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's' && !root.hidden) {
+        e.preventDefault();
+        if (saveInfo && saveInfo.changes.length && !saveInfo.onMain) saveGo.click();
+        else { savePanel.hidden = false; refreshSave(); }
+      }
+    });
+
+    // Keep the badge honest without polling hard: on load, on focus, and
+    // shortly after any write (writes reload the page, which re-runs this).
+    refreshSave();
+    window.addEventListener('focus', refreshSave);
+
     // -- publish ----------------------------------------------------------
     // Deliberately two steps. The button opens a panel; publishing happens on
     // a second, separate click. This pushes to a public site, so it shouldn't
     // be one stray click away from the undo button next to it.
     const pubPanel = root.querySelector('.studio-publish-panel');
-    const pubLog = root.querySelector('.studio-pub-log');
-    const pubState = root.querySelector('.studio-pub-state');
-    const pubGo = root.querySelector('.studio-pub-go');
-    const pubMsg = root.querySelector('.studio-pub-msg input');
+    const pubLog = pubPanel.querySelector('.studio-pub-log');
+    const pubState = pubPanel.querySelector('.studio-pub-state');
+    const pubGo = pubPanel.querySelector('.studio-pub-go');
+    const pubMsg = pubPanel.querySelector('.studio-pub-msg input');
     let pollTimer;
 
     const renderJob = (data) => {
@@ -1240,7 +1409,20 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
 
     root.querySelector('.studio-publish')?.addEventListener('click', () => {
       pubPanel.hidden = !pubPanel.hidden;
-      if (!pubPanel.hidden) { pubMsg.focus(); poll(); }
+      if (!pubPanel.hidden) {
+        savePanel.hidden = true;
+        if (saveInfo?.publishLocked) {
+          pubGo.disabled = true;
+          pubGo.textContent = 'Locked';
+          pubMsg.disabled = true;
+          pubState.textContent = 'Publishing is off. Everything stays on this Mac. To turn it back on, ask Claude or delete .publish-lock.';
+        } else {
+          pubGo.textContent = 'Publish now';
+          pubMsg.disabled = false;
+          pubMsg.focus();
+        }
+        poll();
+      }
     });
     root.querySelector('.studio-pub-close')?.addEventListener('click', () => { pubPanel.hidden = true; });
 
