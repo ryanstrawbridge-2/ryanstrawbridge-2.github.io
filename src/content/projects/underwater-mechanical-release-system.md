@@ -19,10 +19,6 @@ gallery:
     alt: "Prototype parts on the bench: housing, end caps, and the motor and electronics stack, with the drawings underneath."
   - image: ../../assets/images/projects/underwater-mechanical-release-system/housing-drawing.png
     alt: "Housing drawing: acetal copolymer, GD&T on the bore and O-ring face."
-  - video: resetting-latch.mp4
-    alt: The release latch resetting.
-  - image: ../../assets/images/projects/underwater-mechanical-release-system/fea-sheath.png
-    alt: FEA of the release sheath, von Mises stress, 32.7 MPa peak at the shaft step.
   - image: ../../assets/images/projects/underwater-mechanical-release-system/pressure-test-300m.jpeg
     alt: Pressure test vessel used for the 470 psi test.
 tools:
@@ -30,17 +26,22 @@ tools:
 order: 4
 figures:
   - section: What I did
-    kind: diagram
+    kind: photo
     title: Seal stack at 470 psi
     takeaway: Two dynamic O-rings and a face seal hold 470 psi, and the latch still resets from outside.
     plan: >-
       Section view through the housing: both dynamic nitrile O-rings and the static face seal, each called out, with the gland dimensions you sized to the Parker handbook.
-    aspect: auto
     points:
-      - Sized dual dynamic nitrile O-rings and a static face seal to Parker Handbook design practice at 470 psi.
+      - Endcap
       - Resettable without opening the housing.
     image: ../../assets/images/projects/underwater-mechanical-release-system/cross-section.png
     alt: "Section view of the release: electronics and battery inside the housing, motor driving the release shaft through the sealed end cap."
+    focal: 26% 96%
+    callouts:
+      - { x: 85.2, y: 56.6, label: New marker, place: right }
+      - { x: 61.1, y: 75.6, label: New marker, place: right }
+    zoom: 1.5
+    aspect: 3/4
   - section: Outcome
     kind: photo
     title: Ocean test
@@ -50,10 +51,14 @@ figures:
     aspect: 3/2
     points:
       - Version 1 pressure-tested to 470 psi with no leaks.
-      - Released a 20 lb weight at 60 ft after 5 days in the ocean.
       - Achieved 2.25 FS on the release arm with an 80 lb weight.
+      - More testing to come!
     image: ../../assets/images/projects/underwater-mechanical-release-system/v1-testing.png
     alt: Two V1 release units and an anchor on the dock.
+  - section: What I did
+    kind: diagram
+    title: New figure
+    takeaway: "New figure: one line on what it shows"
 ---
 
 ## Problem

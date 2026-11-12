@@ -94,11 +94,11 @@ const hasAside = points.length > 0;
              markup rather than the images so they translate and theme. */
           <div class="pfig-compare">
             <div class="pfig-frame" style={frameStyle} {...studio && { 'data-studio-slot': 'image' }}>
-              <Image src={image} alt={`${beforeLabel}: ${alt}`} widths={[400, 800]} sizes="(min-width: 900px) 40vw, 100vw" loading="lazy" />
+              <div class="pfig-crop"><Image src={image} alt={`${beforeLabel}: ${alt}`} widths={[400, 800]} sizes="(min-width: 900px) 40vw, 100vw" loading="lazy" /></div>
               <span class="pfig-compare-label" data-field={field?.(index, 'beforeLabel')}>{beforeLabel}</span>
             </div>
             <div class="pfig-frame" style={compareStyle} {...studio && { 'data-studio-slot': 'compare' }}>
-              <Image src={compare} alt={`${afterLabel}: ${alt}`} widths={[400, 800]} sizes="(min-width: 900px) 40vw, 100vw" loading="lazy" />
+              <div class="pfig-crop"><Image src={compare} alt={`${afterLabel}: ${alt}`} widths={[400, 800]} sizes="(min-width: 900px) 40vw, 100vw" loading="lazy" /></div>
               <span class="pfig-compare-label" data-field={field?.(index, 'afterLabel')}>{afterLabel}</span>
             </div>
           </div>
@@ -111,13 +111,15 @@ const hasAside = points.length > 0;
                 <source src={videoSrc(video)} type="video/mp4" />
               </video>
             ) : (
-              <Image
-                src={image!}
-                alt={alt}
-                widths={[600, 1200, 1800]}
-                sizes="(min-width: 1100px) 760px, 100vw"
-                loading="lazy"
-              />
+              <div class="pfig-crop">
+                <Image
+                  src={image!}
+                  alt={alt}
+                  widths={[600, 1200, 1800]}
+                  sizes="(min-width: 1100px) 760px, 100vw"
+                  loading="lazy"
+                />
+              </div>
             )}
 
             {/* Markers sit in the frame so they scroll and scale with it. */}
@@ -219,12 +221,21 @@ const hasAside = points.length > 0;
     aspect-ratio: var(--figure-ratio, auto);
     object-fit: cover;
     object-position: var(--figure-focal, center center);
-    transform: scale(var(--figure-zoom, 1));
-    transform-origin: var(--figure-focal, center center);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow);
-    /* The zoom scales the image inside a frame that must still clip it. */
-    clip-path: inset(0 round var(--radius-lg));
+  }
+  /* The zoom scales the photo inside this box, which clips it. A clip-path on
+     the img itself scaled WITH the transform and clipped nothing. The frame
+     can't clip: callout labels may sit past its edge. */
+  .pfig-crop {
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+  }
+  .pfig-crop :global(img) {
+    box-shadow: none;
+    transform: scale(var(--figure-zoom, 1));
+    transform-origin: var(--figure-focal, center center);
   }
 
   .pfig-compare {

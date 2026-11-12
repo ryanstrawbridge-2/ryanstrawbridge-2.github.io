@@ -23,10 +23,7 @@ figures:
     plan: >-
       Flow schematic, left to right: pressurant tank, fill/vent, the position a regulator would occupy (crossed out), the actuated ball valve, then the injector. Label the pressures you know at each station.
     aspect: 16/9
-    points:
-      - Pressure regulators are too heavy to fly.
-      - Previous needle valve and stepper motor had too low Cv and high breaking torque.
-      - Full-port ball valves solve both
+    points: []
     image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-diagram-3.png
   - section: Outcome
     kind: data
@@ -35,10 +32,8 @@ figures:
     plan: >-
       The plot you already made. Current on Y, commanded position on X, one series per test pressure up to 2300 psi. Mark the actuation threshold.
     aspect: 16/9
-    points:
-      - Successful actuation under 2300 psi delta.
+    points: []
     image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-pump-test-4.png
-    caption: Bike pump setup testing seat friction vs motor torque
 heroFocalPoint: 37% 51%
 heroAspect: standard
 ---

@@ -344,6 +344,10 @@ GitHub SSH push from background processes stalls on large payloads.
     after side has its own `compareFocal` / `compareZoom`. `.project-body img`
     carries a 1.5rem prose margin; `.pfig-frame img` must zero it or the photo
     drops 24px out of its frame and over the caption.
+    Zoom is clipped by `.pfig-crop` (overflow hidden) around the img, not by
+    a clip-path on the img: that scaled with the transform and let a zoomed
+    photo spill out. A figure at `aspect: auto` has no crop room until zoomed;
+    give it a ratio to drag-crop.
 
 ## macOS gotchas
 

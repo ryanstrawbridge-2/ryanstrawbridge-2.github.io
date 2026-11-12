@@ -31,6 +31,7 @@ figures:
     points:
       - Applied ASME Y14.5 GD&T — position and symmetry controls on dowel-pin datums.
       - Repeatable alignment to the CNC head.
+heroAspect: standard
 ---
 
 ## Problem
@@ -39,7 +40,7 @@ The previous end-prep operation was performed by hand. This operation took an en
 
 ## What I did
 
-* Developed a modular CNC seam-cutting fixture that radially conforms **11 configurations** of a new cable type
+* Developed a modular CNC seam-cutting fixture that radially conforms 11 configurations of a new cable type
 * Enabled qualification testing ahead of new production line
 * Applied AMSE Y14.5 GD\&T — position and symmetry controls on dowel-pin datums — for repeatable alignment to the CNC head.
 
