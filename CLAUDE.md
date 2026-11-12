@@ -60,7 +60,7 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | CMS thumbnail previews | `scripts/generate-cms-thumbnails.mjs` |
 | Photo/video intake | `scripts/media-intake.mjs` (`npm run photos`) |
 | 3D model intake | `scripts/model-intake.mjs` (`npm run model`), `src/components/Model3D.astro`, models in `public/models/` |
-| Live editor (dev only) | `scripts/studio.sh` (`npm run studio`), `scripts/studio-server.mjs`, `src/components/StudioOverlay.astro` |
+| Live editor (dev only) | `scripts/studio.sh` (`npm run studio`, supervises astro dev), `scripts/studio-server.mjs` (writer, port 4322), `scripts/studio/*.js` + `overlay.css` (the UI, one module per feature, served by the writer), `src/components/StudioOverlay.astro` (markup + the two tags that load them) |
 | Undo journal + trash | `scripts/lib/journal.mjs`, `.photo-trash/` (gitignored) |
 | Career roadmap (parked) | `src/pages/_roadmap.astro` + `src/data/roadmap.json` — the `_` prefix keeps Astro from routing it, so the page is NOT built and nothing links to it. To bring it back: rename to `roadmap.astro`, re-add the nav item to `src/data/navigation.json`, and restore the `roadmap` collection in `.pages.yml` (its image field needs `output: /src/assets/images/roadmap/{name}{extension}` — the version removed here wrote to the assets root, which `check:media` rejects, gotcha 27). |
 | Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs`, `scripts/lib/homejson.mjs`, `scripts/lib/orphans.mjs` |
@@ -115,22 +115,20 @@ GitHub SSH push from background processes stalls on large payloads.
     extension-based probe. `encodeKeepingFormat()` exists for that; `--jpeg` is
     intake-only.
 
-14. **Studio must never reach production.** `StudioOverlay.astro` guards on
-    `import.meta.env.DEV`, but a runtime conditional does NOT keep Astro from
-    hoisting and bundling `<script>`/`<style>` — that's static analysis. Both
-    are `is:inline` so they're emitted only where the template puts them.
-    If you touch that component, re-check with:
-    `npm run build && grep -r studio dist/ ; grep -r "gallery/patch" dist/`
+14. **Studio must never reach production.** The overlay's code is not in
+    `src/` at all: `scripts/studio/*.js` and `overlay.css` are served by the
+    writer at `http://127.0.0.1:4322/overlay/`, and `StudioOverlay.astro`
+    emits the `<link>`/`<script type=module>` tags only when
+    `import.meta.env.DEV`. The markup is inside the same guard. Re-check with:
+    `npm run build && grep -rl "studio-\|4322" dist/ | head`
+    Editing a file in `scripts/studio/` does not hot-reload; reload the page.
 15. **A Vite restart kills content watching for the rest of the session.**
-    Astro normally hot-reloads markdown changed by another process just fine.
-    But touching `package.json` or `astro.config.mjs` restarts Vite, and the
-    content watcher does not come back: writes still succeed, the page keeps
-    rendering the previous frontmatter, and only restarting `npm run studio`
-    fixes it. Measured, not guessed — a write before the restart reloads, the
-    same write after it does not. `nudgeAstro()` in `studio-server.mjs` touches
-    `src/content.config.ts` after each write, which forces the re-sync even in
-    that state. If you edit npm scripts or the Astro config while studio is up,
-    restart it.
+    Touching `package.json`, the lockfile or `astro.config.mjs` restarts Vite
+    in-process and the content watcher never comes back: writes succeed, the
+    page keeps showing old frontmatter. `studio.sh` now supervises astro dev
+    and restarts the whole process when any of those change. The old
+    workaround (touching `content.config.ts` after every write) is gone: it
+    made every edit reload the page twice. One reload per save is Astro's own.
 16. **Studio writes frontmatter with `yaml`'s Document API, not gray-matter.**
     It round-trips byte-identically, so a one-field edit is a one-line diff.
     A full reserialize would rewrite quoting and key order on a file TinaCMS
@@ -162,11 +160,8 @@ GitHub SSH push from background processes stalls on large payloads.
     feed `<source src>` directly and store `/videos/x.mp4`; project gallery rows
     store a bare `x.mp4` and the template prefixes it. `homeVideoRef()` exists
     for that. Don't unify one without changing the other template.
-22. **`:global()` does not work in `is:inline` styles.** StudioOverlay's CSS
-    ships as raw CSS, so a rule containing `:global(...)` is invalid and the
-    browser drops it silently — the overlay just appears not to respond to
-    hover. Write plain selectors there.
-
+22. **Overlay CSS is a plain stylesheet** (`scripts/studio/overlay.css`), not
+    Astro-scoped: no `:global()`, and it targets page markup by class.
 23. **`scripts/lib/orphans.mjs` deletes files, so its scanner has to be exact.**
     It parses `src/data/*.json` and project frontmatter with real JSON/YAML
     parsers, never a regex: a field a regex misses is a photo that's still on
@@ -363,7 +358,11 @@ GitHub SSH push from background processes stalls on large payloads.
     Every figure has a studio toolbar (Add photo / Before / After / Delete);
     placeholders are click-or-drop zones. `/figure/upload`, `/figure/delete`
     and `/library/pick` with `figure` + `figureSlot` (`image` | `compare`)
-    back them, all journalled.
+    back them, all journalled. Since the route consolidation those are
+    `/project/patch` (any field by dotted path), `/project/list` (add /
+    remove / move on gallery, figures, a figure's points or callouts) and
+    `/media` (every photo or video: target gallery | hero | figure | home,
+    from an upload or a library pick).
     Figure photos crop like gallery photos (drag / pinch). A comparison's
     after side has its own `compareFocal` / `compareZoom`. `.project-body img`
     carries a 1.5rem prose margin; `.pfig-frame img` must zero it or the photo

@@ -27,9 +27,8 @@ fi
 node scripts/studio-server.mjs &
 STUDIO_PID=$!
 
-# Without this the writer survives Ctrl-C and holds 4322 against the next run.
-cleanup() { kill "$STUDIO_PID" 2>/dev/null || true; }
-trap cleanup EXIT INT TERM
+# The cleanup trap below also stops the writer, so it can't survive Ctrl-C and
+# hold 4322 against the next run.
 
 echo
 echo "Studio is up. Open a project page:"
@@ -38,4 +37,37 @@ for f in src/content/projects/*.md; do
 done
 echo
 
-npx astro dev "$@"
+# A stale preview from an earlier run would push this one onto another port.
+lsof -ti "tcp:4321" -sTCP:LISTEN | xargs kill 2>/dev/null || true
+
+# Supervise astro dev. When package.json, the lockfile or the Astro config
+# changes, Vite restarts itself in-process, and its content watcher never
+# comes back: saves land on disk and the page keeps showing the old version
+# (CLAUDE.md gotcha 15). Restarting the whole process is the only cure, so do
+# it automatically instead of leaving a page that silently stops updating.
+WATCHED="package.json package-lock.json astro.config.mjs"
+stamp() { stat -f '%m' $WATCHED 2>/dev/null | tr '\n' ' '; }
+
+ASTRO_PID=""
+start_astro() { npx astro dev "$@" & ASTRO_PID=$!; }
+stop_astro() {
+  [ -n "$ASTRO_PID" ] && kill "$ASTRO_PID" 2>/dev/null || true
+  lsof -ti "tcp:4321" -sTCP:LISTEN | xargs kill 2>/dev/null || true
+  wait "$ASTRO_PID" 2>/dev/null || true
+}
+cleanup() { stop_astro; kill "$STUDIO_PID" 2>/dev/null || true; }
+trap cleanup EXIT INT TERM
+
+start_astro "$@"
+LAST=$(stamp)
+while kill -0 "$ASTRO_PID" 2>/dev/null; do
+  sleep 2
+  NOW=$(stamp)
+  if [ "$NOW" != "$LAST" ]; then
+    LAST=$NOW
+    echo
+    echo "studio: package.json / astro config changed, restarting the preview so it keeps updating"
+    stop_astro
+    start_astro "$@"
+  fi
+done

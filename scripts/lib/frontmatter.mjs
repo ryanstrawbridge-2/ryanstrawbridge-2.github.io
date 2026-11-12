@@ -38,22 +38,6 @@ const galleryNode = (doc) => {
   return node;
 };
 
-/**
- * Apply a patch to one gallery row. A key set to null or '' is deleted rather
- * than written as an empty value — the Astro schema treats absent and empty
- * differently for `section`, and a stray `width: ''` fails enum parsing, which
- * on a CMS commit means a failed deploy and a silently stale site.
- */
-export const patchGalleryItem = (doc, index, patch) => {
-  const seq = galleryNode(doc);
-  const item = seq.get(index);
-  if (!item) throw new Error(`no gallery row at index ${index}`);
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === null || value === undefined || value === '') item.delete(key);
-    else item.set(key, value);
-  }
-};
-
 export const appendGalleryItem = (doc, fields) => {
   const seq = galleryNode(doc);
   const clean = Object.fromEntries(
@@ -61,21 +45,6 @@ export const appendGalleryItem = (doc, fields) => {
   );
   seq.add(doc.createNode(clean));
   return seq.items.length - 1;
-};
-
-export const removeGalleryItem = (doc, index) => {
-  const seq = galleryNode(doc);
-  if (!seq.get(index)) throw new Error(`no gallery row at index ${index}`);
-  seq.delete(index);
-};
-
-export const moveGalleryItem = (doc, from, to) => {
-  const seq = galleryNode(doc);
-  if (from === to) return;
-  const item = seq.get(from);
-  if (!item) throw new Error(`no gallery row at index ${from}`);
-  seq.delete(from);
-  seq.items.splice(to, 0, item);
 };
 
 /** Top-level frontmatter keys, e.g. heroFocalPoint / heroAspect / galleryLayout. */

@@ -1,0 +1,627 @@
+/* Studio overlay styles. Served by scripts/studio-server.mjs at /overlay/,
+   linked only in astro dev, so none of this can reach the production build. */
+/* Studio chrome. Dark in both site themes on purpose — editor chrome should
+   read as a tool sitting on top of the page, never as part of it, the same
+   way Figma's or Framer's toolbars do. Every colour comes from these tokens. */
+:root {
+  --st-surface: rgb(24 24 27 / 0.94);
+  --st-solid: #18181b;
+  --st-well: rgb(255 255 255 / 0.05);
+  --st-hover: rgb(255 255 255 / 0.09);
+  --st-press: rgb(255 255 255 / 0.15);
+  --st-line: rgb(255 255 255 / 0.09);
+  --st-line-strong: rgb(255 255 255 / 0.16);
+  --st-text: #fafafa;
+  --st-muted: #a1a1aa;
+  --st-faint: #71717a;
+  --st-accent: #3b82f6;
+  --st-accent-strong: #2563eb;
+  --st-accent-tint: rgb(59 130 246 / 0.2);
+  --st-accent-ink: #bfdbfe;
+  --st-ok: #22c55e;
+  --st-danger: #ef4444;
+  --st-danger-tint: rgb(239 68 68 / 0.18);
+  --st-r-sm: 6px;
+  --st-r: 9px;
+  --st-r-lg: 14px;
+  --st-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --st-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  --st-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+    0 16px 40px -12px rgb(0 0 0 / 0.6), 0 4px 12px -4px rgb(0 0 0 / 0.4);
+  --st-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+#studio[hidden] { display: none; }
+
+/* --- shared controls --------------------------------------------------- */
+
+#studio, .studio-tools, .studio-alt-edit, .studio-text-edit, .studio-zoom-badge {
+  font-family: var(--st-font);
+  -webkit-font-smoothing: antialiased;
+}
+#studio svg, .studio-tools svg {
+  width: 16px; height: 16px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.75;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.studio-btn,
+.studio-tools button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  height: 32px; padding: 0 0.7rem;
+  border: 0; border-radius: var(--st-r-sm);
+  background: transparent; color: var(--st-text);
+  font: 500 12.5px/1 var(--st-font); letter-spacing: 0.005em;
+  white-space: nowrap; cursor: pointer;
+  transition: background 120ms var(--st-ease), color 120ms var(--st-ease), opacity 120ms;
+}
+.studio-btn:hover,
+.studio-tools button:hover { background: var(--st-hover); }
+.studio-btn:active,
+.studio-tools button:active { background: var(--st-press); }
+.studio-btn:focus-visible,
+.studio-tools button:focus-visible,
+.studio-tools select:focus-visible,
+#studio select:focus-visible,
+#studio input:focus-visible {
+  outline: 2px solid var(--st-accent); outline-offset: 1px;
+}
+.studio-btn[aria-pressed='true'],
+.studio-tools button[aria-pressed='true'] {
+  background: var(--st-accent-tint); color: var(--st-accent-ink);
+}
+.studio-btn[disabled],
+.studio-tools button[disabled] { opacity: 0.38; cursor: default; background: transparent; }
+.studio-icon { width: 32px; padding: 0; }
+.studio-primary { background: var(--st-accent); color: white; padding: 0 0.85rem; }
+.studio-primary:hover { background: var(--st-accent-strong); }
+.studio-primary[disabled] { background: var(--st-accent); }
+
+#studio select,
+.studio-tools select {
+  height: 32px; padding: 0 1.7rem 0 0.6rem;
+  border: 1px solid var(--st-line); border-radius: var(--st-r-sm);
+  background: var(--st-well) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.45rem center / 14px;
+  color: var(--st-text); font: 500 12.5px/1 var(--st-font);
+  appearance: none; -webkit-appearance: none; cursor: pointer;
+}
+#studio select:hover,
+.studio-tools select:hover { border-color: var(--st-line-strong); }
+#studio select option,
+.studio-tools select option { background: var(--st-solid); color: var(--st-text); }
+
+.studio-input,
+.studio-alt-edit input,
+.studio-section-edit {
+  display: grid; gap: 0.5rem; margin: 0.75rem 0 1.25rem; padding: 0.6rem;
+  background: var(--st-solid); color: var(--st-text);
+  border-radius: var(--st-r); box-shadow: var(--st-shadow); font-size: 13px;
+}
+.studio-section-edit textarea {
+  width: 100%; box-sizing: border-box; resize: vertical; padding: 0.7rem 0.8rem;
+  background: var(--st-well, #0c0c0e); color: var(--st-text); border: 1px solid var(--st-line);
+  border-radius: var(--st-r-sm); font: 13px/1.6 var(--st-mono);
+}
+.studio-section-edit > div { display: flex; align-items: center; gap: 0.4rem; }
+.studio-section-edit span { flex: 1; color: var(--st-faint); font-size: 11.5px; }
+.studio-section-edit button {
+  height: 30px; padding: 0 0.85rem; background: var(--st-accent); color: white; border: 0;
+  border-radius: var(--st-r-sm); font: 500 12.5px/1 var(--st-font); cursor: pointer;
+}
+.studio-section-edit button.is-quiet { background: transparent; color: var(--st-muted); }
+.studio-text-edit textarea {
+  width: 100%; box-sizing: border-box;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--st-line); border-radius: var(--st-r-sm);
+  background: var(--st-well); color: var(--st-text);
+  font: 13px/1.45 var(--st-font);
+}
+.studio-input:focus,
+.studio-alt-edit input:focus,
+.studio-text-edit textarea:focus {
+  outline: none; border-color: var(--st-accent);
+  box-shadow: 0 0 0 3px var(--st-accent-tint);
+}
+.studio-input::placeholder,
+.studio-alt-edit input::placeholder { color: var(--st-faint); }
+
+/* --- toolbar: a vertical rail on the right edge ----------------------- */
+
+.studio-bar {
+  position: fixed; right: 12px; top: 50%; transform: translateY(-50%);
+  z-index: 900;
+  display: flex; flex-direction: column; align-items: stretch; gap: 2px;
+  padding: 6px;
+  border-radius: var(--st-r-lg);
+  background: var(--st-surface); color: var(--st-text);
+  box-shadow: var(--st-shadow);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  max-height: calc(100vh - 24px);
+}
+.studio-brand {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 6px 0 4px;
+  font: 600 10px/1 var(--st-font); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--st-muted);
+}
+.studio-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--st-ok); box-shadow: 0 0 0 3px rgb(34 197 94 / 0.22);
+}
+.studio-bar.is-offline .studio-dot { background: var(--st-danger); box-shadow: 0 0 0 3px var(--st-danger-tint); }
+.studio-sep { height: 1px; width: 28px; margin: 4px auto; background: var(--st-line-strong); }
+
+/* Icon over a short label, so the rail stays narrow but nothing is a guess. */
+.studio-bar .studio-btn {
+  flex-direction: column; gap: 4px;
+  width: 58px; height: 50px; padding: 0;
+  font-size: 10.5px; font-weight: 500;
+}
+.studio-bar .studio-btn svg { width: 18px; height: 18px; }
+.studio-bar .studio-icon { height: 36px; }
+.studio-bar .studio-primary { margin-top: 2px; }
+.studio-undo-label { max-width: 54px; overflow: hidden; text-overflow: ellipsis; }
+
+.studio-help { position: relative; display: flex; }
+.studio-help .studio-btn { width: 58px; }
+.studio-hint {
+  position: absolute; right: calc(100% + 14px); top: 50%; transform: translate(4px, -50%);
+  width: max-content; max-width: min(320px, 70vw);
+  padding: 0.6rem 0.8rem; border-radius: var(--st-r);
+  background: var(--st-solid); color: var(--st-muted); box-shadow: var(--st-shadow);
+  font: 12px/1.5 var(--st-font); text-align: left;
+  opacity: 0; pointer-events: none;
+  transition: opacity 140ms var(--st-ease), transform 140ms var(--st-ease);
+}
+.studio-help:hover .studio-hint,
+.studio-help:focus-within .studio-hint { opacity: 1; transform: translate(0, -50%); }
+/* Offline is the one message that must be seen without hovering. */
+.studio-bar.is-offline .studio-hint {
+  opacity: 1; transform: translate(0, -50%);
+  color: #fecaca; background: #3f1d1d;
+}
+
+/* Short windows: drop the labels so the rail still fits. */
+@media (max-height: 640px) {
+  .studio-bar .studio-btn > span { display: none; }
+  .studio-bar .studio-btn { height: 36px; }
+}
+
+/* --- toast ------------------------------------------------------------- */
+
+.studio-toast {
+  position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%);
+  z-index: 901;
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.55rem 0.85rem 0.55rem 0.7rem; border-radius: var(--st-r);
+  background: var(--st-solid); color: var(--st-text);
+  font: 500 12.5px/1.4 var(--st-font);
+  box-shadow: var(--st-shadow);
+  max-width: min(90vw, 640px);
+  animation: studio-rise 180ms var(--st-ease);
+}
+.studio-toast::before {
+  content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--st-ok);
+}
+.studio-toast[hidden] { display: none; }
+.studio-toast.is-error { background: #2a1314; color: #fecaca; box-shadow: var(--st-shadow), 0 0 0 1px rgb(239 68 68 / 0.35); }
+.studio-toast.is-error::before { background: var(--st-danger); }
+@keyframes studio-rise { from { opacity: 0; transform: translate(-50%, 6px); } }
+
+/* --- panels ------------------------------------------------------------ */
+
+.studio-panel {
+  position: fixed; z-index: 905;
+  background: var(--st-solid); color: var(--st-text);
+  border-radius: var(--st-r-lg); box-shadow: var(--st-shadow);
+  font: 13px/1.45 var(--st-font); overflow: hidden;
+  animation: studio-pop 160ms var(--st-ease);
+}
+.studio-panel[hidden] { display: none; }
+@keyframes studio-pop { from { opacity: 0; } }
+.studio-panel > header,
+.studio-panel > footer {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.95rem;
+}
+.studio-panel > header { border-bottom: 1px solid var(--st-line); min-height: 48px; box-sizing: border-box; }
+.studio-panel > footer { border-top: 1px solid var(--st-line); padding: 0.65rem 0.65rem 0.65rem 0.95rem; }
+.studio-panel > header strong { flex: 1; font-weight: 600; font-size: 13.5px; }
+
+.studio-theme-panel { right: 88px; top: 50%; transform: translateY(-50%); width: min(320px, calc(100vw - 2rem)); }
+.studio-theme-note { color: var(--st-faint); font-size: 12px; }
+.studio-theme-state { color: var(--st-faint); font-size: 12px; }
+.studio-theme-body { display: grid; gap: 1rem; padding: 1rem 0.95rem; }
+.studio-theme-body label {
+  display: grid; gap: 0.45rem;
+  color: var(--st-muted); font-size: 11.5px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.studio-theme-body select { width: 100%; text-transform: none; letter-spacing: 0; }
+.studio-theme-body input[type='color'] {
+  width: 100%; height: 34px; padding: 3px;
+  border: 1px solid var(--st-line); border-radius: var(--st-r-sm);
+  background: var(--st-well); cursor: pointer;
+}
+.studio-swatches { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.studio-swatches button {
+  width: 24px; height: 24px; border-radius: 50%; padding: 0; cursor: pointer;
+  border: 0; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12) inset;
+  transition: transform 120ms var(--st-ease);
+}
+.studio-swatches button:hover { transform: scale(1.1); }
+.studio-swatches button[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--st-solid), 0 0 0 4px var(--st-text); }
+
+.studio-phone-panel { right: 88px; top: 1rem; z-index: 906; }
+.studio-phone-panel select { max-width: 13rem; }
+/* Scaled down so a 844px-tall phone still fits beside the page on a laptop.
+   The iframe keeps its real pixel size, so media queries inside it fire at
+   the width being emulated rather than the width on screen. */
+.studio-phone-frame {
+  display: block; border: 0; background: white;
+  transform: scale(var(--phone-scale, 0.62)); transform-origin: top left;
+}
+.studio-phone-shell { overflow: hidden; }
+
+.studio-publish-panel { right: 88px; bottom: 1rem; width: min(520px, calc(100vw - 2rem)); }
+.studio-publish-panel > footer { justify-content: space-between; }
+.studio-pub-state { color: var(--st-muted); flex: 1; font-size: 12px; }
+.studio-pub-msg { display: grid; gap: 0.45rem; padding: 0.95rem; }
+.studio-pub-msg > span { color: var(--st-muted); font-size: 12px; font-weight: 500; }
+.studio-pub-log {
+  margin: 0 0.95rem 0.95rem; padding: 0.65rem 0.75rem; max-height: 220px;
+  overflow: auto; background: #09090b; border: 1px solid var(--st-line); border-radius: var(--st-r-sm);
+  font: 11.5px/1.55 var(--st-mono); white-space: pre-wrap; color: #d4d4d8;
+}
+.studio-pub-log[hidden] { display: none; }
+
+.studio-save-panel { right: 88px; bottom: 1rem; width: min(440px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; }
+.studio-save-panel > footer { justify-content: space-between; border-bottom: 1px solid var(--st-line); }
+.studio-save-branch {
+  margin-left: auto; margin-right: 0.35rem; padding: 2px 7px; border: 1px solid var(--st-line);
+  border-radius: 99px; color: var(--st-muted); font: 11px/1.4 var(--st-mono);
+}
+.studio-save-section { padding: 0.85rem 0.95rem 0.2rem; }
+.studio-save-h {
+  margin: 0 0 0.5rem; color: var(--st-muted); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; display: flex; gap: 0.5rem;
+}
+.studio-save-h span { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.studio-save-changes, .studio-save-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.studio-save-changes li, .studio-save-list li {
+  display: grid; grid-template-columns: 5.6rem 1fr auto; gap: 0.6rem; align-items: baseline;
+  padding: 0.4rem 0.5rem; border-radius: var(--st-r-sm); font-size: 12.5px;
+}
+.studio-save-changes li:nth-child(odd), .studio-save-list li:nth-child(odd) { background: rgb(255 255 255 / 0.03); }
+.studio-save-changes .area { color: var(--st-muted); font-size: 11.5px; }
+.studio-save-changes .name, .studio-save-list .subj { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.studio-save-changes .what { color: var(--st-muted); font-size: 11.5px; }
+.studio-save-changes li:has(.empty) { display: block; background: none; padding-left: 0; }
+.studio-save-changes .empty { color: var(--st-muted); }
+.studio-save-list li { grid-template-columns: 1fr auto; }
+.studio-save-list .when { color: var(--st-muted); font-size: 11.5px; white-space: nowrap; }
+.studio-save-history { padding-bottom: 0.9rem; }
+.studio-pub-msg em { font-style: normal; opacity: 0.7; font-weight: 400; }
+
+.studio-save { position: relative; }
+.studio-save-count {
+  position: absolute; top: 4px; right: 6px; min-width: 16px; height: 16px; padding: 0 4px;
+  box-sizing: border-box; border-radius: 99px; background: #fbbf24; color: #111;
+  font: 600 10px/16px var(--st-sans, system-ui); text-align: center;
+}
+.studio-save-count[hidden] { display: none; }
+.studio-pub-go[disabled] { cursor: not-allowed; }
+
+/* --- inline text editing ----------------------------------------------- */
+
+.studio-text-slot {
+  outline: 1px dashed rgb(59 130 246 / 0.55);
+  outline-offset: 4px; cursor: text; border-radius: 3px;
+  transition: background 120ms, outline-color 120ms;
+}
+.studio-text-slot:hover { outline-style: solid; outline-color: var(--st-accent); background: rgb(59 130 246 / 0.07); }
+.studio-editing {
+  outline: 2px solid var(--st-accent) !important; outline-offset: 4px;
+  background: rgb(59 130 246 / 0.08);
+}
+.studio-text-edit {
+  position: absolute; z-index: 904; display: grid; gap: 0.5rem;
+  padding: 0.6rem; min-width: 300px;
+  background: var(--st-solid); color: var(--st-text);
+  border-radius: var(--st-r); box-shadow: var(--st-shadow);
+  font-size: 13px; text-align: left;
+}
+.studio-text-edit textarea { resize: vertical; font-family: var(--st-mono); font-size: 12.5px; }
+.studio-text-edit span { color: var(--st-faint); font-size: 11.5px; }
+.studio-text-edit button {
+  justify-self: end; height: 30px; padding: 0 0.85rem;
+  background: var(--st-accent); color: white; border: 0; border-radius: var(--st-r-sm);
+  font: 500 12.5px/1 var(--st-font); cursor: pointer;
+}
+.studio-text-edit button:hover { background: var(--st-accent-strong); }
+
+/* --- drop target ------------------------------------------------------- */
+
+.studio-drop {
+  position: fixed; inset: 0.6rem; z-index: 899;
+  display: grid; place-items: center;
+  background: rgb(59 130 246 / 0.08);
+  border: 2px dashed rgb(59 130 246 / 0.7); border-radius: 18px;
+  pointer-events: none;
+}
+.studio-drop span {
+  padding: 0.7rem 1.1rem; border-radius: var(--st-r);
+  background: var(--st-solid); color: var(--st-text); box-shadow: var(--st-shadow);
+  font: 600 14px/1 var(--st-font);
+}
+.studio-drop[hidden] { display: none; }
+
+/* --- library ----------------------------------------------------------- */
+
+.studio-library {
+  position: fixed; left: 0.75rem; right: 88px; bottom: 0.75rem;
+  height: min(64vh, 580px);
+  z-index: 902;
+  display: flex; flex-direction: column;
+  background: var(--st-solid); color: var(--st-text);
+  border-radius: 16px; box-shadow: var(--st-shadow);
+  font: 13px/1.4 var(--st-font);
+  overflow: hidden;
+  animation: studio-pop 180ms var(--st-ease);
+}
+.studio-library[hidden] { display: none; }
+.studio-library header {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  padding: 0.6rem 0.6rem 0.6rem 1.1rem;
+  border-bottom: 1px solid var(--st-line);
+}
+.studio-lib-title { display: grid; gap: 0.15rem; margin-right: auto; }
+.studio-lib-title strong { font-size: 14px; font-weight: 600; }
+.studio-lib-target { color: var(--st-muted); font-size: 12px; }
+.studio-library.is-hero .studio-lib-target { color: var(--st-accent-ink); }
+.studio-lib-opt {
+  display: flex; align-items: center; gap: 0.45rem;
+  color: var(--st-muted); font-size: 12px; font-weight: 500;
+}
+.studio-lib-opt[hidden] { display: none; }
+
+.studio-lib-body { display: flex; min-height: 0; flex: 1; }
+.studio-lib-folders {
+  width: 240px; flex: none; overflow-y: auto;
+  border-right: 1px solid var(--st-line);
+  padding: 0.5rem;
+  background: rgb(255 255 255 / 0.015);
+}
+.studio-lib-folders button {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+  width: 100%; height: auto; min-height: 32px; padding: 0.35rem 0.6rem;
+  text-align: left; border: 0; border-radius: var(--st-r-sm);
+  background: transparent; color: var(--st-muted);
+  font: 500 12.5px/1.3 var(--st-font); cursor: pointer;
+}
+.studio-lib-folders button:hover { background: var(--st-hover); color: var(--st-text); }
+.studio-lib-folders button[aria-current='true'] { background: var(--st-accent-tint); color: var(--st-accent-ink); }
+.studio-lib-folders .count {
+  flex: none; min-width: 1.4rem; padding: 0.1rem 0.35rem; border-radius: 999px;
+  background: var(--st-well); color: var(--st-faint);
+  font-size: 11px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.studio-lib-heading {
+  margin: 0.9rem 0 0.3rem; padding: 0 0.6rem;
+  font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--st-faint);
+}
+.studio-lib-heading:first-child { margin-top: 0.35rem; }
+.studio-lib-note {
+  margin: 0.9rem 0.35rem 0.35rem; padding: 0.65rem 0.7rem;
+  border: 1px dashed var(--st-line-strong); border-radius: var(--st-r-sm);
+  color: var(--st-faint); font-size: 11.5px; line-height: 1.5;
+}
+.studio-lib-note code {
+  font: 11px var(--st-mono); color: var(--st-muted);
+  background: var(--st-well); padding: 0.05rem 0.25rem; border-radius: 4px;
+}
+
+.studio-lib-grid {
+  flex: 1; overflow-y: auto; padding: 0.9rem;
+  display: grid; gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  align-content: start;
+}
+.studio-lib-tile {
+  position: relative; padding: 0; border: 0; cursor: pointer;
+  background: var(--st-well); border-radius: var(--st-r); overflow: hidden;
+  display: flex; flex-direction: column; text-align: left;
+  font: inherit; color: inherit;
+  box-shadow: 0 0 0 1px var(--st-line);
+  transition: box-shadow 120ms var(--st-ease), transform 120ms var(--st-ease);
+}
+.studio-lib-tile:hover { box-shadow: 0 0 0 2px var(--st-accent); transform: translateY(-1px); }
+.studio-lib-tile:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--st-accent), 0 0 0 5px var(--st-accent-tint); }
+.studio-lib-tile img {
+  width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
+  background: repeating-conic-gradient(rgb(255 255 255 / 0.04) 0 25%, transparent 0 50%) 0 0 / 16px 16px;
+}
+.studio-lib-tile .meta {
+  display: grid; gap: 0.1rem;
+  padding: 0.45rem 0.55rem 0.55rem;
+  font-size: 11px; line-height: 1.3; color: var(--st-faint);
+}
+.studio-lib-tile .meta b {
+  color: var(--st-text); font-weight: 500; font-size: 11.5px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.studio-lib-tile .badge {
+  position: absolute; top: 0.4rem; right: 0.4rem;
+  padding: 0.18rem 0.45rem; border-radius: 999px;
+  font: 600 10px/1 var(--st-font); letter-spacing: 0.02em;
+  background: rgb(22 163 74 / 0.92); color: white;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+.studio-lib-tile .badge.kind { background: rgb(0 0 0 / 0.72); left: 0.4rem; right: auto; }
+.studio-lib-tile[disabled] { opacity: 0.5; cursor: progress; }
+.studio-lib-empty { color: var(--st-muted); font-size: 13px; padding: 1rem; grid-column: 1 / -1; }
+
+@media (max-width: 700px) {
+  .studio-lib-folders { width: 150px; }
+}
+
+/* --- per-photo toolbar (gallery, home slots, main photo) -------------- */
+
+.studio-tools {
+  position: absolute; top: 0.6rem; left: 0.6rem;
+  max-width: calc(100% - 1.2rem);
+  z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px;
+  padding: 4px;
+  border-radius: var(--st-r);
+  background: var(--st-surface); color: var(--st-text);
+  box-shadow: var(--st-shadow);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  opacity: 0; transform: translateY(-3px);
+  transition: opacity 140ms var(--st-ease), transform 140ms var(--st-ease);
+  pointer-events: none;
+  line-height: 1;
+}
+figure[data-studio-index]:hover .studio-tools,
+.studio-slot:hover .studio-tools,
+.studio-tools:focus-within { opacity: 1; transform: none; pointer-events: auto; }
+
+.studio-tools button { height: 28px; padding: 0 0.55rem; font-size: 12px; }
+.studio-tools button.studio-tool-icon { width: 28px; padding: 0; }
+.studio-tools select { height: 28px; font-size: 12px; }
+.studio-tools .studio-danger:hover { background: var(--st-danger-tint); color: #fca5a5; }
+.studio-tools .studio-tool-sep { width: 1px; height: 16px; margin: 0 3px; background: var(--st-line-strong); }
+
+/* Segmented control: one choice of several, sitting in one well. */
+.studio-seg {
+  display: inline-flex; gap: 2px; padding: 2px;
+  border-radius: 7px; background: var(--st-well);
+}
+.studio-seg button { height: 24px; padding: 0 0.55rem; border-radius: 5px; color: var(--st-muted); }
+.studio-seg button[aria-pressed='true'] { background: var(--st-press); color: var(--st-text); }
+
+.studio-slot-path,
+.studio-tool-label {
+  padding: 0 0.5rem;
+  font: 600 10.5px/1 var(--st-font); letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--st-muted); align-self: center;
+}
+.studio-slot-path { font-family: var(--st-mono); text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+.studio-grip { cursor: grab; }
+.studio-grip:active { cursor: grabbing; }
+
+/* While rearranging, nothing else on the page should react to the pointer —
+   otherwise crossing a photo starts a crop under the drag. */
+body.studio-rearranging { user-select: none; }
+body.studio-rearranging .studio-slot img,
+body.studio-rearranging .studio-slot video { pointer-events: none; }
+.studio-dragging-tile { opacity: 0.45; }
+.studio-drop-target { outline: 2px solid var(--st-accent); outline-offset: -2px; }
+
+.studio-alt-edit {
+  position: absolute; left: 0.6rem; right: 0.6rem; bottom: 0.6rem; z-index: 6;
+  display: flex; gap: 0.35rem; padding: 0.35rem;
+  border-radius: var(--st-r); background: var(--st-surface); box-shadow: var(--st-shadow);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.studio-alt-edit input { flex: 1; min-width: 0; padding: 0.45rem 0.6rem; }
+.studio-alt-edit button {
+  flex: none; height: auto; padding: 0 0.85rem;
+  border: 0; border-radius: var(--st-r-sm);
+  background: var(--st-accent); color: white;
+  font: 500 12.5px/1 var(--st-font); cursor: pointer;
+}
+.studio-alt-edit button:hover { background: var(--st-accent-strong); }
+
+.studio-zoom-badge {
+  position: absolute; right: 0.6rem; bottom: 0.6rem; z-index: 3;
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  height: 24px; padding: 0 0.5rem; border-radius: 999px;
+  background: var(--st-surface); color: var(--st-text); box-shadow: var(--st-shadow);
+  font: 600 11px/1 var(--st-font); font-variant-numeric: tabular-nums;
+  cursor: pointer; pointer-events: auto;
+}
+.studio-zoom-badge::after { content: 'reset'; color: var(--st-faint); font-weight: 500; }
+.studio-zoom-badge:hover { background: var(--st-accent); }
+.studio-zoom-badge:hover::after { color: white; }
+.studio-zoom-badge[hidden] { display: none; }
+
+.studio-crosshair {
+  position: absolute; z-index: 4;
+  width: 22px; height: 22px; margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45), 0 0 0 4px rgb(59 130 246 / 0.35), 0 2px 8px rgb(0 0 0 / 0.4);
+  pointer-events: none;
+  opacity: 0; transition: opacity 120ms var(--st-ease);
+}
+.studio-crosshair::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: white;
+}
+figure[data-studio-index]:hover .studio-crosshair,
+figure[data-studio-index].is-dragging .studio-crosshair,
+.studio-slot:hover .studio-crosshair,
+.studio-slot.is-dragging .studio-crosshair { opacity: 1; }
+figure.g-full .studio-crosshair { display: none; }
+
+/* --- hover outlines ---------------------------------------------------- */
+
+.studio-slot { position: relative; }
+.studio-slot:hover img,
+.studio-slot:hover video,
+figure[data-studio-index]:hover > .gallery-frame {
+  outline: 2px solid rgb(59 130 246 / 0.9);
+  outline-offset: 2px;
+}
+.studio-slot-over { outline: 2px dashed var(--st-accent); outline-offset: 4px; background: rgb(59 130 246 / 0.06); }
+.studio-slot[data-tina-field*='photo'] img,
+.studio-hero img { cursor: grab; }
+.studio-slot.is-dragging img { cursor: grabbing; }
+/* The main photo's frame clips its own outline, so draw it inside. */
+.studio-hero:hover img { outline: none; }
+.studio-hero:hover { box-shadow: 0 0 0 2px rgb(59 130 246 / 0.9), var(--shadow-lg); }
+
+figure[data-studio-index] { position: relative; }
+figure[data-studio-index][data-studio-kind='image'] img { cursor: grab; }
+figure[data-studio-index].is-dragging img { cursor: grabbing; }
+/* The lightbox binds click on any img in the root; suppress it mid-drag. */
+figure[data-studio-index].is-dragging { pointer-events: auto; }
+
+/* --- walkthrough figure markers -------------------------------------- */
+
+.studio-figure-frame [data-studio-callout] { cursor: grab; touch-action: none; }
+.studio-figure-frame [data-studio-callout].is-dragging { cursor: grabbing; z-index: 6; }
+.studio-figure-frame [data-studio-callout].is-dragging .pfig-callout-dot {
+  box-shadow: 0 0 0 2px white, 0 0 0 5px rgb(59 130 246 / 0.55), 0 6px 16px rgb(0 0 0 / 0.4);
+}
+/* Figure toolbar sits ABOVE the photo, not on it: markers live on the photo,
+   and a toolbar covering the top-left corner swallowed drags on any marker
+   placed there. The ::after bridges the gap so the toolbar stays open while
+   the pointer travels up to it. */
+.studio-figure-media > .studio-tools { top: auto; bottom: calc(100% + 8px); left: 0; }
+.studio-figure-media:hover > .studio-tools { opacity: 1; transform: none; pointer-events: auto; }
+.studio-figure-media.studio-slot-over { outline-offset: 6px; border-radius: 12px; }
+.studio-fig-dropzone { cursor: pointer; transition: background 140ms, border-color 140ms; }
+.studio-fig-dropzone:hover, .studio-slot-over .studio-fig-dropzone {
+  background: rgb(59 130 246 / 0.07); border-color: rgb(59 130 246 / 0.7);
+}
+.studio-fig-cta {
+  display: inline-flex; align-items: center; gap: 0.45rem; justify-self: start;
+  margin: 0.4rem 0 0; padding: 0.5rem 0.8rem; border-radius: 99px;
+  background: #2563eb; color: white; font: 600 12.5px/1 system-ui, sans-serif;
+}
+.studio-fig-cta svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+.studio-figure-media > .studio-tools::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 10px;
+}
+.studio-tool-hint { padding: 0 0.45rem; color: var(--st-faint); font: 500 11px/1 var(--st-font); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-toast, .studio-panel, .studio-library { animation: none; }
+  .studio-tools, .studio-hint { transition: none; }
+}

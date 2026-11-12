@@ -25,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, extname, basename, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
+import YAML from 'yaml';
 import { tmpdir } from 'node:os';
 import { spawn } from 'node:child_process';
 import {
@@ -46,10 +47,7 @@ import { fileInbox } from './lib/inbox-file.mjs';
 import {
   readProject,
   writeProject,
-  patchGalleryItem,
   appendGalleryItem,
-  removeGalleryItem,
-  moveGalleryItem,
   patchTopLevel,
 } from './lib/frontmatter.mjs';
 
@@ -108,33 +106,11 @@ const readBody = (req) =>
 /** Astro's image() wants paths relative to the markdown file. */
 const astroPath = (slug, filename) => `../../assets/images/projects/${slug}/${filename}`;
 
-/**
- * Forces Astro to re-sync content after a write.
- *
- * Normally it doesn't need to: Astro picks up markdown changed by another
- * process on its own. But when Vite restarts mid-session — which it does the
- * moment package.json or astro.config.mjs is touched — the content watcher does
- * not come back, and from then on every save returns ok while the page keeps
- * rendering the previous frontmatter. That failure is silent and looks exactly
- * like the editor being broken.
- *
- * Touching src/content.config.ts forces the re-sync even in that state, so it
- * runs after every write rather than trying to detect the bad one. The cost is
- * a page reload the editor was going to do anyway for uploads, reorders and
- * section moves; for a crop drag the new framing is already on screen locally,
- * so the reload only confirms it.
- *
- * Debounced, so a burst of uploads reloads once rather than once per file.
- */
-const CONTENT_CONFIG = join(ROOT, 'src/content.config.ts');
-let nudgeTimer;
-const nudgeAstro = () => {
-  clearTimeout(nudgeTimer);
-  nudgeTimer = setTimeout(() => {
-    const now = new Date();
-    utimes(CONTENT_CONFIG, now, now).catch(() => {});
-  }, 250);
-};
+// No "nudge" after writes any more. Astro reloads the page by itself when a
+// content file changes; touching content.config.ts on top of that made every
+// edit reload TWICE. The nudge existed to rescue a dead content watcher after
+// Vite restarts in-process (gotcha 15); studio.sh now restarts astro dev
+// whenever package.json or the Astro config changes, which removes the cause.
 
 const withProject = async (slug, mutate) => {
   const slugs = await projectSlugs(CONTENT);
@@ -142,62 +118,148 @@ const withProject = async (slug, mutate) => {
   const file = await readProject(CONTENT, slug);
   const result = await mutate(file);
   await writeProject(file);
-  nudgeAstro();
   return result ?? {};
 };
 
 // ---------------------------------------------------------------------------
-// upload: same pipeline as `npm run photos`, so a photo dropped on the page and
-// a photo run through the terminal land identical.
+// Media: one route for every photo or video that lands on a page.
+//
+//   target.kind  gallery (default) | hero | figure | home
+//   source       bytes ({ filename, data }) or a library pick
+//                ({ source, folder, file }: inbox / library copy through
+//                encode(); site / videos are already committed and are
+//                referenced where they sit, never duplicated)
+//
+// Same encode pipeline as `npm run photos`, so a dropped photo, a picked one
+// and one run through the terminal land identical.
 // ---------------------------------------------------------------------------
-const handleUpload = async ({ slug, filename, data, section, width }) => {
-  const ext = extname(filename || '').toLowerCase();
-  const stem = slugify(basename(filename || 'photo', ext)) || 'photo';
-  const input = Buffer.from(data, 'base64');
 
-  if (VIDEO_EXT.has(ext)) {
-    await mkdir(VIDEOS, { recursive: true });
-    const outName = await uniqueName(VIDEOS, `${slug}-${stem}`, '.mp4');
-    const target = join(VIDEOS, outName);
-
-    if (ext === '.mov') {
-      if (!hasVideoConverter()) throw new Error('.mov needs /usr/bin/avconvert, which is missing');
-      const scratch = join(tmpdir(), `studio-${Date.now()}.mov`);
-      await writeFile(scratch, input);
-      try {
-        await convertVideo(scratch, target);
-      } finally {
-        await unlink(scratch).catch(() => {});
-      }
-    } else {
-      await writeFile(target, input);
-    }
-
-    const row = { video: outName, alt: stem.replace(/-/g, ' '), section, width };
-    const index = await withProject(slug, (file) => appendGalleryItem(file.doc, row));
-    return { index, kind: 'video', file: `public/videos/${outName}`, bytes: input.length };
-  }
-
-  if (!IMAGE_EXT.has(ext)) throw new Error(`${ext || 'that file'} isn't an image or a video`);
-
-  const outDir = join(IMAGES, slug);
-  await mkdir(outDir, { recursive: true });
-  const encoded = await encode(input, ext);
-  const outName = await uniqueName(outDir, `${slug}-${stem}`, encoded.ext);
-  await writeFile(join(outDir, outName), encoded.data);
-
-  const row = { image: astroPath(slug, outName), alt: stem.replace(/-/g, ' '), section, width };
-  const index = await withProject(slug, (file) => appendGalleryItem(file.doc, row));
-  return {
-    index,
-    kind: 'image',
-    file: `src/assets/images/projects/${slug}/${outName}`,
-    before: input.length,
-    after: encoded.data.length,
-    saved: mb(input.length - encoded.data.length),
-  };
+/** Name for the new file. A known PREFIX_ (photo-prefixes.json) is dropped. */
+const titleOf = async (name) => {
+  const parsed = parseInboxName(name, await loadPrefixes(ROOT));
+  return parsed.known ? parsed.title : slugify(basename(name, extname(name))) || 'photo';
 };
 
+/** Bytes or a file on disk -> public/videos/<name>.mp4 (.mov converted). */
+const storeVideo = async (base, { input, srcPath, ext }) => {
+  await mkdir(VIDEOS, { recursive: true });
+  const outName = await uniqueName(VIDEOS, base, '.mp4');
+  const target = join(VIDEOS, outName);
+  if (ext === '.mov') {
+    if (!hasVideoConverter()) throw new Error('.mov needs /usr/bin/avconvert, which is missing');
+    const scratch = srcPath ?? join(tmpdir(), `studio-${Date.now()}.mov`);
+    if (!srcPath) await writeFile(scratch, input);
+    try { await convertVideo(scratch, target); } finally { if (!srcPath) await unlink(scratch).catch(() => {}); }
+  } else {
+    await writeFile(target, input ?? (await readFile(srcPath)));
+  }
+  return { outName, after: (await stat(target)).size };
+};
+
+const placeMedia = async ({ slug, target = {}, filename, data, source, folder, file }) => {
+  const kind = target.kind ?? 'gallery';
+  const home = kind === 'home';
+  if (!['gallery', 'hero', 'figure', 'home'].includes(kind)) throw new Error(`unknown target "${kind}"`);
+  const name = filename ?? file;
+  if (!name) throw new Error('nothing to place');
+  const ext = extname(name).toLowerCase();
+  const isVideo = source === 'videos' || VIDEO_EXT.has(ext);
+  if (!isVideo && !IMAGE_EXT.has(ext)) throw new Error(`${ext || 'that file'} isn't an image or a video`);
+  if (isVideo && kind === 'hero') throw new Error('the main photo has to be an image');
+  if (isVideo && kind === 'figure') throw new Error('figures take an image here');
+
+  const title = await titleOf(name);
+  const base = home ? title : `${slug}-${title}`;
+  let ref;
+  let meta;
+  if (source && !COPY_SOURCES.has(source)) {
+    // Already committed: point at it where it sits.
+    const rel = [folder, file].filter(Boolean).join('/');
+    ref = isVideo ? (home ? homeVideoRef(file) : file) : home ? `/src/assets/images/${rel}` : siteRef(source, folder, file);
+    meta = { file, reused: true };
+  } else {
+    const srcPath = source ? sourcePath(source, folder, file) : null;
+    const input = srcPath ? null : Buffer.from(data ?? '', 'base64');
+    if (isVideo) {
+      const { outName, after } = await storeVideo(base, { input, srcPath, ext });
+      ref = home ? homeVideoRef(outName) : outName;
+      meta = { file: `public/videos/${outName}`, after };
+    } else {
+      const bytes = input ?? (await readFile(srcPath));
+      const dir = home ? HOME_IMAGES : join(IMAGES, slug);
+      await mkdir(dir, { recursive: true });
+      const encoded = await encode(bytes, ext);
+      const outName = await uniqueName(dir, base, encoded.ext);
+      await writeFile(join(dir, outName), encoded.data);
+      ref = home ? homeRef(outName) : astroPath(slug, outName);
+      meta = { file: outName, before: bytes.length, after: encoded.data.length };
+    }
+  }
+
+  const out = { kind: isVideo ? 'video' : 'image', ...meta };
+  if (home) return { ...out, home: true, ...(await replaceHomeSlot(target.path, ref)) };
+  if (kind === 'hero') return { ...out, ...(await setProjectHero(slug, ref)) };
+  if (kind === 'figure') return { ...out, ...(await setFigureImage(slug, Number(target.figure), ref, target.slot ?? 'image')) };
+  const row = { [isVideo ? 'video' : 'image']: ref, alt: title.replace(/-/g, ' '), section: target.section, width: target.width };
+  return { ...out, index: await withProject(slug, (f) => appendGalleryItem(f.doc, row)) };
+};
+
+// ---------------------------------------------------------------------------
+// Lists in a project's frontmatter: gallery rows, figures, a figure's points
+// and callout markers. add / remove / move, one route for all of them.
+// Removing a row tidies up any media only it used (to .photo-trash, so undo
+// can bring it back).
+// ---------------------------------------------------------------------------
+const PROJECT_LISTS = /^(gallery|figures)(\.\d+\.(points|callouts))?$/;
+const MEDIA_KEYS = ['image', 'video', 'compare', 'poster'];
+const toPath = (dotted) => String(dotted).split('.').map((part) => (/^\d+$/.test(part) ? Number(part) : part));
+
+const projectList = async ({ slug, path, op, index, from, to, value, at }) => {
+  if (!PROJECT_LISTS.test(String(path))) throw new Error(`${path} is not an editable list`);
+  const keys = toPath(path);
+  const refs = [];
+  const result = await withProject(slug, (file) => {
+    const { doc } = file;
+    let seq = doc.getIn(keys);
+    if (op === 'add') {
+      if (!YAML.isSeq(seq)) {
+        doc.setIn(keys, doc.createNode([]));
+        seq = doc.getIn(keys);
+      }
+      // Markers are written inline, { x: 51, y: 18, label: …, place: right },
+      // like the hand-written ones.
+      const node = doc.createNode(value, { flow: keys.at(-1) === 'callouts' });
+      const i = at == null ? seq.items.length : Math.max(0, Math.min(seq.items.length, Number(at)));
+      seq.items.splice(i, 0, node);
+      return { index: i };
+    }
+    if (!YAML.isSeq(seq)) throw new Error(`${path} is empty`);
+    if (op === 'remove') {
+      const i = Number(index);
+      const item = seq.get(i, true);
+      if (item === undefined) throw new Error(`nothing at ${path}.${i}`);
+      if (YAML.isMap(item)) for (const key of MEDIA_KEYS) if (item.get(key)) refs.push(String(item.get(key)));
+      seq.delete(i);
+      if (!seq.items.length && path === 'figures') doc.delete('figures');
+      return { removed: i };
+    }
+    if (op === 'move') {
+      const a = Number(from);
+      const b = Math.max(0, Math.min(seq.items.length - 1, Number(to)));
+      if (!seq.items[a]) throw new Error(`nothing at ${path}.${a}`);
+      if (a === b) return { moved: false };
+      seq.items.splice(b, 0, ...seq.items.splice(a, 1));
+      return { moved: true, from: a, to: b };
+    }
+    throw new Error(`unknown list operation "${op}"`);
+  });
+  const displaced = [];
+  for (const ref of refs) {
+    const moved = await cleanupDisplaced(ROOT, ref);
+    if (moved) displaced.push(moved);
+  }
+  return { ...result, ...(displaced.length ? { displaced: displaced[0], displacedAll: displaced } : {}) };
+};
 
 // ---------------------------------------------------------------------------
 // Library: browse portfolio-photos/ from the page.
@@ -460,45 +522,6 @@ const setProjectHero = async (slug, ref) => {
   return { hero: true, staleAlt, ...(displaced ? { displaced } : {}) };
 };
 
-/** Encode an image into a project's folder; returns the new filename. */
-const importProjectImage = async (slug, input, ext, title) => {
-  const outDir = join(IMAGES, slug);
-  await mkdir(outDir, { recursive: true });
-  const encoded = await encode(input, ext);
-  const outName = await uniqueName(outDir, `${slug}-${title}`, encoded.ext);
-  await writeFile(join(outDir, outName), encoded.data);
-  return { outName, before: input.length, after: encoded.data.length };
-};
-
-/**
- * Move, add or remove a callout marker on a walkthrough figure.
- *
- * `callout` is 1-based, matching the number drawn on the marker. x and y are
- * percentages of the frame, clamped and rounded to a tenth — finer than that
- * is noise from the pointer, and it keeps the frontmatter readable.
- */
-const figureCallout = ({ slug, figure, callout, x, y, add, remove }) =>
-  withProject(slug, (file) => {
-    const fig = file.doc.getIn(['figures', figure]);
-    if (!fig) throw new Error(`no figure ${figure}`);
-    const pct = (v) => Math.round(Math.min(100, Math.max(0, Number(v))) * 10) / 10;
-    if (add) {
-      const node = file.doc.createNode({ x: pct(x ?? 50), y: pct(y ?? 50), label: 'New marker', place: 'right' }, { flow: true });
-      if (file.doc.getIn(['figures', figure, 'callouts'])) file.doc.addIn(['figures', figure, 'callouts'], node);
-      else file.doc.setIn(['figures', figure, 'callouts'], file.doc.createNode([node]));
-      return { added: true };
-    }
-    const i = Number(callout) - 1;
-    if (!file.doc.getIn(['figures', figure, 'callouts', i])) throw new Error(`no marker ${callout} on figure ${figure + 1}`);
-    if (remove) {
-      file.doc.deleteIn(['figures', figure, 'callouts', i]);
-      return { removed: true };
-    }
-    file.doc.setIn(['figures', figure, 'callouts', i, 'x'], pct(x));
-    file.doc.setIn(['figures', figure, 'callouts', i, 'y'], pct(y));
-    return { x: pct(x), y: pct(y) };
-  });
-
 /**
  * Put an image into a walkthrough figure: its main picture, or the "after"
  * side of a before/after (`slot: 'compare'`). A placeholder with an image
@@ -520,16 +543,6 @@ const setFigureImage = async (slug, figure, ref, slot = 'image') => {
   const displaced = before === ref ? null : await cleanupDisplaced(ROOT, before);
   return { figure, slot, ...(displaced ? { displaced } : {}) };
 };
-
-/** A file dropped onto a figure. */
-const uploadFigure = async ({ slug, figure, slot, filename, data }) => {
-  const ext = extname(filename || '').toLowerCase();
-  if (!IMAGE_EXT.has(ext)) throw new Error('figures take an image here (png, jpg, webp, heic)');
-  const { title } = parseInboxName(filename || 'figure', await loadPrefixes(ROOT));
-  const { outName, before, after } = await importProjectImage(slug, Buffer.from(data, 'base64'), ext, title);
-  return { kind: 'image', file: outName, before, after, ...(await setFigureImage(slug, Number(figure), astroPath(slug, outName), slot)) };
-};
-
 /**
  * Read or rewrite one body section (the markdown under a `## Heading`).
  *
@@ -565,51 +578,7 @@ const projectSection = async ({ slug, section, value }) => {
   // Collapse runs of blank lines the splice may have doubled.
   const out = next.join('\n').replace(/\n{3,}/g, '\n\n');
   await writeFile(file.path, file.header + out, 'utf8');
-  nudgeAstro();
   return { section, saved: true };
-};
-
-/** Append a numbered point to a figure. Edit or blank it in Text mode. */
-const addFigurePoint = ({ slug, figure }) =>
-  withProject(slug, (file) => {
-    if (!file.doc.getIn(['figures', figure])) throw new Error(`no figure ${figure + 1}`);
-    if (file.doc.getIn(['figures', figure, 'points'])) file.doc.addIn(['figures', figure, 'points'], 'New point');
-    else file.doc.setIn(['figures', figure, 'points'], file.doc.createNode(['New point']));
-    return { added: true };
-  });
-
-/**
- * Remove a whole walkthrough figure. Its images go to .photo-trash (only if
- * nothing else on the site uses them), so undo can bring everything back.
- */
-const deleteFigure = async ({ slug, figure }) => {
-  const refs = [];
-  await withProject(slug, (file) => {
-    const node = file.doc.getIn(['figures', figure]);
-    if (!node) throw new Error(`no figure ${figure + 1}`);
-    for (const key of ['image', 'compare', 'poster']) {
-      const ref = file.doc.getIn(['figures', figure, key]);
-      if (ref) refs.push(String(ref));
-    }
-    file.doc.deleteIn(['figures', figure]);
-    if (!file.doc.get('figures')?.items?.length) file.doc.delete('figures');
-  });
-  const displaced = [];
-  for (const ref of refs) {
-    const moved = await cleanupDisplaced(ROOT, ref);
-    if (moved) displaced.push(moved);
-  }
-  return { deleted: figure, ...(displaced.length ? { displaced } : {}) };
-};
-
-/** Replace the hero with a file dropped on it. */
-const uploadHero = async ({ slug, filename, data }) => {
-  const ext = extname(filename || '').toLowerCase();
-  if (!IMAGE_EXT.has(ext)) throw new Error('the main photo has to be an image');
-  const prefixes = await loadPrefixes(ROOT);
-  const { title } = parseInboxName(filename || 'photo', prefixes);
-  const { outName, before, after } = await importProjectImage(slug, Buffer.from(data, 'base64'), ext, title);
-  return { kind: 'image', file: outName, before, after, ...(await setProjectHero(slug, astroPath(slug, outName))) };
 };
 
 /**
@@ -635,102 +604,6 @@ const libraryThumb = async (source, folder, file) => {
   return data;
 };
 
-const pickFromLibrary = async ({ slug, source = 'library', folder, file, section, width, homePath, hero, figure, figureSlot }) => {
-  const src = sourcePath(source, folder, file);
-  const ext = extname(file).toLowerCase();
-  // Inbox files drop their PREFIX_ — "ABV_p-and-id" becomes "p-and-id".
-  const stem =
-    source === 'inbox'
-      ? parseInboxName(file, await loadPrefixes(ROOT)).title
-      : slugify(basename(file, extname(file))) || 'photo';
-
-  // Targeting a home-page slot: set that one field instead of adding a row.
-  if (homePath) {
-    if (source === 'videos') {
-      const swap = await replaceHomeSlot(homePath, homeVideoRef(file));
-      return { kind: 'video', file, reused: true, home: true, ...swap };
-    }
-    if (!COPY_SOURCES.has(source)) {
-      // Already committed — point at it where it sits.
-      const ref = `/src/assets/images/${[folder, file].filter(Boolean).join('/')}`;
-      const swap = await replaceHomeSlot(homePath, ref);
-      return { kind: 'image', file, reused: true, home: true, ...swap };
-    }
-    await mkdir(HOME_IMAGES, { recursive: true });
-    const input = await readFile(src);
-    const encoded = await encode(input, ext);
-    const outName = await uniqueName(HOME_IMAGES, stem, encoded.ext);
-    await writeFile(join(HOME_IMAGES, outName), encoded.data);
-    const swap = await replaceHomeSlot(homePath, homeRef(outName));
-    return { kind: 'image', file: outName, before: input.length, after: encoded.data.length, home: true, ...swap };
-  }
-
-  // Targeting a walkthrough figure: fill that frame instead of adding a row.
-  if (figure !== undefined && figure !== null) {
-    if (source === 'videos' || VIDEO_EXT.has(ext)) throw new Error('figures take an image here');
-    const idx = Number(figure);
-    if (!COPY_SOURCES.has(source)) {
-      return { kind: 'image', file, reused: true, ...(await setFigureImage(slug, idx, siteRef(source, folder, file), figureSlot)) };
-    }
-    const { outName, before, after } = await importProjectImage(slug, await readFile(src), ext, stem);
-    return { kind: 'image', file: outName, before, after, ...(await setFigureImage(slug, idx, astroPath(slug, outName), figureSlot)) };
-  }
-
-  // Targeting the project's main photo: set `hero` instead of adding a row.
-  if (hero) {
-    if (source === 'videos' || VIDEO_EXT.has(ext)) throw new Error('the main photo has to be an image');
-    if (!COPY_SOURCES.has(source)) {
-      return { kind: 'image', file, reused: true, ...(await setProjectHero(slug, siteRef(source, folder, file))) };
-    }
-    const { outName, before, after } = await importProjectImage(slug, await readFile(src), ext, stem);
-    return { kind: 'image', file: outName, before, after, ...(await setProjectHero(slug, astroPath(slug, outName))) };
-  }
-
-  // Already committed — just reference it. Copying would duplicate the bytes
-  // and leave two paths to keep in step.
-  if (!COPY_SOURCES.has(source)) {
-    const alt = stem.replace(/-/g, ' ');
-    const row =
-      source === 'videos'
-        ? { video: file, alt, section, width }
-        : { image: siteRef(source, folder, file), alt, section, width };
-    const index = await withProject(slug, (f) => appendGalleryItem(f.doc, row));
-    return { index, kind: source === 'videos' ? 'video' : 'image', file, reused: true };
-  }
-
-  if (VIDEO_EXT.has(ext)) {
-    await mkdir(VIDEOS, { recursive: true });
-    const outName = await uniqueName(VIDEOS, `${slug}-${stem}`, '.mp4');
-    const target = join(VIDEOS, outName);
-    if (ext === '.mov') {
-      if (!hasVideoConverter()) throw new Error('.mov needs /usr/bin/avconvert, which is missing');
-      await convertVideo(src, target);
-    } else {
-      await writeFile(target, await readFile(src));
-    }
-    const { size } = await stat(target);
-    const index = await withProject(slug, (f) =>
-      appendGalleryItem(f.doc, { video: outName, alt: stem.replace(/-/g, ' '), section, width }),
-    );
-    return { index, kind: 'video', file: `public/videos/${outName}`, after: size };
-  }
-
-  const outDir = join(IMAGES, slug);
-  await mkdir(outDir, { recursive: true });
-  const input = await readFile(src);
-  const encoded = await encode(input, ext);
-  const outName = await uniqueName(outDir, `${slug}-${stem}`, encoded.ext);
-  await writeFile(join(outDir, outName), encoded.data);
-  const index = await withProject(slug, (f) =>
-    appendGalleryItem(f.doc, {
-      image: astroPath(slug, outName),
-      alt: stem.replace(/-/g, ' '),
-      section,
-      width,
-    }),
-  );
-  return { index, kind: 'image', file: outName, before: input.length, after: encoded.data.length };
-};
 
 
 // ---------------------------------------------------------------------------
@@ -756,7 +629,6 @@ const withHome = async (mutate) => {
   const data = await readHome(HOME_JSON);
   const result = await mutate(data);
   await writeHome(HOME_JSON, data);
-  nudgeAstro();
   return result ?? {};
 };
 
@@ -788,38 +660,6 @@ const replaceHomeSlot = async (path, value) => {
   };
 };
 
-/** Replace the photo in one home slot with an uploaded file. */
-const uploadHome = async ({ path, filename, data }) => {
-  const ext = extname(filename || '').toLowerCase();
-  const stem = slugify(basename(filename || 'photo', ext)) || 'photo';
-  const input = Buffer.from(data, 'base64');
-
-  if (VIDEO_EXT.has(ext)) {
-    // Only the showcase takes video, and it reads from public/videos.
-    await mkdir(VIDEOS, { recursive: true });
-    const outName = await uniqueName(VIDEOS, stem, '.mp4');
-    const target = join(VIDEOS, outName);
-    if (ext === '.mov') {
-      if (!hasVideoConverter()) throw new Error('.mov needs /usr/bin/avconvert, which is missing');
-      const scratch = join(tmpdir(), `studio-${Date.now()}.mov`);
-      await writeFile(scratch, input);
-      try { await convertVideo(scratch, target); } finally { await unlink(scratch).catch(() => {}); }
-    } else {
-      await writeFile(target, input);
-    }
-    const swap = await replaceHomeSlot(path, homeVideoRef(outName));
-    return { kind: 'video', file: `public/videos/${outName}`, ...swap };
-  }
-
-  if (!IMAGE_EXT.has(ext)) throw new Error(`${ext || 'that file'} isn't an image or a video`);
-
-  await mkdir(HOME_IMAGES, { recursive: true });
-  const encoded = await encode(input, ext);
-  const outName = await uniqueName(HOME_IMAGES, stem, encoded.ext);
-  await writeFile(join(HOME_IMAGES, outName), encoded.data);
-  const swap = await replaceHomeSlot(path, homeRef(outName));
-  return { kind: 'image', file: outName, before: input.length, after: encoded.data.length, ...swap };
-};
 
 
 /**
@@ -879,67 +719,45 @@ const homeCrop = async ({ imagePath, focal, zoom }) => {
 };
 
 /**
- * List operations on home.json arrays (showcase tiles, interests, experience).
- *
- * Generic over the list path rather than hardcoded to the showcase: the same
- * three operations are wanted on every list on the page, and a second copy of
- * this with "interestsSection" substituted in would be the kind of duplication
- * that drifts.
+ * The same list operations on home.json (showcase tiles, interests,
+ * experience). A new row is created empty-but-valid, so it appears on the page
+ * and can be filled by dropping onto it like any other slot.
  */
-const homeList = async (listPath) => {
+const HOME_BLANKS = {
+  'showcase.items': { image: '', alt: '', size: 'regular' },
+  'interestsSection.items': { title: 'New interest', image: '', alt: '', body: '' },
+  'experienceSection.items': { role: 'New role', org: '', blurb: '', logo: '' },
+};
+
+const homeListOp = async ({ path = 'showcase.items', op, index, from, to, after }) => {
   const data = await readHome(HOME_JSON);
-  const list = getPath(data, listPath);
-  if (!Array.isArray(list)) throw new Error(`${listPath} is not a list`);
-  return { data, list };
-};
-
-const homeMove = async ({ listPath = 'showcase.items', from, to }) => {
-  const { list } = await homeList(listPath);
-  const a = Number(from);
-  const b = Math.min(list.length - 1, Math.max(0, Number(to)));
-  if (!Number.isInteger(a) || a < 0 || a >= list.length) throw new Error(`no item at ${from}`);
-  if (a === b) return { moved: false };
-  await withHome((home) => {
-    const items = getPath(home, listPath);
-    items.splice(b, 0, ...items.splice(a, 1));
-  });
-  return { moved: true, from: a, to: b };
-};
-
-const homeRemove = async ({ listPath = 'showcase.items', index }) => {
-  const { list } = await homeList(listPath);
-  const i = Number(index);
-  if (!Number.isInteger(i) || i < 0 || i >= list.length) throw new Error(`no item at ${index}`);
-  const before = list[i]?.image ?? list[i]?.video ?? null;
-  await withHome((home) => {
-    getPath(home, listPath).splice(i, 1);
-  });
-  // Same rule as a gallery row: only tidy up a file nothing else points at.
-  const displaced = await cleanupDisplaced(ROOT, before);
-  return { removed: i, ...(displaced ? { displaced } : {}) };
-};
-
-/**
- * Add a tile. It is created empty-but-valid rather than prompting for a photo
- * first, so the new cell is on the page and can be filled by dropping onto it
- * like any other slot.
- */
-const homeAdd = async ({ listPath = 'showcase.items', after, template }) => {
-  const { list } = await homeList(listPath);
-  // Shape per list: a row missing the keys its template reads renders blank
-  // and, worse, can't be filled in from the page afterwards.
-  const BLANKS = {
-    'showcase.items': { image: '', alt: '', size: 'regular' },
-    'interestsSection.items': { title: 'New interest', image: '', alt: '', body: '' },
-    'experienceSection.items': { role: 'New role', org: '', blurb: '', logo: '' },
-  };
-  const blank = template ?? BLANKS[listPath];
-  if (!blank) throw new Error(`don't know what a new ${listPath} row looks like`);
-  const at = Number.isInteger(Number(after)) ? Math.min(list.length, Number(after) + 1) : list.length;
-  await withHome((home) => {
-    getPath(home, listPath).splice(at, 0, blank);
-  });
-  return { index: at };
+  const list = getPath(data, path);
+  if (!Array.isArray(list)) throw new Error(`${path} is not a list`);
+  const inRange = (n) => Number.isInteger(n) && n >= 0 && n < list.length;
+  if (op === 'add') {
+    const blank = HOME_BLANKS[path];
+    if (!blank) throw new Error(`don't know what a new ${path} row looks like`);
+    const at = Number.isInteger(Number(after)) ? Math.min(list.length, Number(after) + 1) : list.length;
+    await withHome((home) => { getPath(home, path).splice(at, 0, structuredClone(blank)); });
+    return { index: at };
+  }
+  if (op === 'remove') {
+    const i = Number(index);
+    if (!inRange(i)) throw new Error(`no item at ${index}`);
+    const before = list[i]?.image ?? list[i]?.video ?? null;
+    await withHome((home) => { getPath(home, path).splice(i, 1); });
+    const displaced = await cleanupDisplaced(ROOT, before);
+    return { removed: i, ...(displaced ? { displaced } : {}) };
+  }
+  if (op === 'move') {
+    const a = Number(from);
+    const b = Math.min(list.length - 1, Math.max(0, Number(to)));
+    if (!inRange(a)) throw new Error(`no item at ${from}`);
+    if (a === b) return { moved: false };
+    await withHome((home) => { const items = getPath(home, path); items.splice(b, 0, ...items.splice(a, 1)); });
+    return { moved: true, from: a, to: b };
+  }
+  throw new Error(`unknown list operation "${op}"`);
 };
 
 /**
@@ -958,7 +776,6 @@ const siteTheme = async ({ patch }) => {
     else data[key] = value;
   }
   await writeFile(SITE_JSON, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
-  nudgeAstro();
   return { site: data };
 };
 
@@ -1000,43 +817,40 @@ const homeAlt = async ({ imagePath, value }) => {
 };
 
 /** What the undo button says it will undo. */
+const PATCH_LABELS = {
+  focal: 'crop', compareFocal: 'crop', zoom: 'zoom', compareZoom: 'zoom', aspect: 'shape',
+  section: 'section', alt: 'description', heroFocalPoint: 'main photo crop',
+  heroZoom: 'main photo zoom', heroAspect: 'main photo shape', heroAlt: 'main photo description',
+  x: 'move marker', y: 'move marker',
+};
+const LIST_NOUNS = { gallery: 'photo', figures: 'figure', points: 'point', callouts: 'marker' };
+
 const undoLabel = (pathname, payload = {}) => {
-  const patch = payload.patch ?? {};
-  const keys = Object.keys(patch);
   switch (pathname) {
-    case '/gallery/patch':
-      if (keys.length === 1 && keys[0] === 'focal') return 'crop';
-      if (keys.length === 1 && keys[0] === 'zoom') return 'zoom';
-      if (keys.length === 1 && keys[0] === 'width') return `width ${patch.width}`;
-      if (keys.length === 1 && keys[0] === 'aspect') return 'shape';
-      if (keys.length === 1 && keys[0] === 'section') return 'section';
-      if (keys.length === 1 && keys[0] === 'alt') return 'description';
-      return keys.length ? keys.join(' + ') : 'edit';
-    case '/gallery/delete': return 'remove photo';
-    case '/gallery/move': return 'reorder';
-    case '/project/patch':
-      if (keys.length === 1 && keys[0] === 'heroFocalPoint') return 'main photo crop';
-      if (keys.length === 1 && keys[0] === 'heroZoom') return 'main photo zoom';
-      if (keys.length === 1 && keys[0] === 'heroAspect') return 'main photo shape';
-      if (keys.length === 1 && keys[0] === 'heroAlt') return 'main photo description';
-      return keys.length === 1 ? keys[0] : 'page settings';
-    case '/project/hero': return 'main photo';
-    case '/figure/upload': return `photo into figure ${Number(payload.figure) + 1}`;
+    case '/project/patch': {
+      const keys = Object.keys(payload.patch ?? {});
+      const leaves = [...new Set(keys.map((k) => k.split('.').pop()))];
+      if (leaves.length === 1 && leaves[0] === 'width') return `width ${Object.values(payload.patch)[0]}`;
+      if (leaves.length === 1) return PATCH_LABELS[leaves[0]] ?? leaves[0];
+      if (leaves.every((l) => l === 'x' || l === 'y')) return 'move marker';
+      return 'page settings';
+    }
+    case '/project/list': {
+      const noun = LIST_NOUNS[String(payload.path).split('.').pop()] ?? 'item';
+      return payload.op === 'move' ? `reorder ${noun}s` : `${payload.op} ${noun}`;
+    }
     case '/project/section': return `${String(payload.section ?? 'section').replace(/-/g, ' ')} text`;
-    case '/figure/point': return `add point to figure ${Number(payload.figure) + 1}`;
-    case '/figure/delete': return `delete figure ${Number(payload.figure) + 1}`;
-    case '/figure/callout': return payload.add ? 'add marker' : payload.remove ? 'remove marker' : `move marker ${payload.callout ?? ''}`.trim();
-    case '/upload': return `add ${payload.filename ?? 'file'}`;
-    case '/library/pick': return payload.hero ? 'main photo' : payload.figure != null ? `photo into figure ${Number(payload.figure) + 1}` : `add ${payload.file ?? 'file'}`;
+    case '/media': {
+      const t = payload.target ?? {};
+      if (t.kind === 'hero') return 'main photo';
+      if (t.kind === 'figure') return `photo into figure ${Number(t.figure) + 1}`;
+      if (t.kind === 'home') return 'home photo';
+      return `add ${payload.filename ?? payload.file ?? 'file'}`;
+    }
     case '/home/patch': return `home ${String(payload.path ?? '').split('.').pop()}`;
-    case '/home/upload': return 'home photo';
+    case '/home/list': return payload.op === 'move' ? 'reorder tiles' : `${payload.op} tile`;
     case '/home/alt': return 'home description';
     case '/home/crop': return payload.zoom !== undefined && payload.focal === undefined ? 'home zoom' : 'home crop';
-    case '/home/move': return 'reorder tiles';
-    case '/home/add': return 'add tile';
-    case '/home/remove': return 'remove tile';
-    case '/text/patch': return 'text';
-    case '/publish': return 'publish';
     case '/site/theme': return 'theme';
     default: return pathname.replace(/^\//, '');
   }
@@ -1201,53 +1015,33 @@ const saveLocal = async ({ message }) => {
 const NOT_JOURNALLED = new Set(['/publish', '/save', '/project/section/read', '/home/value', '/project/value', '/site/read']);
 
 const ROUTES = {
-  '/gallery/patch': ({ slug, index, patch }) =>
-    withProject(slug, (file) => patchGalleryItem(file.doc, index, patch)),
-  '/gallery/delete': async ({ slug, index }) => {
-    // Grab what the row pointed at before it's gone, then tidy up after.
-    let before = null;
-    await withProject(slug, (file) => {
-      const item = file.doc.get('gallery')?.get(index);
-      before = String(item?.get?.('image') ?? item?.get?.('video') ?? '') || null;
-      removeGalleryItem(file.doc, index);
-    });
-    const displaced = await cleanupDisplaced(ROOT, before);
-    return displaced ? { displaced } : {};
-  },
-  '/gallery/move': ({ slug, from, to }) =>
-    withProject(slug, (file) => moveGalleryItem(file.doc, from, to)),
+  // Projects: any field by dotted path, any list, the body sections.
   '/project/patch': ({ slug, patch }) => {
-    // patchTopLevel treats '' as "delete the key". For these the schema says
-    // required, so a blanked field would be a build error, not a cleared one.
+    // '' deletes a key. These are required by the schema, so a blank one
+    // would be a build error rather than a cleared field.
     for (const key of ['title', 'summary', 'hero', 'heroAlt', 'date']) {
-      if (key in (patch ?? {}) && (patch[key] === '' || patch[key] == null)) {
-        throw new Error(`${key} can't be empty`);
-      }
+      if (key in (patch ?? {}) && (patch[key] === '' || patch[key] == null)) throw new Error(`${key} can't be empty`);
     }
     return withProject(slug, (file) => patchTopLevel(file.doc, patch));
   },
-  '/upload': handleUpload,
-  '/project/hero': uploadHero,
-  '/figure/callout': figureCallout,
-  '/figure/upload': uploadFigure,
-  '/figure/delete': deleteFigure,
-  '/figure/point': addFigurePoint,
-  '/project/section': (p) => projectSection(p),
-  '/project/section/read': ({ slug, section }) => projectSection({ slug, section }),
-  '/library/pick': pickFromLibrary,
+  '/project/list': projectList,
+  '/project/section': projectSection,
+  // Every photo or video, wherever it is going.
+  '/media': placeMedia,
+  // Home page (src/data/home.json) and site settings.
   '/home/patch': patchHome,
-  '/home/upload': uploadHome,
-  '/home/alt': homeAlt,
+  '/home/list': homeListOp,
   '/home/crop': homeCrop,
-  '/home/move': homeMove,
-  '/home/remove': homeRemove,
-  '/home/add': homeAdd,
+  '/home/alt': homeAlt,
   '/site/theme': siteTheme,
-  '/site/read': siteRead,
-  '/home/value': homeValue,
+  // Reads (never journalled).
   '/project/value': projectValue,
-  '/publish': startPublish,
+  '/project/section/read': ({ slug, section }) => projectSection({ slug, section }),
+  '/home/value': homeValue,
+  '/site/read': siteRead,
+  // Git.
   '/save': saveLocal,
+  '/publish': startPublish,
 };
 
 const server = createServer(async (req, res) => {
@@ -1283,8 +1077,24 @@ const server = createServer(async (req, res) => {
       return;
     }
     const result = await journal.undo(ROOT);
-    if (result.ok) nudgeAstro();
     json(res, result.ok ? 200 : 409, result);
+    return;
+  }
+
+  // The overlay's own code (scripts/studio/), loaded by the dev page as a
+  // module. Read-only, flat directory, no path components allowed.
+  if (url.pathname.startsWith('/overlay/') && req.method === 'GET') {
+    const name = url.pathname.slice('/overlay/'.length);
+    const type = { '.js': 'text/javascript', '.css': 'text/css' }[extname(name)];
+    if (!/^[\w.-]+$/.test(name) || !type) { json(res, 404, { error: 'no such file' }); return; }
+    try {
+      const body = await readFile(join(ROOT, 'scripts/studio', name));
+      // CORS for the module script comes from the shared header above.
+      res.writeHead(200, { 'content-type': `${type}; charset=utf-8`, 'cache-control': 'no-store' });
+      res.end(body);
+    } catch {
+      json(res, 404, { error: 'no such file' });
+    }
     return;
   }
 
