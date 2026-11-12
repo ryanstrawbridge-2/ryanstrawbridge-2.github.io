@@ -610,7 +610,7 @@ const libraryThumb = async (source, folder, file) => {
 // ---------------------------------------------------------------------------
 // Home page: src/data/home.json, a fixed set of slots rather than a list.
 //
-// Paths come straight from the data-tina-field attributes already in
+// Paths come straight from the data-field attributes ("home:aboutSection.photo") in
 // index.astro ("home.aboutSection.photo"), so the template needed no new
 // markup for this.
 // ---------------------------------------------------------------------------

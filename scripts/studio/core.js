@@ -304,16 +304,12 @@ const figures = () => [...document.querySelectorAll('figure[data-studio-index]')
 
 // -- home page: fixed slots, not a list -------------------------------
 //
-// Every editable image on the home page already carries data-tina-field,
-// whose value ends in the JSON path ("...---home.aboutSection.photo").
-// Reusing that meant index.astro needed no new markup at all.
+// Every editable image on the home page carries data-field="home:<json path>"
+// (src/lib/edit-fields.ts, dev only), e.g. "home:aboutSection.photo".
 const HOME_IMAGE_FIELD = /\.(image|photo|logo|headshot|video)$/;
 const homeSlots = () =>
-  [...document.querySelectorAll('[data-tina-field*="---home."]')]
-    .map((el) => {
-      const path = (el.getAttribute('data-tina-field') || '').split('---home.')[1] || '';
-      return { el, path };
-    })
+  [...document.querySelectorAll('[data-field^="home:"]')]
+    .map((el) => ({ el, path: el.getAttribute('data-field').slice('home:'.length) }))
     .filter(({ el, path }) => HOME_IMAGE_FIELD.test(path) && el.querySelector('img, video'));
 
 

@@ -579,7 +579,7 @@ figure[data-studio-index]:hover > .gallery-frame {
   outline-offset: 2px;
 }
 .studio-slot-over { outline: 2px dashed var(--st-accent); outline-offset: 4px; background: rgb(59 130 246 / 0.06); }
-.studio-slot[data-tina-field*='photo'] img,
+.studio-slot[data-field*='photo'] img,
 .studio-hero img { cursor: grab; }
 .studio-slot.is-dragging img { cursor: grabbing; }
 /* The main photo's frame clips its own outline, so draw it inside. */

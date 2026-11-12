@@ -22,7 +22,7 @@ import { KIND_LABEL, type Figure } from '../lib/figures';
 
 interface Props {
   figure: Figure;
-  /** Builds the data-tina-field path, e.g. (i, key) => f('figures', i, key) */
+  /** Builds the data-field path, e.g. (i, key) => f('figures', i, key) */
   field?: (index: number, key: string) => string | undefined;
 }
 
@@ -59,7 +59,7 @@ const hasAside = points.length > 0;
 <figure
   class:list={['pfig', `pfig-${kind}`, placeholder && 'is-placeholder', hasAside && 'has-aside']}
   data-figure={String(number)}
-  data-tina-field={field?.(index, placeholder ? 'title' : video ? 'video' : 'image')}
+  data-field={field?.(index, placeholder ? 'title' : video ? 'video' : 'image')}
   {...studio && {
     'data-studio-figure': String(index),
     'data-studio-kind': kind,
@@ -68,7 +68,7 @@ const hasAside = points.length > 0;
 >
   {
     takeaway && (
-      <p class="pfig-takeaway" data-tina-field={field?.(index, 'takeaway')} set:html={takeaway} />
+      <p class="pfig-takeaway" data-field={field?.(index, 'takeaway')} set:html={takeaway} />
     )
   }
 
@@ -80,8 +80,8 @@ const hasAside = points.length > 0;
              production build, so this never reaches the live site. */
           <div class="pfig-skeleton" style={ratio ? `--figure-ratio: ${ratio};` : ''}>
             <p class="pfig-skeleton-kind">{KIND_LABEL[kind]} · to make</p>
-            {title && <p class="pfig-skeleton-title" data-tina-field={field?.(index, 'title')}>{title}</p>}
-            {plan && <p class="pfig-skeleton-plan" data-tina-field={field?.(index, 'plan')}>{plan}</p>}
+            {title && <p class="pfig-skeleton-title" data-field={field?.(index, 'title')}>{title}</p>}
+            {plan && <p class="pfig-skeleton-plan" data-field={field?.(index, 'plan')}>{plan}</p>}
             {callouts.length > 0 && (
               <p class="pfig-skeleton-meta">
                 {callouts.length} callout{callouts.length === 1 ? '' : 's'} positioned — drop the
@@ -95,11 +95,11 @@ const hasAside = points.length > 0;
           <div class="pfig-compare">
             <div class="pfig-frame" style={frameStyle} {...studio && { 'data-studio-slot': 'image' }}>
               <Image src={image} alt={`${beforeLabel}: ${alt}`} widths={[400, 800]} sizes="(min-width: 900px) 40vw, 100vw" loading="lazy" />
-              <span class="pfig-compare-label" data-tina-field={field?.(index, 'beforeLabel')}>{beforeLabel}</span>
+              <span class="pfig-compare-label" data-field={field?.(index, 'beforeLabel')}>{beforeLabel}</span>
             </div>
             <div class="pfig-frame" style={compareStyle} {...studio && { 'data-studio-slot': 'compare' }}>
               <Image src={compare} alt={`${afterLabel}: ${alt}`} widths={[400, 800]} sizes="(min-width: 900px) 40vw, 100vw" loading="lazy" />
-              <span class="pfig-compare-label" data-tina-field={field?.(index, 'afterLabel')}>{afterLabel}</span>
+              <span class="pfig-compare-label" data-field={field?.(index, 'afterLabel')}>{afterLabel}</span>
             </div>
           </div>
         ) : (
@@ -131,7 +131,7 @@ const hasAside = points.length > 0;
                 {...studio && { 'data-studio-callout': String(callout.n) }}
               >
                 <span class="pfig-callout-dot">{callout.n}</span>
-                {callout.label && <span class="pfig-callout-label" data-tina-field={field?.(index, `callouts.${callout.n - 1}.label`)}>{callout.label}</span>}
+                {callout.label && <span class="pfig-callout-label" data-field={field?.(index, `callouts.${callout.n - 1}.label`)}>{callout.label}</span>}
               </button>
             ))}
           </div>
@@ -145,7 +145,7 @@ const hasAside = points.length > 0;
           {points.map((point, i) => (
             <li data-point={String(i + 1)}>
               <span class="pfig-point-n">{i + 1}</span>
-              <span class="pfig-point-text" data-tina-field={field?.(index, `points.${i}`)} set:html={point} />
+              <span class="pfig-point-text" data-field={field?.(index, `points.${i}`)} set:html={point} />
             </li>
           ))}
         </ol>
@@ -157,7 +157,7 @@ const hasAside = points.length > 0;
     (caption || title) && !placeholder && (
       <figcaption>
         <span class="pfig-fignum">Fig. {number}</span>
-        <span data-tina-field={field?.(index, caption ? 'caption' : 'title')}>{caption || title}</span>
+        <span data-field={field?.(index, caption ? 'caption' : 'title')}>{caption || title}</span>
       </figcaption>
     )
   }

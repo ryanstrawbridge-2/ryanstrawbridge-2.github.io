@@ -52,18 +52,6 @@
       }
     },
     {
-      "label": "Start TinaCMS admin (old editor)",
-      "detail": "Only for hero image / summary fields - use Start studio for photos",
-      "type": "shell",
-      "command": "npm run dev:tina",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      }
-    },
-    {
       "label": "Import photos from a folder",
       "detail": "Resize, strip metadata and file everything in photo-inbox/<project-slug>/",
       "type": "shell",

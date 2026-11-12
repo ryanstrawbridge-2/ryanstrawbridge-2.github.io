@@ -13,7 +13,7 @@ import Model3D from './Model3D.astro';
 
 interface Props {
   items: GalleryItem[];
-  /** Builds the data-tina-field path for a row, e.g. (i) => f('gallery', i, 'image') */
+  /** Builds the data-field path for a row, e.g. (i) => f('gallery', i, 'image') */
   field?: (index: number, key: string) => string | undefined;
   class?: string;
 }
@@ -36,7 +36,7 @@ const studio = import.meta.env.DEV;
             `--zoom: ${item.zoom};`,
             item.ratio ? `--ratio: ${item.ratio};` : '',
           ].join('')}
-          data-tina-field={field?.(item.index, item.video ? 'video' : 'image')}
+          data-field={field?.(item.index, item.video ? 'video' : 'image')}
           {...studio && {
             'data-studio-index': String(item.index),
             'data-studio-width': item.width,

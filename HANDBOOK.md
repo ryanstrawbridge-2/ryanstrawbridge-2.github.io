@@ -25,7 +25,7 @@
 | Tool | URL | What it gives you | When to use |
 |------|-----|-------------------|-------------|
 | **Pages CMS** | https://app.pagescms.org/ | Form-based fields with image uploads | Quick text/photo swaps, daily driver |
-| **TinaCMS** | https://ryanstrawbridge-2.github.io/admin/ | Click on any element on the live site, edit inline with side panel | Visual edits where you want to see the result |
+| **Studio** | `npm run studio`, then localhost:4321 | Edit right on the page: text, photos, crops, figures (side panel), Save on this Mac, Go live. |
 | **Local + Claude** | run `scripts/dev-server.sh` → localhost:4321 | Edit code/JSON/markdown directly, see changes in <2s | Layout/structure changes, anything structural |
 | **Live editor** | `npm run studio` → localhost:4321 | Drag to crop, hover for width/section/order, drop files to add | Fastest for photo work — see below |
 | **`npm run photos`** | terminal | Resizes, strips metadata, files and labels new photos/video | Bulk imports from a folder |
@@ -209,12 +209,6 @@ editing the markdown), `--max 1800` (smaller cap).
 
 ---
 
-> **One thing to know before using TinaCMS on a gallery row.** Tina's schema
-> doesn't yet list the zoom, shape and 3D-model fields, so saving a gallery row
-> in TinaCMS will drop them. Pages CMS and studio are both fine. Updating Tina
-> needs its lock file regenerated — ask Claude to do it when you can check
-> `/admin/` afterwards.
-
 ## Putting a 3D model on a project page
 
 ```bash
@@ -317,11 +311,9 @@ On a phone the little labels drop away and the numbered list carries the text.
 
 ### Where the editing happens
 
-Figures live in each project's `figures:` list. Edit them in **Pages CMS**
-(Projects → a project → Walkthrough figures) or ask Claude.
-
-**Not in TinaCMS.** Tina has no schema for figures yet, so saving a project
-there would delete every figure on it. Pages CMS and studio are both safe.
+Figures live in each project's `figures:` list. Edit them in **studio** (click a
+figure: the side panel has every field), in **Pages CMS** (Projects → a project →
+Walkthrough figures), or ask Claude.
 
 ### The fields that matter
 
@@ -451,34 +443,6 @@ lower threshold.
 
 ---
 
-## Click-to-edit (TinaCMS visual editing)
-
-Open `/admin/`, click **Enter Edit Mode**, and the real site loads in a pane next to the form.
-Every editable piece of text or image gets a dashed blue outline on hover — click it and the
-sidebar jumps straight to that field.
-
-Works on the home page and every project page. Locally (`npm run dev:tina`) saves write to disk
-and the preview hot-reloads in a second or two. On the deployed `/admin/`, saves commit to GitHub
-and the preview catches up after the deploy finishes (~2 min).
-
-**What isn't clickable:** list fields as a whole — project *Tools / skills* and interest-card
-*Extra thumbnails*. TinaCMS can only focus a single field, not a whole list, so those have no
-outline on purpose. Edit them from the sidebar. Individual cards inside a list (experience,
-interests) *are* clickable.
-
----
-
-## Open setup steps
-
-<!-- Delete this whole section once both items are done. -->
-
-- [ ] Finish TinaCloud config so `/admin/` lights up:
-  - Project page: https://app.tina.io/projects/a5253d2b-6939-4ae7-903b-b1f1e02657fa
-  - GitHub secrets needed: `TINA_PUBLIC_CLIENT_ID` and `TINA_TOKEN` (Content Read-only token).
-  - Paste with `printf 'value' | pbcopy` so no trailing newline sneaks in.
-
----
-
 ## Visual focal-point picker
 
 Drag a dot on any image to pick exactly where it should anchor when cropped.
@@ -493,18 +457,6 @@ Drag a dot on any image to pick exactly where it should anchor when cropped.
    - **Exact percentage** (e.g. `37% 22%`) → paste into the markdown for pixel-precise control.
 
 The site accepts both formats — schema is `string`, so any valid CSS `object-position` value works.
-
----
-
-## Drag-drop section reorder
-
-Once `/admin/` is live, TinaCMS's list fields support drag-and-drop reordering for free:
-
-- Experience cards: `Home page → Experience section → Experience cards`
-- Interest cards: same pattern under `Interests section`
-- Tool tags on a project: `Projects → [pick one] → Tools / skills`
-
-Grab the handle, drag, save. No code changes needed.
 
 ---
 
@@ -580,7 +532,7 @@ With your own message:
 cd ~/Documents/Projects/portfolio && npm run publish -- "Added ball valve photos"
 ```
 
-It normalises the image paths TinaCMS writes in a broken form, pulls anything
+It normalises image paths a CMS may write in a broken form, pulls anything
 that landed on GitHub while you were editing, builds (so a broken site fails on
 your machine, not on the deploy), then commits and pushes. It stops if there's
 nothing to publish, and asks before committing anything over 5 MB.
@@ -658,6 +610,6 @@ Plain English in chat, no code needed:
 
 ## What's deliberately not in this repo
 
-- `.env.local` (TinaCMS credentials, gitignored)
+- `.env.local` (old TinaCMS credentials, unused; gitignored)
 - Original 5712×4284 source photos — resized to 2400px max before commit
 - The 4th hero video (`home-hero.mp4`) — too large to push; not on the live site

@@ -3,22 +3,12 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import TinaEditBridge from '../components/TinaEditBridge.astro';
 import home from '../data/home.json';
 import { inlineEmphasis } from '../lib/inline-emphasis';
 import { resolveSiteImage } from '../lib/site-images';
 import { focalCss, clampZoom } from '../lib/gallery';
 import StudioOverlay from '../components/StudioOverlay.astro';
-import {
-  HOME_QUERY,
-  HOME_VARIABLES,
-  asTinaDocument,
-  homeField as f,
-  queryId,
-} from '../lib/tina-visual-editing';
-
-const tinaId = queryId(HOME_QUERY, HOME_VARIABLES);
-const tinaData = { home: asTinaDocument('Home', 'home.json', 'src/data', home) };
+import { homeField as f } from '../lib/edit-fields';
 
 // Lookup tables for the new layout knobs. The focal keyword table lives in
 // lib/gallery.ts and is imported above — it was duplicated here, which meant
@@ -93,19 +83,19 @@ const aboutBioParagraphs = home.aboutSection.bio
   <section class="hero">
     <div class="container hero-grid">
       <div class="hero-text">
-        <p class="eyebrow" data-tina-field={f('hero', 'eyebrow')}>{home.hero.eyebrow}</p>
+        <p class="eyebrow" data-field={f('hero', 'eyebrow')}>{home.hero.eyebrow}</p>
         <h1>Ryan Strawbridge</h1>
-        <p class="tagline" data-tina-field={f('hero', 'tagline')} set:html={inlineEmphasis(home.hero.tagline)} />
+        <p class="tagline" data-field={f('hero', 'tagline')} set:html={inlineEmphasis(home.hero.tagline)} />
         {/* Optional. Left blank to keep the hero to name, tagline and buttons. */}
         {home.hero.lede?.trim() && (
-          <p class="lede" data-tina-field={f('hero', 'lede')} set:html={inlineEmphasis(home.hero.lede)} />
+          <p class="lede" data-field={f('hero', 'lede')} set:html={inlineEmphasis(home.hero.lede)} />
         )}
         <div class="cta-row">
-          <a class="btn" href={home.hero.primaryCta.href} data-tina-field={f('hero', 'primaryCta', 'label')}>{home.hero.primaryCta.label}</a>
+          <a class="btn" href={home.hero.primaryCta.href} data-field={f('hero', 'primaryCta', 'label')}>{home.hero.primaryCta.label}</a>
           <a
             class="btn btn-resume"
             href={home.hero.secondaryCta.href}
-            data-tina-field={f('hero', 'secondaryCta', 'label')}
+            data-field={f('hero', 'secondaryCta', 'label')}
             target="_blank"
             rel="noopener"
             download={home.hero.secondaryCta.href.endsWith('.pdf') ? '' : undefined}
@@ -120,7 +110,7 @@ const aboutBioParagraphs = home.aboutSection.bio
           </a>
         </div>
       </div>
-      <div class="hero-photo" style={`--headshot-radius: ${headshotShapeCss[photoShape]}; --focal: ${headshotCrop.focal}; --zoom: ${headshotCrop.zoom};`} data-tina-field={f('hero', 'headshot')}>
+      <div class="hero-photo" style={`--headshot-radius: ${headshotShapeCss[photoShape]}; --focal: ${headshotCrop.focal}; --zoom: ${headshotCrop.zoom};`} data-field={f('hero', 'headshot')}>
         <Image
           src={heroHeadshot}
           alt={home.hero.headshotAlt ?? 'Headshot of Ryan Strawbridge'}
@@ -160,7 +150,7 @@ const aboutBioParagraphs = home.aboutSection.bio
                 <div
                   class={cls}
                   style={`--focal: ${homeFocal(item.focal)}; --zoom: ${homeZoom(item.zoom)};`}
-                  data-tina-field={f('showcase', 'items', i, item.video ? 'video' : 'image')}
+                  data-field={f('showcase', 'items', i, item.video ? 'video' : 'image')}
                 >
                   {item.video ? (
                     /* data-src, not src: an autoplaying <video> downloads the
@@ -199,8 +189,8 @@ const aboutBioParagraphs = home.aboutSection.bio
     <section class="section" id="projects">
       <div class="container">
         <div class="section-head">
-          <p class="eyebrow" data-tina-field={f('projectsSection', 'eyebrow')}>{home.projectsSection.eyebrow}</p>
-          <h2 data-tina-field={f('projectsSection', 'title')}>{home.projectsSection.title}</h2>
+          <p class="eyebrow" data-field={f('projectsSection', 'eyebrow')}>{home.projectsSection.eyebrow}</p>
+          <h2 data-field={f('projectsSection', 'title')}>{home.projectsSection.title}</h2>
         </div>
         <div class="project-grid">
           {projects.map((project) => <ProjectCard project={project} />)}
@@ -213,8 +203,8 @@ const aboutBioParagraphs = home.aboutSection.bio
   <section class="section experience-section" style={`--logo-height: ${logoH};`}>
     <div class="container">
       <div class="section-head">
-        <p class="eyebrow" data-tina-field={f('experienceSection', 'eyebrow')}>{home.experienceSection.eyebrow}</p>
-        <h2 data-tina-field={f('experienceSection', 'title')}>{home.experienceSection.title}</h2>
+        <p class="eyebrow" data-field={f('experienceSection', 'eyebrow')}>{home.experienceSection.eyebrow}</p>
+        <h2 data-field={f('experienceSection', 'title')}>{home.experienceSection.title}</h2>
       </div>
       <ul class="experience-list">
         {
@@ -223,14 +213,14 @@ const aboutBioParagraphs = home.aboutSection.bio
             return (
               <li class="experience-card reveal">
                 {logo && (
-                  <div class="experience-logo" data-tina-field={f('experienceSection', 'items', i, 'logo')}>
+                  <div class="experience-logo" data-field={f('experienceSection', 'items', i, 'logo')}>
                     <Image src={logo} alt={item.org} widths={[400, 800, 1200]} sizes="(min-width: 768px) 33vw, 90vw" loading="lazy" />
                   </div>
                 )}
                 <div class="experience-body">
-                  <p class="experience-role" data-tina-field={f('experienceSection', 'items', i, 'role')}>{item.role}</p>
-                  <p class="experience-org" data-tina-field={f('experienceSection', 'items', i, 'org')}>{item.org}</p>
-                  <p class="muted" data-tina-field={f('experienceSection', 'items', i, 'blurb')}>{item.blurb}</p>
+                  <p class="experience-role" data-field={f('experienceSection', 'items', i, 'role')}>{item.role}</p>
+                  <p class="experience-org" data-field={f('experienceSection', 'items', i, 'org')}>{item.org}</p>
+                  <p class="muted" data-field={f('experienceSection', 'items', i, 'blurb')}>{item.blurb}</p>
                 </div>
               </li>
             );
@@ -245,7 +235,7 @@ const aboutBioParagraphs = home.aboutSection.bio
   <section class={`section about-section about-photo-${photoPosition}`} id="about" style={`--about-focal: ${aboutFocal}; --about-zoom: ${aboutZoom};`}>
     <div class="container">
       <div class="about-grid">
-        <div class="portrait-wrap" data-tina-field={f('aboutSection', 'photo')}>
+        <div class="portrait-wrap" data-field={f('aboutSection', 'photo')}>
           <Image
             src={aboutPhoto}
             alt={home.aboutSection.photoAlt ?? ''}
@@ -256,16 +246,16 @@ const aboutBioParagraphs = home.aboutSection.bio
           />
         </div>
         <div class="about-copy">
-          <p class="eyebrow" data-tina-field={f('aboutSection', 'eyebrow')}>{home.aboutSection.eyebrow}</p>
-          <h2 data-tina-field={f('aboutSection', 'heading')}>{home.aboutSection.heading}</h2>
-          <p class="lede" data-tina-field={f('aboutSection', 'lede')}>{home.aboutSection.lede}</p>
-          {aboutBioParagraphs.map((p) => <p data-tina-field={f('aboutSection', 'bio')}>{p}</p>)}
+          <p class="eyebrow" data-field={f('aboutSection', 'eyebrow')}>{home.aboutSection.eyebrow}</p>
+          <h2 data-field={f('aboutSection', 'heading')}>{home.aboutSection.heading}</h2>
+          <p class="lede" data-field={f('aboutSection', 'lede')}>{home.aboutSection.lede}</p>
+          {aboutBioParagraphs.map((p) => <p data-field={f('aboutSection', 'bio')}>{p}</p>)}
         </div>
       </div>
 
       {home.interestsSection.show !== false && (
       <div class="interests">
-        <p class="eyebrow" data-tina-field={f('interestsSection', 'eyebrow')}>{home.interestsSection.eyebrow}</p>
+        <p class="eyebrow" data-field={f('interestsSection', 'eyebrow')}>{home.interestsSection.eyebrow}</p>
         <div class="interests-grid">
           {
             home.interestsSection.items.map((item, i) => {
@@ -279,7 +269,7 @@ const aboutBioParagraphs = home.aboutSection.bio
                     <div
                       class="interest-image-main"
                       style={`--focal: ${crop(item, 'focal', 'zoom').focal}; --zoom: ${crop(item, 'focal', 'zoom').zoom};`}
-                      data-tina-field={f('interestsSection', 'items', i, 'image')}
+                      data-field={f('interestsSection', 'items', i, 'image')}
                     >
                       <Image src={main} alt={item.alt} widths={[400, 800]} sizes="(min-width: 768px) 33vw, 100vw" loading="lazy" />
                     </div>
@@ -299,8 +289,8 @@ const aboutBioParagraphs = home.aboutSection.bio
                       ))}
                     </div>
                   )}
-                  <h3 data-tina-field={f('interestsSection', 'items', i, 'title')}>{item.title}</h3>
-                  <p class="muted" data-tina-field={f('interestsSection', 'items', i, 'body')}>{item.body}</p>
+                  <h3 data-field={f('interestsSection', 'items', i, 'title')}>{item.title}</h3>
+                  <p class="muted" data-field={f('interestsSection', 'items', i, 'body')}>{item.body}</p>
                 </article>
               );
             })
@@ -315,12 +305,12 @@ const aboutBioParagraphs = home.aboutSection.bio
   {home.contactSection.show !== false && (
   <section class="section contact-section" id="contact">
     <div class="container-narrow contact-inner">
-      <p class="eyebrow" data-tina-field={f('contactSection', 'eyebrow')}>{home.contactSection.eyebrow}</p>
-      <h2 data-tina-field={f('contactSection', 'heading')}>{home.contactSection.heading}</h2>
-      <p class="muted" data-tina-field={f('contactSection', 'body')}>{home.contactSection.body}</p>
+      <p class="eyebrow" data-field={f('contactSection', 'eyebrow')}>{home.contactSection.eyebrow}</p>
+      <h2 data-field={f('contactSection', 'heading')}>{home.contactSection.heading}</h2>
+      <p class="muted" data-field={f('contactSection', 'body')}>{home.contactSection.body}</p>
       <div class="cta-row">
-        <a class="btn" href={`mailto:${home.contactSection.email}`} data-tina-field={f('contactSection', 'email')}>{home.contactSection.email}</a>
-        <a class="btn btn-secondary" href={`tel:${home.contactSection.phone.replace(/\D/g, '')}`} data-tina-field={f('contactSection', 'phone')}>
+        <a class="btn" href={`mailto:${home.contactSection.email}`} data-field={f('contactSection', 'email')}>{home.contactSection.email}</a>
+        <a class="btn btn-secondary" href={`tel:${home.contactSection.phone.replace(/\D/g, '')}`} data-field={f('contactSection', 'phone')}>
           {home.contactSection.phone}
         </a>
       </div>
@@ -378,8 +368,6 @@ const aboutBioParagraphs = home.aboutSection.bio
       }
     }
   </script>
-
-  <TinaEditBridge query={HOME_QUERY} variables={HOME_VARIABLES} data={tinaData} id={tinaId} />
 
 
   {/* Dev only. Renders nothing in a production build. */}

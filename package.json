@@ -7,20 +7,16 @@
   },
   "scripts": {
     "dev": "node scripts/fix-cms-paths.mjs && astro dev",
-    "dev:tina": "node scripts/fix-cms-paths.mjs && tinacms dev -c \"astro dev\"",
     "studio": "bash scripts/studio.sh",
-    "build": "node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs && node scripts/generate-cms-thumbnails.mjs",
-    "build:tina": "tinacms build && node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs && node scripts/generate-cms-thumbnails.mjs",
+    "build": "node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs",
     "fix:paths": "node scripts/fix-cms-paths.mjs",
     "photos": "node scripts/media-intake.mjs",
     "photos:sort": "node scripts/sort-inbox.mjs",
     "model": "node scripts/model-intake.mjs",
     "photos:shrink": "node scripts/media-intake.mjs --shrink",
-    "check:tina": "node scripts/check-tina-fragment.mjs",
     "check:media": "node scripts/check-media-layout.mjs",
     "preview": "astro preview",
     "astro": "astro",
-    "tina": "tinacms",
     "publish": "bash scripts/publish.sh",
     "resume": "bash scripts/update-resume.sh",
     "resume:build": "bash scripts/update-resume.sh --local",
@@ -29,10 +25,8 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.2",
     "@google/model-viewer": "^4.4.0",
-    "@tinacms/cli": "^2.2.6",
     "astro": "^6.3.1",
-    "meshoptimizer": "^1.3.0",
-    "tinacms": "^3.7.6"
+    "meshoptimizer": "^1.3.0"
   },
   "devDependencies": {
     "@gltf-transform/core": "^4.5.1",

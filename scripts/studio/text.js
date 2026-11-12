@@ -9,9 +9,8 @@ import {
 
 // -- inline text editing ----------------------------------------------
 /**
- * Any element already carrying a data-tina-field that isn't an image slot
- * becomes editable. index.astro tagged these for click-to-edit, so no new
- * markup was needed — the same reuse that made home-mode cropping cheap.
+ * Any element carrying a data-field ("home:…" / "project:…", dev only, see
+ * src/lib/edit-fields.ts) that isn't an image slot becomes editable.
  *
  * Text is edited from the SOURCE, not from what's on screen: the tagline
  * renders "*bridge*" as italics, and editing the rendered text would eat
@@ -25,19 +24,17 @@ import {
 const TEXT_SKIP = /(^|\.)(image|photo|logo|headshot|video|alt|href|poster|body|gallery)($|\.)/i;
 
 const textSlots = () =>
-  [...document.querySelectorAll('[data-tina-field]')]
+  [...document.querySelectorAll('[data-field]')]
     .map((el) => {
-      const raw = el.getAttribute('data-tina-field') || '';
-      const home = raw.split('---home.')[1];
-      const project = raw.split('---project.')[1];
-      return { el, path: home ?? project, isHome: Boolean(home) };
+      const [doc, ...rest] = (el.getAttribute('data-field') || '').split(':');
+      return { el, path: rest.join(':'), isHome: doc === 'home' };
     })
     .filter(({ el, path }) =>
       path && !TEXT_SKIP.test(path) &&
       !el.querySelector('img, video') &&
       // A wrapper around other editable text (a placeholder figure's
       // root, say) isn't a value itself; its children are.
-      !el.querySelector('[data-tina-field]') &&
+      !el.querySelector('[data-field]') &&
       el.textContent.trim() !== '');
 
 const saveText = (slot, value) =>

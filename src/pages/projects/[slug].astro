@@ -6,13 +6,7 @@ import Lightbox from '../../components/Lightbox.astro';
 import StudioOverlay from '../../components/StudioOverlay.astro';
 import GalleryGrid from '../../components/GalleryGrid.astro';
 import ProjectFigure from '../../components/ProjectFigure.astro';
-import TinaEditBridge from '../../components/TinaEditBridge.astro';
-import {
-  PROJECT_QUERY,
-  asTinaDocument,
-  projectField,
-  queryId,
-} from '../../lib/tina-visual-editing';
+import { projectField as f } from '../../lib/edit-fields';
 import {
   clampZoom,
   focalCss,
@@ -122,21 +116,6 @@ const idx = all.findIndex((p) => p.id === project.id);
 const prev = idx > 0 ? all[idx - 1] : null;
 const next = idx < all.length - 1 ? all[idx + 1] : null;
 
-const tinaVariables = { relativePath: `${project.id}.md` };
-const tinaId = queryId(PROJECT_QUERY, tinaVariables);
-// `figures` is deliberately NOT in this payload. TinaEditBridge serializes it
-// into the production HTML, and tina/config.ts has no `figures` field, so
-// including it would ship every figure's draft notes in the page source while
-// Tina still dropped the whole list on save (gotcha 41). Pages CMS and studio
-// edit figures; Tina does not see them.
-const { figures: _figuresNotInTina, ...tinaFields } = project.data;
-const tinaData = {
-  project: asTinaDocument('Project', `${project.id}.md`, 'src/content/projects', {
-    ...tinaFields,
-    date: date.toISOString(),
-  }),
-};
-const f = (...path: (string | number)[]) => projectField(project.id, ...path);
 const galleryField = (index: number, key: string) => f('gallery', index, key);
 const figureField = (index: number, key: string) => f('figures', index, key);
 ---
@@ -145,19 +124,19 @@ const figureField = (index: number, key: string) => f('figures', index, key);
   <article>
     <header class="project-hero">
       <div class="container">
-        <p class="eyebrow" data-tina-field={f(organization ? 'organization' : 'date')}>
+        <p class="eyebrow" data-field={f(organization ? 'organization' : 'date')}>
           {organization ?? subtitle ?? 'Project'} <span class="dot">·</span> {dateLabel}
         </p>
-        <h1 data-tina-field={f('title')}>{title}</h1>
-        {subtitle && organization && <p class="subtitle muted" data-tina-field={f('subtitle')}>{subtitle}</p>}
-        <p class="summary" data-tina-field={f('summary')}>{summary}</p>
+        <h1 data-field={f('title')}>{title}</h1>
+        {subtitle && organization && <p class="subtitle muted" data-field={f('subtitle')}>{subtitle}</p>}
+        <p class="summary" data-field={f('summary')}>{summary}</p>
       </div>
     </header>
 
     <div
       class="hero-image-wrap container"
       style={heroStyle}
-      data-tina-field={f('hero')}
+      data-field={f('hero')}
       {...import.meta.env.DEV && {
         'data-studio-hero': '',
         'data-studio-focal': heroFocalPoint,
@@ -185,7 +164,7 @@ const figureField = (index: number, key: string) => f('figures', index, key);
     <div data-lightbox-root data-studio-slug={import.meta.env.DEV ? project.id : undefined}>
       <div class="container project-layout">
         <div class="project-main">
-          <div class="project-body" data-tina-field={f('body')}>
+          <div class="project-body" data-field={f('body')}>
             {
               useInlineBody ? (
                 bodyChunks.map((chunk) => (
@@ -234,13 +213,13 @@ const figureField = (index: number, key: string) => f('figures', index, key);
               organization && (
                 <div class="rail-block">
                   <p class="rail-label">Where</p>
-                  <p class="rail-value" data-tina-field={f('organization')}>{organization}</p>
+                  <p class="rail-value" data-field={f('organization')}>{organization}</p>
                 </div>
               )
             }
             <div class="rail-block">
               <p class="rail-label">When</p>
-              <p class="rail-value" data-tina-field={f('date')}>{dateLabel}</p>
+              <p class="rail-value" data-field={f('date')}>{dateLabel}</p>
             </div>
             {
               sectionLinks.length > 0 && (
@@ -260,8 +239,6 @@ const figureField = (index: number, key: string) => f('figures', index, key);
         </aside>
       </div>
     </div>
-
-    <TinaEditBridge query={PROJECT_QUERY} variables={tinaVariables} data={tinaData} id={tinaId} />
 
     <Lightbox />
 

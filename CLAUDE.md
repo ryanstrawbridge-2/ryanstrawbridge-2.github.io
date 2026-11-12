@@ -13,8 +13,8 @@
 - Ryan's personal portfolio site, replacing his old Wix site.
 - **Live:** https://ryanstrawbridge-2.github.io
 - **GitHub repo:** `ryanstrawbridge-2/ryanstrawbridge-2.github.io` (default branch `main`)
-- **Stack:** Astro 6 (static), GitHub Pages, GitHub Actions deploy, Pages CMS + TinaCMS for content editing.
-- **Editing model:** Ryan should be able to edit content visually (Pages CMS / TinaCMS), not via terminal. Code/layout/structural changes happen here in Claude.
+- **Stack:** Astro 6 (static), GitHub Pages, GitHub Actions deploy, Pages CMS (forms, in the browser) and studio (`npm run studio`, live on the page) for content editing. TinaCMS was removed on 2026-11-12.
+- **Editing model:** Ryan should be able to edit content visually (Pages CMS / studio), not via terminal. Code/layout/structural changes happen here in Claude.
 
 ## Build & verify commands
 
@@ -24,12 +24,10 @@
 npm install              # first time
 npm run dev              # localhost:4321, hot reload
 npm run build            # plain Astro build (always works)
-npm run build:tina       # Astro + TinaCMS admin (needs TINA_TOKEN in env)
 npm run preview          # serve the built site
 npm run photos           # intake: resize/strip/file new photos + video
 npm run model <f.glb>    # compress a CAD model into public/models/ (4 MB budget)
 npm run photos:shrink    # re-encode oversized images already in src/assets
-npm run check:tina       # fragment vs tina-lock.json (catches "Unexpected Error")
 npm run check:media      # src/assets/images layout (no loose/camera-named uploads)
 npm run check:copy       # no PLACEHOLDER / TODO text in fields that publish
 # studio: theme / text / phone preview / publish / undo (⌘Z) — see HANDBOOK.md
@@ -52,12 +50,8 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | Astro pages | `src/pages/index.astro`, `src/pages/projects/[slug].astro` |
 | Optimized images | `src/assets/images/` (Astro processes these) |
 | Static videos | `public/videos/` (not processed) |
-| TinaCMS schema | `tina/config.ts` (+ `tina/tina-lock.json`) |
-| Visual-editing helpers | `src/lib/tina-visual-editing.ts` |
-| Visual-editing bridge | `src/components/TinaEditBridge.astro` |
 | Pages CMS schema | `.pages.yml` |
 | Auto-sync script | `scripts/auto-sync.sh` |
-| CMS thumbnail previews | `scripts/generate-cms-thumbnails.mjs` |
 | Photo/video intake | `scripts/media-intake.mjs` (`npm run photos`) |
 | 3D model intake | `scripts/model-intake.mjs` (`npm run model`), `src/components/Model3D.astro`, models in `public/models/` |
 | Live editor (dev only) | `scripts/studio.sh` (`npm run studio`, supervises astro dev), `scripts/studio-server.mjs` (writer, port 4322), `scripts/studio/*.js` + `overlay.css` (the UI, one module per feature, served by the writer), `src/components/StudioOverlay.astro` (markup + the two tags that load them) |
@@ -65,9 +59,9 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | Career roadmap (parked) | `src/pages/_roadmap.astro` + `src/data/roadmap.json` — the `_` prefix keeps Astro from routing it, so the page is NOT built and nothing links to it. To bring it back: rename to `roadmap.astro`, re-add the nav item to `src/data/navigation.json`, and restore the `roadmap` collection in `.pages.yml` (its image field needs `output: /src/assets/images/roadmap/{name}{extension}` — the version removed here wrote to the assets root, which `check:media` rejects, gotcha 27). |
 | Shared media/frontmatter helpers | `scripts/lib/media.mjs`, `scripts/lib/frontmatter.mjs`, `scripts/lib/homejson.mjs`, `scripts/lib/orphans.mjs` |
 | Gallery placement helpers | `src/lib/gallery.ts` + `src/components/GalleryGrid.astro` |
+| Studio field markers | `src/lib/edit-fields.ts` (`data-field="project:…"` / `"home:…"`, dev only) |
 | Walkthrough figures | `src/lib/figures.ts` + `src/components/ProjectFigure.astro`; authored in each project's `figures:` frontmatter |
 | Placeholder-copy guard | `scripts/check-placeholder-copy.mjs` (`npm run check:copy`) |
-| Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
 | Media layout guard | `scripts/check-media-layout.mjs` (`npm run check:media`) |
 | Ryan's photo library (gitignored) | `portfolio-photos/<project-slug>/` — 138 originals, folders named for the site's project slugs; studio browses and copies from it; the ONLY write is Save filing `photo-inbox/PREFIX_*` originals into `<slug>/` (or `general/`) via `scripts/lib/inbox-file.mjs`: a rename, add-only, never overwrites (`name 2.ext`). Also `npm run photos:sort [--dry-run]`. `wix-archive/` is the unsorted legacy Wix export. |
 | Intake queue (gitignored) | `photo-inbox/PREFIX_title.ext` routed by `photo-prefixes.json` (parser: `scripts/lib/prefixes.mjs`, shared by studio library + `npm run photos`); legacy `photo-inbox/<slug>/` still works; processed originals in `photo-inbox/_done/` |
@@ -82,19 +76,16 @@ GitHub SSH push from background processes stalls on large payloads.
 - If a push stalls: `pkill -9 -f "git push"`, retry with timeout, or ask Ryan to push from his Terminal.
 - Hourly `launchd` auto-sync runs `scripts/auto-sync.sh` with a 90-second push timeout.
 
-## TinaCMS gotchas (learned the hard way)
+## Content and build gotchas (learned the hard way)
 
-<!-- These are non-obvious. Don't delete unless the underlying issue is gone. -->
-
-1. **Image path translation.** Astro `image()` wants paths relative to the markdown file (`../../assets/images/...`). TinaCMS stores paths relative to its `mediaRoot` (`/src/assets/images/...`). The `parse`/`format` helpers in `tina/config.ts` translate. **When adding a new image field, copy the `ui: { parse, format }` block from the existing `hero` field** or paths get mangled.
-2. **`tina/tina-lock.json` must match `tina/config.ts`.** Any schema change → regenerate: `set -a && source .env.local && set +a && npx tinacms dev` for ~10s, kill, commit. Stale lock → "local schema doesn't match remote" or 403.
-3. **GitHub Actions secrets from chat keep newlines.** Use `printf 'value' | pbcopy` when pasting `TINA_TOKEN`. Trailing newline → broken JS bundle.
-4. **Step-level `if:` can't see step-level `env:`** in GitHub Actions. The `if` evaluates before env binds. Use `secrets` directly OR check inside the run script.
-5. **`continue-on-error: true` masks failures.** Keep the verification step in `deploy.yml` that warns loudly when `dist/admin/index.html` is missing.
-6. **Visual editing is a hand-rolled port, not Tina's React hooks.** This site is static Astro with no React, so `useTina`/`tinaField` can't be used. `TinaEditBridge.astro` reimplements the same postMessage protocol in vanilla JS. If a Tina upgrade breaks click-to-edit, diff `node_modules/tinacms/dist/react.js` against that component — the message types (`open`, `updateData`, `quickEditEnabled`, `field:selected`) are the contract.
-7. **Adding a new editable field = two edits.** Add it to `tina/config.ts`, then add `data-tina-field={f(...)}` in the template. The path must mirror the GraphQL result shape (`home.aboutSection.bio`, `experienceSection.items.2.role`). If the fragment in `src/lib/tina-visual-editing.ts` doesn't select the field, the sidebar won't focus it.
-8. **List roots can't be focused.** Tina focuses one field, so `tools` / `extraImageKeys` get no `data-tina-field` — an outline with a dead click is worse than no outline. List *items* are fine.
-9. **CMS thumbnails need `dist/src/assets/images/`.** `mediaRoot` is `src/assets/images`, so every image field requests `/src/assets/images/<path>` — a path Astro never serves (it compiles originals into hashed `/_astro/` files). `scripts/generate-cms-thumbnails.mjs` writes 400px previews there at build time (~0.9 MB). Drop that step and every thumbnail in the editor goes back to a broken-image icon.
+1–9. **Retired with TinaCMS (2026-11-12).** These covered Tina's image-path
+    translation, `tina-lock.json`, the hand-rolled visual-editing bridge and
+    its CMS thumbnails. Tina silently dropped fields it didn't know (figures,
+    zoom, heroZoom) and studio now covers visual editing, so it was removed:
+    `tina/`, `TinaEditBridge`, `check:tina`, `build:tina`, the thumbnails
+    script and the `/admin/` route. Pages CMS remains. If TinaCloud or the
+    `TINA_TOKEN` / `TINA_PUBLIC_CLIENT_ID` GitHub secrets still exist, they
+    are unused and can be deleted. Numbers kept so references below hold.
 10. **`image()` fields emit their full-size original.** Astro ships the untouched source for every content-collection `image()` field even when only resized variants are used — that's ~18 MB across the gallery, and why `dist` is ~63 MB rather than ~36 MB. Not a leak, and not worth chasing unless deploy time becomes a problem; the escape hatch is storing paths as `z.string()` and resolving them with `import.meta.glob`.
 
 11. **Gallery placement is a body split, not a layout trick.** `[slug].astro`
@@ -105,10 +96,7 @@ GitHub SSH push from background processes stalls on large payloads.
     `rendered.metadata.imagePaths.length === 0`; when it trips, every item
     silently falls back to the bottom of the page. If someone adds a body image
     and inline photos stop working, that's why.
-12. **`npm run check:tina` is in `publish.sh`, deliberately not in `build`.**
-    A stale `tina-lock.json` would otherwise fail the GitHub Actions deploy and
-    leave the live site silently out of date — the exact failure mode in the
-    memory note. In `publish.sh` it only stops a push Ryan is watching.
+12. **Retired** (the `check:tina` placement note; Tina is gone).
 13. **`--shrink` must never change a file's container format.** It rewrites in
     place under the existing name so no path changes, which means a `.png`
     holding JPEG bytes would sail past sharp and then trip Astro's own
@@ -131,7 +119,7 @@ GitHub SSH push from background processes stalls on large payloads.
     made every edit reload the page twice. One reload per save is Astro's own.
 16. **Studio writes frontmatter with `yaml`'s Document API, not gray-matter.**
     It round-trips byte-identically, so a one-field edit is a one-line diff.
-    A full reserialize would rewrite quoting and key order on a file TinaCMS
+    A full reserialize would rewrite quoting and key order on a file Pages CMS
     also writes, and collide with the next CMS commit.
 17. **`/usr/bin/avconvert` handles .mov → .mp4.** Ships with macOS; no ffmpeg or
     Homebrew needed. `Preset960x540` lands a typical phone clip under the 5 MB
@@ -151,11 +139,11 @@ GitHub SSH push from background processes stalls on large payloads.
     originals can STAY local while only the picked, optimised copies enter the
     repo — that's the closest thing to "pull from my machine" that works.
 
-20. **Studio's home mode reuses `data-tina-field` as its path source.** Every
-    editable home image already carries `...---home.aboutSection.photo`, so
-    `index.astro` needed no new markup — the overlay splits on `---home.` and
-    patches that JSON path. If a `data-tina-field` is ever removed from an
-    image wrapper, that slot silently stops being editable in studio too.
+20. **Studio finds editable things by `data-field`.** `src/lib/edit-fields.ts`
+    emits `data-field="home:aboutSection.photo"` / `"project:figures.0.takeaway"`
+    in dev only. Home photo slots, Text mode and figure text all key off it. If
+    one is removed from a template, that thing silently stops being editable
+    in studio.
 21. **Two different conventions for a video path.** `home.json` showcase items
     feed `<source src>` directly and store `/videos/x.mp4`; project gallery rows
     store a bare `x.mp4` and the template prefixes it. `homeVideoRef()` exists
@@ -267,24 +255,12 @@ GitHub SSH push from background processes stalls on large payloads.
     It's imported lazily now, and only when the model actually has textures —
     most CAD exports have none.
 
-41. **A CMS schema that doesn't list a field DROPS it on save.** Pages CMS and
-    Tina write back only the fields they know about, so a crop, a zoom or a
-    3D model set in studio would silently vanish the next time that row was
-    saved in the CMS. `.pages.yml` has been brought in step (gallery now
-    lists model/zoom/aspect, site settings list accentSoft/cornerStyle/
-    headingFont).
-    **`tina/config.ts` has NOT** — it is still missing `model`, `zoom` and
-    `aspect` on gallery rows, because adding them means regenerating
-    `tina-lock.json` against TinaCloud (gotcha 2) and that shouldn't be done
-    without someone able to check `/admin/` afterwards. Until then, editing a
-    gallery row in TinaCMS will discard those three fields. Pages CMS and
-    studio are both safe. Whenever a field is added to
-    `src/content.config.ts`, add it to BOTH CMS schemas in the same change.
-    The same now applies to the whole `figures` list: it IS in `.pages.yml`
-    and is NOT in `tina/config.ts`, so editing a project in TinaCMS discards
-    every figure on it. Until the lock is regenerated, edit project figures in
-    Pages CMS or studio, not Tina.
-
+41. **A CMS schema that doesn't list a field DROPS it on save.** Pages CMS
+    writes back only the fields `.pages.yml` declares, so a crop, zoom or 3D
+    model set in studio would vanish the next time that row was saved in the
+    CMS. Whenever a field is added to `src/content.config.ts`, add it to
+    `.pages.yml` in the same change. (TinaCMS had the same problem and was
+    never brought in step; that is part of why it was removed.)
 42. **Walkthrough figures are a second list, not more gallery fields.** A
     gallery row is a photograph; a figure is a claim with evidence — headline,
     picture, numbered points, and callout markers pinned to the picture at
@@ -303,7 +279,7 @@ GitHub SSH push from background processes stalls on large payloads.
     `npm run check:copy` is for: it greps PLACEHOLDER/TODO/FIXME/ADD FS out of
     every publishable frontmatter field, exempting `plan`, which exists to hold
     notes-to-self and never renders outside dev. Warn-only by default,
-    `--strict` in publish.sh — same reasoning as check:media and check:tina.
+    `--strict` in publish.sh — same reasoning as check:media.
 45. **`aspect-ratio` resolves against `min-height` when width is auto.** The
     placeholder skeleton had `min-height: 220px` and `aspect-ratio: 16/9` with
     no width, so the browser computed the WIDTH from the height — 391px inside
@@ -311,21 +287,14 @@ GitHub SSH push from background processes stalls on large payloads.
     phone. `width: 100%` on that element is load-bearing: it makes the ratio
     derive height from width, which is the direction intended. Any element
     with both a min-height and an aspect-ratio needs a definite width.
-46. **`TinaEditBridge` serializes the whole frontmatter into production HTML.**
-    `#tina-edit-payload` carries `project.data` on the live site, so anything
-    in frontmatter is in the page source whether or not it renders. `figures`
-    is destructured out of that payload in `[slug].astro` — otherwise every
-    figure's draft `plan` notes would ship, while Tina still dropped the whole
-    list on save for want of a schema field. If a future field is notes-only,
-    keep it out of the payload too.
+46. **Retired.** `TinaEditBridge` used to serialise frontmatter into the live
+    HTML; it's gone, and the dev-only `data-field` markers don't reach the build.
 47. **Callout markers anchor on the dot.** `.pfig-callout` holds dot + label;
     translating the whole button by -50% centred the PAIR on (x, y), so every
     marker sat half a label-width off its target. Each `place-*` now offsets by
     half the dot (0.8rem) on its own axis. Change the dot size, change that.
-48. **`heroZoom` is a studio field Tina doesn't know.** Same class as gotcha 41:
-    saving a project in TinaCMS drops it and the main photo snaps back to 1x.
-    Pages CMS has it. The hero image now sits in a clipping `.hero-frame` so
-    zoom crops at the rounded edge.
+48. **The main photo sits in a clipping `.hero-frame`** so `heroZoom` crops at
+    the rounded edge. `heroZoom` is in `.pages.yml`.
 49. **Restarting the studio writer by hand loses undo.** The journal is in
     memory. `studio.sh` now kills whatever holds 4322 before starting, so a
     hand-started writer can't block the next `npm run studio`.
@@ -378,7 +347,7 @@ GitHub SSH push from background processes stalls on large payloads.
 ## Editing approaches (Ryan's options)
 
 1. **Pages CMS** at https://app.pagescms.org/ — form-based, his daily driver for content.
-2. **TinaCMS** at https://ryanstrawbridge-2.github.io/admin/ — click-to-edit visual editor (needs TinaCloud `main` registration + `TINA_TOKEN` GitHub secret).
+2. **Studio** (`npm run studio`) — edit on the page itself: text, photos, crops, figures, Save, Go live.
 3. **Local files via Claude** — for layout, new sections, or anything structural.
 
 ## Media handling — the rule
@@ -395,7 +364,7 @@ unexpected top folder, a space in a filename, an iCloud conflict copy, or a name
 that says nothing about the photo (`IMG_1234`, `Picture1`, `Screenshot…`, a bare
 UUID). `publish.sh` runs it with `--strict`; the script itself is warn-only so a
 CMS commit can never fail the GitHub Actions deploy and leave the site silently
-stale — same reasoning as `check:tina`.
+stale.
 
 Name files for what they show. The names in the repo came from each gallery
 item's own `alt`/`caption`, which is where to look when you need one.
@@ -415,7 +384,7 @@ in the page header.
 
 ## What's deliberately NOT in the repo
 
-- `.env.local` (TinaCMS credentials, gitignored).
+- `.env.local` (old TinaCMS credentials, unused now; gitignored).
 - `public/RyanStrawbridgeResume.pdf` — the download linked from the home page. The filename is what visitors get, so keep it presentable; drop the latest compile here when applying.
 - Source 5712×4284 photos — resized to 2400px max before commit.
 - The 4th hero video (`home-hero.mp4`) — too large to push.

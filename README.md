@@ -61,6 +61,6 @@ Pushing to `main` triggers `.github/workflows/deploy.yml` and publishes to GitHu
 ## Editing without code
 
 - **Pages CMS** — https://app.pagescms.org/ (form-based content editor)
-- **TinaCMS** — https://ryanstrawbridge-2.github.io/admin/ (click-to-edit, once TinaCloud is configured)
+- **Studio** — `npm run studio`, then edit on the page at localhost:4321 (Save locally, Go live when ready)
 
 See `HANDBOOK.md` for the full daily-editing workflow.

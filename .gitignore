@@ -19,8 +19,6 @@ pnpm-debug.log*
 .env.*.local
 .env.production
 
-# tina (auto-generated GraphQL client and types)
-tina/__generated__/
 
 # local photo staging — full-resolution originals, resized into src/assets before use
 portfolio-photos/
