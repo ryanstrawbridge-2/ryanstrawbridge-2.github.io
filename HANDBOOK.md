@@ -255,7 +255,7 @@ spending that on someone who scrolled past would be rude.
 | **Phone** | Opens the same page in a real 390px frame beside it, so you can see the phone layout without resizing anything. |
 | **Undo** | Undoes the last edit, and says which one. ⌘Z does the same. |
 | **?** | Hover for the gestures. |
-| **Figures** | Hover any walkthrough figure for its toolbar: Add photo (or Before / After on a comparison) and Delete. Empty "to make" frames: drop a file on them or click to pick from the library. Undo brings back a deleted figure. |
+| **Figures** | Hover any walkthrough figure for its toolbar: Add photo (or Before / After on a comparison), + Point and Delete. With Text on, every piece of figure text is editable in place: headline, each numbered point, caption, Before/After labels, marker labels, and the title and notes on empty figures. Clear a point's text to remove it. Empty "to make" frames: drop a file on them or click to pick from the library. Undo brings back a deleted figure. |
 | **Save** | Saves a checkpoint on this Mac (⌘S). Also tidies `photo-inbox/`: `Lift_BTH1.png` moves to `portfolio-photos/lifting-frame/BTH1.png`, `gen_` files to `portfolio-photos/general/`. Files with no or an unknown prefix stay in the inbox. Nothing is ever overwritten. (`npm run photos:sort` does the same from Terminal.) Lists what changed since the last save and shows your recent saves. Never touches the live site. The yellow badge counts unsaved changes. |
 | **Go live** | Pushes your saves to the live site: runs the publish script and shows its output. Two clicks, on purpose. Greyed out and refuses while publishing is locked (see below). |
 

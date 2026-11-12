@@ -530,6 +530,15 @@ const uploadFigure = async ({ slug, figure, slot, filename, data }) => {
   return { kind: 'image', file: outName, before, after, ...(await setFigureImage(slug, Number(figure), astroPath(slug, outName), slot)) };
 };
 
+/** Append a numbered point to a figure. Edit or blank it in Text mode. */
+const addFigurePoint = ({ slug, figure }) =>
+  withProject(slug, (file) => {
+    if (!file.doc.getIn(['figures', figure])) throw new Error(`no figure ${figure + 1}`);
+    if (file.doc.getIn(['figures', figure, 'points'])) file.doc.addIn(['figures', figure, 'points'], 'New point');
+    else file.doc.setIn(['figures', figure, 'points'], file.doc.createNode(['New point']));
+    return { added: true };
+  });
+
 /**
  * Remove a whole walkthrough figure. Its images go to .photo-trash (only if
  * nothing else on the site uses them), so undo can bring everything back.
@@ -974,6 +983,7 @@ const undoLabel = (pathname, payload = {}) => {
       return keys.length === 1 ? keys[0] : 'page settings';
     case '/project/hero': return 'main photo';
     case '/figure/upload': return `photo into figure ${Number(payload.figure) + 1}`;
+    case '/figure/point': return `add point to figure ${Number(payload.figure) + 1}`;
     case '/figure/delete': return `delete figure ${Number(payload.figure) + 1}`;
     case '/figure/callout': return payload.add ? 'add marker' : payload.remove ? 'remove marker' : `move marker ${payload.callout ?? ''}`.trim();
     case '/upload': return `add ${payload.filename ?? 'file'}`;
@@ -1181,6 +1191,7 @@ const ROUTES = {
   '/figure/callout': figureCallout,
   '/figure/upload': uploadFigure,
   '/figure/delete': deleteFigure,
+  '/figure/point': addFigurePoint,
   '/library/pick': pickFromLibrary,
   '/home/patch': patchHome,
   '/home/upload': uploadHome,

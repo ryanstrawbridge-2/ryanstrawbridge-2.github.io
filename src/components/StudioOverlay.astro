@@ -1114,6 +1114,9 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         .filter(({ el, path }) =>
           path && !TEXT_SKIP.test(path) &&
           !el.querySelector('img, video') &&
+          // A wrapper around other editable text (a placeholder figure's
+          // root, say) isn't a value itself; its children are.
+          !el.querySelector('[data-tina-field]') &&
           el.textContent.trim() !== '');
 
     const saveText = (slot, value) =>
@@ -2030,6 +2033,14 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         photo.addEventListener('click', () => openLibrary({ figure: figIndex, figureSlot: 'image' }));
         tools.appendChild(photo);
       }
+      const pointBtn = toolButton({ icon: 'plus', text: 'Point', title: 'Add a numbered point beside the figure. Edit it in Text mode; clear its text to remove it.' });
+      pointBtn.addEventListener('click', async () => {
+        try {
+          await post('/figure/point', { figure: figIndex });
+          toast('point added. Turn on Text to edit it');
+        } catch (error) { toast(error.message, true); }
+      });
+      tools.appendChild(pointBtn);
       tools.appendChild(toolSep());
       const del = toolButton({ icon: 'trash', text: 'Delete', title: 'Delete this whole figure (undo brings it back)', className: 'studio-danger' });
       del.addEventListener('click', async () => {
