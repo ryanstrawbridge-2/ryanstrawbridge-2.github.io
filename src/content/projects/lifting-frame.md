@@ -64,7 +64,7 @@ Existing lifting equipment was oversized and unstable for lifting custom magnet 
 
 * Designed and structurally analyzed a **2,100 lb** hand-portable aluminum 3-point lifting frame.
 * Validated it against **ASME BTH-1** and **ASME B30.20**, carrying the design through sign-off with structural engineering and safety.
-* Specified weld procedures and inspection requirements for the fabricator. Worked with NDT to validate welds.
+* Specified weld procedures and inspection requirements for the Rev 1 welded joint. NDT could not validate weld fusion, so I redesigned the joint for Rev 2 without welds.
 * Worked with riggers on initial proof-load testing and walked through the lift plan with the safety team.
 
 ## Outcome
