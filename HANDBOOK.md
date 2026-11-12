@@ -256,7 +256,7 @@ spending that on someone who scrolled past would be rude.
 | **Undo** | Undoes the last edit, and says which one. ⌘Z does the same. |
 | **?** | Hover for the gestures. |
 | **Save** | Saves a checkpoint on this Mac (⌘S). Lists what changed since the last save and shows your recent saves. Never touches the live site. The yellow badge counts unsaved changes. |
-| **Publish** | Runs the publish script and shows its output. Two clicks, on purpose. Greyed out and refuses while publishing is locked (see below). |
+| **Go live** | Pushes your saves to the live site: runs the publish script and shows its output. Two clicks, on purpose. Greyed out and refuses while publishing is locked (see below). |
 
 ### The main photo
 
