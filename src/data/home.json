@@ -87,12 +87,12 @@
     "photo": "/src/assets/images/home/initial-testing.jpg",
     "photoAlt": "ITD preliminary testing",
     "photoPosition": "left",
-    "photoFocalPoint": "59% 36%",
+    "photoFocalPoint": "67% 63%",
     "eyebrow": "About me",
     "heading": "Hi, I'm Ryan.",
     "lede": "I'm a mechanical engineer, focused on clean energy and aerospace. ",
     "bio": "I'm currently working on a low-cost underwater mechanical release system for underwater robotic recovery for my senior capstone. I am also working on the feed system for a liquid rocket engine on Northeastern's Aerospace Club. I've previously worked as a Manufacturing Engineer at Commonwealth Fusion Systems, where I supported the poloidal field magnets for the SPARC tokamak. ",
-    "photoZoom": 1.08
+    "photoZoom": 1.25
   },
   "interestsSection": {
     "show": true,
@@ -118,7 +118,7 @@
         ],
         "alt": "Music",
         "body": "I have a great appreciation for music. I played trumpet in high school, picked up guitar my junior year, and now play rhythm guitar in an alt-rock band.",
-        "focal": "50% 73%"
+        "focal": "8% 65%"
       },
       {
         "title": "Interior Design & Plants",
@@ -129,7 +129,7 @@
         ],
         "alt": "Plants",
         "body": "I have always had an appreciation for small details, and I bring that into the spaces I live in. I also love flowers and plants!",
-        "focal": "48% 79%"
+        "focal": "51% 82%"
       }
     ]
   },
