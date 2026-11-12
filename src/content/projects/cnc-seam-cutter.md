@@ -24,13 +24,17 @@ figures:
   - section: What I did
     kind: diagram
     title: Datum scheme
-    takeaway: PLACEHOLDER COPY — rewrite.
+    takeaway: "Plane and two dowels: the base sits on A, and the fixed plate's dowel holes fix everything else."
     plan: >-
       Simplified datum sketch: the dowel-pin datums, with the position and symmetry feature control frames you actually applied. Y14.5 notation, not a photo.
-    aspect: 4/3
+    aspect: auto
     points:
-      - Applied ASME Y14.5 GD&T — position and symmetry controls on dowel-pin datums.
-      - Repeatable alignment to the CNC head.
+      - A is the base. Dowel 1 is B, which fixes X and Y; dowel 2 is C, which only stops rotation.
+      - The fixed plate sits on the dowels. The ram plate's slots ride on shoulder bolts positioned to A|B|C, so it travels square to the fixed plate.
+      - Toggle clamps push the ram plate in, and the cable is held between the two green plates.
+      - The cable channel in the base only has to clear the cable, so it carries no feature control frame.
+    image: ../../assets/images/projects/cnc-seam-cutter/cnc-seam-cutter-datum-scheme-2.png
+    alt: "Datum sketch of the fixture base plate: datum A is the base, B and C are the two dowel holes the fixed plate sits on. The shoulder-bolt holes under the ram plate's slots are positioned to A, B and C; toggle clamps push the ram plate toward the fixed plate, with the cable between them."
 heroAspect: standard
 ---
 
@@ -42,7 +46,7 @@ The previous end-prep operation was performed by hand. This operation took an en
 
 * Developed a modular CNC seam-cutting fixture that radially conforms 11 configurations of a new cable type
 * Enabled qualification testing ahead of new production line
-* Applied AMSE Y14.5 GD\&T — position and symmetry controls on dowel-pin datums — for repeatable alignment to the CNC head.
+* Applied ASME Y14.5 GD\&T: datums on the base and dowel pins, with position controls for repeatable alignment to the CNC head.
 
 ## Outcome
 
