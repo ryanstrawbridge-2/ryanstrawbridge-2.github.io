@@ -62,9 +62,19 @@ const checkMarkdown = async (file) => {
     return;
   }
 
+  // A draft project never builds, and a figure with no picture is dropped
+  // from the production build (normalizeFigures). Neither can publish copy.
+  if (data?.draft === true) return;
+  const figureHasMedia = (i) => {
+    const fig = data?.figures?.[i];
+    return Boolean(fig && (fig.image || fig.video || fig.model));
+  };
+
   for (const [path, text] of strings(data)) {
     const leaf = path.split('.').pop();
     if (EXEMPT_FIELDS.has(leaf)) continue;
+    const fig = path.match(/^figures\.(\d+)\./);
+    if (fig && !figureHasMedia(Number(fig[1]))) continue;
     for (const marker of findMarkers(text)) {
       findings.push({ file, path, marker, text: text.slice(0, 80) });
     }

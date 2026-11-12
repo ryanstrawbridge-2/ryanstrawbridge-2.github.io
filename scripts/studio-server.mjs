@@ -1006,9 +1006,6 @@ let job = null;
 
 const startPublish = ({ message }) => {
   if (job && job.running) throw new Error('a publish is already running');
-  if (existsSync(join(ROOT, '.publish-lock'))) {
-    throw new Error('publishing is locked: everything stays on this Mac. Delete .publish-lock to turn it back on.');
-  }
 
   const note = String(message ?? '').trim() || 'Content update';
   // The message reaches git as a single argv entry, never a shell string, so
@@ -1123,7 +1120,6 @@ const saveStatus = async () => {
     changes,
     notLive,
     saves,
-    publishLocked: existsSync(join(ROOT, '.publish-lock')),
   };
 };
 

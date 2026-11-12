@@ -168,8 +168,8 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         </label>
         <div class="studio-pub-log" hidden />
         <footer>
-          <span class="studio-pub-state">Commits and pushes everything saved. Live in about two minutes.</span>
-          <button type="button" class="studio-btn studio-primary studio-pub-go">Publish now</button>
+          <span class="studio-pub-state">Puts your saves (and anything unsaved) on the public site. Asks first.</span>
+          <button type="button" class="studio-btn studio-primary studio-pub-go">Go live</button>
         </footer>
       </div>
       <div class="studio-drop" hidden><span>Drop to add to this project</span></div>
@@ -497,7 +497,6 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     font: 600 10px/16px var(--st-sans, system-ui); text-align: center;
   }
   .studio-save-count[hidden] { display: none; }
-  .studio-publish.is-locked { opacity: 0.55; }
   .studio-pub-go[disabled] { cursor: not-allowed; }
 
   /* --- inline text editing ----------------------------------------------- */
@@ -1310,12 +1309,6 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       saveBtn.title = n
         ? `${n} unsaved change${n === 1 ? '' : 's'}. Save a checkpoint on this Mac.`
         : 'Everything is saved on this Mac';
-      publishBtn?.classList.toggle('is-locked', info.publishLocked);
-      if (publishBtn) {
-        publishBtn.title = info.publishLocked
-          ? 'Publishing is locked: everything stays on this Mac'
-          : 'Push saved work to the live site';
-      }
 
       root.querySelector('.studio-save-branch').textContent = info.branch;
       const list = root.querySelector('.studio-save-changes');
@@ -1402,7 +1395,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         pubState.textContent = `publishing… ${data.seconds}s`;
         pubGo.disabled = true;
       } else if (data.code === 0) {
-        pubState.textContent = 'pushed. GitHub Actions takes about two minutes.';
+        pubState.textContent = 'Live. GitHub Actions takes about two minutes to finish deploying.';
         pubGo.disabled = false;
         toast('published');
       } else if (data.code !== null) {
@@ -1424,22 +1417,27 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       pubPanel.hidden = !pubPanel.hidden;
       if (!pubPanel.hidden) {
         savePanel.hidden = true;
-        if (saveInfo?.publishLocked) {
-          pubGo.disabled = true;
-          pubGo.textContent = 'Locked';
-          pubMsg.disabled = true;
-          pubState.textContent = 'Publishing is off. Everything stays on this Mac. To turn it back on, ask Claude or delete .publish-lock.';
-        } else {
-          pubGo.textContent = 'Publish now';
-          pubMsg.disabled = false;
-          pubMsg.focus();
-        }
+        pubGo.textContent = 'Go live';
+        pubMsg.focus();
         poll();
       }
     });
     root.querySelector('.studio-pub-close')?.addEventListener('click', () => { pubPanel.hidden = true; });
 
     pubGo?.addEventListener('click', async () => {
+      // The one step that reaches the public site: always ask first.
+      let info = saveInfo;
+      try { info = await (await fetch(`${API}/save/status`)).json(); renderSave(info); } catch {}
+      const saves = info?.notLive ?? 0;
+      const unsaved = info?.changes?.length ?? 0;
+      const what = [
+        saves ? `${saves} save${saves === 1 ? '' : 's'}` : '',
+        unsaved ? `${unsaved} unsaved change${unsaved === 1 ? '' : 's'}` : '',
+      ].filter(Boolean).join(' and ') || 'everything on this Mac';
+      if (!confirm(`Go live?\n\nThis puts ${what} on the public site (ryanstrawbridge-2.github.io). It's visible to anyone in about 2 minutes.`)) {
+        pubState.textContent = 'Cancelled. Nothing was sent.';
+        return;
+      }
       pubGo.disabled = true;
       pubLog.hidden = false;
       pubLog.textContent = 'starting…';

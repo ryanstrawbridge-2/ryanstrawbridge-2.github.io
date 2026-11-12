@@ -335,15 +335,16 @@ GitHub SSH push from background processes stalls on large payloads.
     while dragging and vanished on reload. Any new home image slot needs its
     crop wired in the template too, or it repeats this. Logos are not croppable.
 
-51. **Save and Publish are separate steps, and Publish can be locked.**
-    Studio's Save button is `git add -A && git commit --no-verify` on the
-    current branch: a local checkpoint, never a push. It refuses on `main`,
-    because auto-sync pushes `main` hourly whenever it is ahead of GitHub, so a
-    save there would go live within the hour. Publish (`scripts/publish.sh`,
-    the same script as the button) refuses while `.publish-lock` exists
-    (gitignored, first line is the reason) and refuses on any branch but
-    `main`. Ryan asked on 2026-11-11 for nothing to go live; the lock is in
-    place. Don't delete it without him saying so.
+51. **Save and Go live are separate steps.** Studio's Save button is
+    `git add -A && git commit --no-verify` on the current branch: a local
+    checkpoint, never a push. It refuses on `main`, because auto-sync pushes
+    `main` hourly whenever it is ahead of GitHub. Go live runs
+    `scripts/publish.sh` behind a confirm popup. The script works from any
+    branch: saves unsaved edits, merges in anything new on GitHub's main,
+    builds, pushes `HEAD` to `origin/main` (one save at a time if over 5 MB of
+    media), then `git branch -f main HEAD`. `PUBLISH_DRY_RUN=1` does every
+    step but the push. check:copy ignores figures with no picture and draft
+    projects, since neither can render in production.
 52. **Figure text edits are dotted paths; `patchTopLevel` must not write
     them as keys.** Studio's Text mode sends `figures.0.takeaway` to
     `/project/patch`. `doc.set()` wrote that as a literal top-level key, so the
