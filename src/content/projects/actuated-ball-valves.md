@@ -14,14 +14,6 @@ order: 3
 gallery:
   - image: ../../assets/images/projects/actuated-ball-valves/printed-fixture.jpeg
     alt: abv printedfixture
-  - image: ../../assets/images/projects/actuated-ball-valves/pump-test.png
-    alt: abv pumptest
-    section: Outcome
-    focal: 65% 66%
-  - image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-abv-p-id.png
-    alt: abv p id
-    section: Problem
-    focal: 3% 44%
   - image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-diagram.png
     alt: diagram
 figures:
@@ -36,13 +28,7 @@ figures:
       - Pressure regulators are too heavy to fly.
       - Previous needle valve and stepper motor had too low Cv and high breaking torque.
       - PLACEHOLDER — add the third point this diagram should make.
-  - section: Problem
-    kind: diagram
-    title: Architecture trade-off
-    takeaway: PLACEHOLDER COPY — rewrite.
-    plan: >-
-      Three columns (regulator, needle valve + stepper, actuated ball valve) against four rows (mass, Cv, breakaway torque, flight-viable). Shade the cell that rules each option out.
-    aspect: 4/3
+    image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-diagram-3.png
   - section: What I did
     kind: diagram
     title: Torque budget
