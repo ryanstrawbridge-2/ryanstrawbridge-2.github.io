@@ -59,6 +59,8 @@ figures:
     aspect: 16/9
     points:
       - Successful actuation under 2300 psi delta.
+heroFocalPoint: 37% 51%
+heroAspect: standard
 ---
 
 ## Problem

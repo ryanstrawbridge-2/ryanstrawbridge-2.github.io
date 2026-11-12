@@ -5,8 +5,8 @@ date: 2026-06-24T20:30:15.114Z
 summary: 'Designed the mechanical release for a resettable, low-cost underwater retrieval system rated to 300 m, targeting under $400 against $2,000+ commercial systems.'
 hero: ../../assets/images/projects/underwater-mechanical-release-system/hero-overview.png
 heroAlt: CAD mockup
-heroFocalPoint: ''
-heroAspect: wide
+heroFocalPoint: '43% 29%'
+heroAspect: standard
 galleryLayout: stacked
 gallery:
   - image: ../../assets/images/projects/underwater-mechanical-release-system/prototype-assembly.jpeg
@@ -32,9 +32,7 @@ figures:
     title: Cost against depth rating
     takeaway: PLACEHOLDER COPY — rewrite. The gap this design aims at.
     plan: >-
-      Scatter: depth rating on X, unit cost on Y. Plot the commercial systems
-      above $2,000 and this one at under $400 and 300 m. One quadrant is empty
-      and that is the point.
+      Scatter: depth rating on X, unit cost on Y. Plot the commercial systems above $2,000 and this one at under $400 and 300 m. One quadrant is empty and that is the point.
     aspect: 4/3
     points:
       - Target production cost under $400 against $2,000+ commercial systems.
@@ -44,9 +42,7 @@ figures:
     title: Seal stack at 470 psi
     takeaway: PLACEHOLDER COPY — rewrite.
     plan: >-
-      Section view through the housing: both dynamic nitrile O-rings and the
-      static face seal, each called out, with the gland dimensions you sized to
-      the Parker handbook.
+      Section view through the housing: both dynamic nitrile O-rings and the static face seal, each called out, with the gland dimensions you sized to the Parker handbook.
     aspect: 16/9
     points:
       - Sized dual dynamic nitrile O-rings and a static face seal to Parker Handbook design practice at 470 psi.
@@ -56,10 +52,7 @@ figures:
     title: Load path, with a factor of safety at each check
     takeaway: PLACEHOLDER COPY — rewrite. Six hand calculations, one picture.
     plan: >-
-      One section view, six numbered callouts — shaft bending, tensile,
-      torsional, shear tear-out, bolt pullout, face-seal clamping. Put the
-      factor of safety next to each number. Use the callout markers below
-      rather than drawing the numbers into the image.
+      One section view, six numbered callouts — shaft bending, tensile, torsional, shear tear-out, bolt pullout, face-seal clamping. Put the factor of safety next to each number. Use the callout markers below rather than drawing the numbers into the image.
     aspect: 16/9
     points:
       - Shaft bending — ADD FS.
@@ -73,16 +66,14 @@ figures:
     title: Release sequence
     takeaway: PLACEHOLDER COPY — rewrite.
     plan: >-
-      Four frames: armed, signal received, actuating, released and ready to
-      reset. Same section view each time so only the mechanism moves.
+      Four frames: armed, signal received, actuating, released and ready to reset. Same section view each time so only the mechanism moves.
     aspect: 16/9
   - section: Outcome
     kind: photo
     title: Ocean test
     takeaway: PLACEHOLDER COPY — rewrite.
     plan: >-
-      A photo from the 60 ft, 5-day deployment if you have one; otherwise the
-      bench pressure test at 470 psi. Pick from portfolio-photos.
+      A photo from the 60 ft, 5-day deployment if you have one; otherwise the bench pressure test at 470 psi. Pick from portfolio-photos.
     aspect: 3/2
     points:
       - Version 1 pressure-tested to 470 psi with no leaks.
