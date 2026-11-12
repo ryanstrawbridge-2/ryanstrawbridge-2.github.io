@@ -31,23 +31,19 @@ figures:
     alt: "Section view of the release: electronics and battery inside the housing, motor driving the release shaft through the sealed end cap."
     focal: 23% 98%
     callouts:
-      - { x: 75, y: 54.8, label: Endcap, place: right }
+      - { x: 76.9, y: 55.3, label: Endcap, place: right }
       - { x: 57.1, y: 73, label: Release Arm, place: right }
       - { x: 36, y: 62.8, label: Sheath, place: right }
     zoom: 1.5
     aspect: 3/4
   - section: What I did
-    kind: diagram
-    title: FEA of the release arm
-    takeaway: "Peak stress on the release arm is 32.7 MPa, at the shaft step."
-    image: ../../assets/images/projects/underwater-mechanical-release-system/fea-sheath.png
+    kind: photo
+    title: Max principle stress at tab fillet
+    takeaway: "FEA of the release arm"
+    image: ../../assets/images/projects/underwater-mechanical-release-system/underwater-mechanical-release-system-feaarm.png
     alt: "Ansys static structural result, von Mises stress on the release arm: 32.7 MPa peak at the shaft step, 21.3 MPa at the shoulder."
     aspect: auto
-    points:
-      - Ansys static structural, von Mises stress.
-      - 32.7 MPa peak at the shaft step; 21.3 MPa at the shoulder.
-      - Hand calculations covered bending, tension, torsion and shear tear-out on the same load path.
-    focal: 68% 41%
+    points: []
   - section: What I did
     kind: diagram
     title: GD&T and drawings
