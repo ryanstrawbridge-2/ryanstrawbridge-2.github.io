@@ -17,10 +17,13 @@ gallery:
   - image: ../../assets/images/projects/actuated-ball-valves/pump-test.png
     alt: abv pumptest
     section: Outcome
+    focal: 65% 66%
   - image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-abv-p-id.png
     alt: abv p id
     section: Problem
     focal: 3% 44%
+  - image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-diagram.png
+    alt: diagram
 figures:
   - section: Problem
     kind: diagram

@@ -20,33 +20,16 @@ figures:
   - section: What I did
     kind: comparison
     title: Joint revision
-    takeaway: PLACEHOLDER COPY — rewrite. Rev 2 redesigned the joint to eliminate welds.
+    takeaway: Rev 2 redesigned the joint to eliminate welds.
     image: ../../assets/images/projects/lifting-frame/joint-rev1.jpg
     compare: ../../assets/images/projects/lifting-frame/joint-rev2.jpg
     beforeLabel: Rev 1
     afterLabel: Rev 2
     alt: Corner joint of the lifting frame, first and second revision
-    caption: PLACEHOLDER CAPTION — what changed between revisions and why.
     aspect: 4/3
     points:
-      - PLACEHOLDER — what drove the change from a weldment to a machined joint.
-      - PLACEHOLDER — what it cost or saved.
-  - section: What I did
-    kind: photo
-    title: The machined corner joint
-    takeaway: PLACEHOLDER COPY — rewrite. The arms carry the lift in compression; the pins only hold the frame together.
-    image: ../../assets/images/projects/lifting-frame/joint-rev2.jpg
-    alt: Machined aluminum corner joint with two arm sockets and two tapped holes on the top face
-    caption: PLACEHOLDER CAPTION.
-    aspect: 4/3
-    points:
-      - Tapped holes for the lifting hardware. The swivel hoist ring threads in here — CHECK AND REWRITE which hole takes what.
-      - Arm socket. The arm bears on the joint in compression during a lift — CHECK AND REWRITE.
-      - Assembly pin hole. Loose fit on purpose. The pin only holds the frame together while it is unloaded; in a lift the arm is in compression, so the pin carries no load.
-    callouts:
-      - { x: 51, y: 18, label: Tapped holes, place: right }
-      - { x: 72, y: 50, label: Arm socket, place: right }
-      - { x: 61, y: 67, label: Pin hole, place: left }
+      - Weld fusion on the Rev 1 joint could not be validated by NDT.
+      - Rev 2 pivots to non-weldment features to simplify the joint.
   - section: What I did
     kind: diagram
     title: Load path and sling angle
@@ -71,13 +54,6 @@ figures:
     points:
       - Saved 90 square feet of floor space in storage.
       - Increased table space for more fixture tooling for magnet stacking.
-  - section: Outcome
-    kind: data
-    title: Time per lift
-    takeaway: PLACEHOLDER COPY — rewrite.
-    plan: >-
-      Two horizontal bars, old against new, in minutes per lift. Annotate the 30-45 minute saving. Keep it small; it is one number.
-    aspect: 16/9
 ---
 
 ## Problem
