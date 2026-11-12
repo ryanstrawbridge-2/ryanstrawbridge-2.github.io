@@ -20,27 +20,16 @@ tools:
 order: 2
 draft: false
 figures:
-  - section: Problem
-    kind: diagram
-    title: What the old tool could not do
-    takeaway: Previous Process
-    plan: >-
-      Side by side: one bend at a time with the old plates, against both bends in one press with the new ones. Show the short bend the old tool produced against the required geometry.
-    aspect: 16/9
-    points:
-      - Produced bends shorter than required and formed only one bend at a time.
-      - Required multiple adjustments and relied on operators eyeballing the geometry.
   - section: What I did
-    kind: diagram
+    kind: photo
     title: Spring-back compensation
     takeaway: Springback Compensation
     plan: >-
       The geometry your equation describes: bend offset, radius and arc length, with the spring-back angle drawn as the difference between pressed and released. This is the diagram that makes the equation readable.
     aspect: 16/9
-    points:
-      - Derived a generalizable equation relating bend offset, radius and arc length to compensate for spring-back.
-      - Redesigned the bending plates to create both bends at once.
-      - Reconfigured the bolting and piston layout, increasing shear capacity to **44 kips**.
+    points: []
+    image: ../../assets/images/projects/hydraulic-bender/hydraulic-bender-diagram.png
+    focal: 28% 60%
 ---
 
 ## Problem
