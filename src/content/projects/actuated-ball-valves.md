@@ -14,8 +14,6 @@ order: 3
 gallery:
   - image: ../../assets/images/projects/actuated-ball-valves/printed-fixture.jpeg
     alt: abv printedfixture
-  - image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-diagram.png
-    alt: diagram
 figures:
   - section: Problem
     kind: diagram
