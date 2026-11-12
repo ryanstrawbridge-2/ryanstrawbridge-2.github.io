@@ -29,16 +29,6 @@ figures:
       - Previous needle valve and stepper motor had too low Cv and high breaking torque.
       - PLACEHOLDER — add the third point this diagram should make.
     image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-diagram-3.png
-  - section: What I did
-    kind: diagram
-    title: Torque budget
-    takeaway: PLACEHOLDER COPY — rewrite.
-    plan: >-
-      Stacked bar: seat friction + differential-pressure term + the margin you added for seat creep and breakaway, against the servo's stall torque as a horizontal line. Shows the margin rather than asserting it.
-    aspect: 4/3
-    points:
-      - Derived required torque from differential pressure, seat friction and port geometry.
-      - Added margin for seat creep and breakaway torque the simplified model does not capture.
   - section: Outcome
     kind: data
     title: Commanded position vs current, across pressures
