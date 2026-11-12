@@ -13,12 +13,13 @@ tools:
 order: 3
 gallery:
   - image: ../../assets/images/projects/actuated-ball-valves/printed-fixture.jpeg
-    alt: abv printedfixture
+    alt: 3D Printed Jig
+    focal: 53% 60%
 figures:
   - section: Problem
     kind: diagram
     title: Where the valve sits in the feed system
-    takeaway: PLACEHOLDER COPY — rewrite. The valve replaces a regulator the vehicle cannot afford to fly.
+    takeaway: P&ID
     plan: >-
       Flow schematic, left to right: pressurant tank, fill/vent, the position a regulator would occupy (crossed out), the actuated ball valve, then the injector. Label the pressures you know at each station.
     aspect: 16/9
@@ -30,12 +31,14 @@ figures:
   - section: Outcome
     kind: data
     title: Commanded position vs current, across pressures
-    takeaway: PLACEHOLDER COPY — rewrite.
+    takeaway: Breakaway Torque Testing
     plan: >-
       The plot you already made. Current on Y, commanded position on X, one series per test pressure up to 2300 psi. Mark the actuation threshold.
     aspect: 16/9
     points:
       - Successful actuation under 2300 psi delta.
+    image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-pump-test-4.png
+    caption: Bike pump setup testing seat friction vs motor torque
 heroFocalPoint: 37% 51%
 heroAspect: standard
 ---
