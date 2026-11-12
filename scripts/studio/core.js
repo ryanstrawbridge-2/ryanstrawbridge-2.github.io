@@ -56,6 +56,10 @@ const ICON = {
   alt: '<path d="M4 6h16M4 12h11M4 18h7"/>',
   replace: '<path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 15.5"/><path d="M4 20v-4.5h4.5"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  up: '<path d="m18 15-6-6-6 6"/>',
+  down: '<path d="m6 9 6 6 6-6"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/>',
   grip: '<circle cx="9" cy="6" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="18" r="1.2"/>',
 };
 const svg = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[name]}</svg>`;
@@ -96,14 +100,32 @@ const undoBtn = root.querySelector('.studio-undo');
  * "undo (3)") — you are undoing one specific thing you just did, and the
  * only way to be sure it is the right one is to see it named.
  */
+const redoBtn = root.querySelector('.studio-redo');
+const historyList = root.querySelector('.studio-history-list');
+
+/** Keep Undo / Redo / History in step with the server's journal. */
 const setUndo = (state) => {
   if (!undoBtn || !state) return;
   undoBtn.disabled = !state.depth;
-  const labelEl = undoBtn.querySelector('.studio-undo-label');
-  if (labelEl) labelEl.textContent = 'Undo';
-  undoBtn.title = state.next
-    ? `Undo: ${state.next} (⌘Z)`
-    : 'Nothing to undo yet';
+  undoBtn.title = state.next ? `Undo: ${state.next} (⌘Z)` : 'Nothing to undo yet';
+  if (redoBtn) {
+    redoBtn.disabled = !state.redo;
+    redoBtn.title = state.redo ? `Redo: ${state.redo} (⌘⇧Z)` : 'Nothing to redo';
+  }
+  if (historyList && state.history) {
+    const ago = (t) => {
+      const s = Math.round((Date.now() - t) / 1000);
+      return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} h ago`;
+    };
+    historyList.replaceChildren(...(state.history.length ? state.history.map((h, i) => {
+      const li = document.createElement('li');
+      const b = Object.assign(document.createElement('button'), { type: 'button', title: `Undo the last ${i + 1} edit${i ? 's' : ''}` });
+      b.append(Object.assign(document.createElement('span'), { textContent: h.label }), Object.assign(document.createElement('time'), { textContent: ago(h.at) }));
+      b.addEventListener('click', () => doUndo(i + 1));
+      li.append(b);
+      return li;
+    }) : [Object.assign(document.createElement('li'), { className: 'is-empty', textContent: 'No edits yet.' })]));
+  }
 };
 
 /** Patch fields of one gallery row: patchRow(2, { width: 'half' }). */
@@ -161,30 +183,46 @@ const flushPending = () => {
 window.addEventListener('pagehide', flushPending);
 
 let undoing = false;
-const doUndo = async () => {
-  if (undoing || undoBtn?.disabled) return;
+const journalStep = async (kind, steps = 1) => {
+  if (undoing) return;
   undoing = true;
   try {
-    const response = await fetch(`${API}/undo`, { method: 'POST' });
+    const response = await fetch(`${API}/${kind}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ steps }),
+    });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.reason || data.error || 'undo failed');
-    // The write nudges Astro, so the page is about to reload with the
-    // restored file. Say what came back before that happens.
+    if (!response.ok) throw new Error(data.reason || data.error || `${kind} failed`);
+    // The restored file reloads the page; say what came back before it does.
     const bits = [];
     if (data.restoredMedia) bits.push(`${data.restoredMedia} file back`);
     if (data.deleted) bits.push(`${data.deleted} file removed`);
-    toast(`undid ${data.label}${bits.length ? ` · ${bits.join(' · ')}` : ''}`);
-    if (data.missing?.length)
-      toast(`undid ${data.label}, but ${data.missing.length} file could not be restored`, true);
-    setUndo({ depth: data.remaining, next: null });
+    const what = data.steps > 1 ? `${data.steps} edits` : data.label;
+    toast(`${kind === 'redo' ? 'redid' : 'undid'} ${what}${bits.length ? ` · ${bits.join(' · ')}` : ''}`);
+    if (data.missing?.length) toast(`${data.missing.length} file could not be restored`, true);
+    setUndo(data.undo);
   } catch (error) {
     toast(error.message, true);
   } finally {
     undoing = false;
   }
 };
+const doUndo = (steps = 1) => (undoBtn?.disabled ? undefined : journalStep('undo', steps));
+const doRedo = () => (redoBtn?.disabled ? undefined : journalStep('redo'));
+redoBtn?.addEventListener('click', doRedo);
 
-undoBtn?.addEventListener('click', doUndo);
+// History panel.
+const historyPanel = root.querySelector('.studio-history-panel');
+root.querySelector('.studio-history-open')?.addEventListener('click', async () => {
+  historyPanel.hidden = !historyPanel.hidden;
+  if (!historyPanel.hidden) {
+    try { setUndo((await (await fetch(`${API}/health`)).json()).undo); } catch { /* keeps last list */ }
+  }
+});
+root.querySelector('.studio-history-close')?.addEventListener('click', () => { historyPanel.hidden = true; });
+
+undoBtn?.addEventListener('click', () => doUndo());
 
 // -- focal keyword <-> percentage -------------------------------------
 const KEYWORD_PCT = {
@@ -284,6 +322,7 @@ const label = (id) =>
 
 
 export {
+  doRedo,
   patchRow,
   PORT,
   API,

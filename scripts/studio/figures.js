@@ -77,11 +77,14 @@ for (const fig of MODE === 'project' ? document.querySelectorAll('figure[data-st
 
   if (skeleton) {
     skeleton.classList.add('studio-fig-dropzone');
-    const cta = document.createElement('p');
+    // The pill picks a photo; clicking anywhere else on the frame selects the
+    // figure for the side panel (inspector.js).
+    const cta = document.createElement('button');
+    cta.type = 'button';
     cta.className = 'studio-fig-cta';
-    cta.innerHTML = `${svg('plus')}<span>Drop a photo here, or click to choose</span>`;
+    cta.innerHTML = `${svg('plus')}<span>Drop a photo here, or choose one</span>`;
+    cta.addEventListener('click', () => hooks.openLibrary({ figure: figIndex, figureSlot: 'image' }));
     skeleton.appendChild(cta);
-    skeleton.addEventListener('click', () => hooks.openLibrary({ figure: figIndex, figureSlot: 'image' }));
   }
 
   // Drop a file on the figure to fill it. On a before/after, the side

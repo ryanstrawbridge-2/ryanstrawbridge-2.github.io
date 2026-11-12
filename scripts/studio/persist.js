@@ -38,7 +38,7 @@ if (saved && saved.path === location.pathname && Date.now() - saved.at < 8000) {
   if (saved.text) root.querySelector('.studio-text')?.click();
   const openers = { '.studio-save-panel': '.studio-save', '.studio-theme-panel': '.studio-theme', '.studio-publish-panel': '.studio-publish' };
   for (const sel of saved.panels ?? []) root.querySelector(openers[sel])?.click();
-  if (saved.selected !== null) {
+  if (saved.selected !== null && !window.__studioSelectionHandled) {
     document.querySelector(`figure[data-studio-figure="${saved.selected}"]`)?.dispatchEvent(new CustomEvent('studio:select'));
   }
 }

@@ -798,9 +798,11 @@ const homeValue = async ({ path }) => {
 };
 
 /** Same, for a project's frontmatter. */
-const projectValue = async ({ slug, path }) => {
+const projectValue = async ({ slug, path, json }) => {
   const file = await readProject(CONTENT, slug);
-  const value = file.doc.getIn(String(path).split('.'));
+  const value = file.doc.getIn(toPath(path));
+  // json: the inspector reads a whole figure at once.
+  if (json) return { path, value: value?.toJSON ? value.toJSON() : value ?? null };
   if (value === undefined || value === null) return { path, value: '' };
   if (typeof value === 'object') throw new Error(`${path} is not text`);
   return { path, value: String(value) };
@@ -1071,13 +1073,16 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  if (url.pathname === '/undo' && req.method === 'POST') {
+  if ((url.pathname === '/undo' || url.pathname === '/redo') && req.method === 'POST') {
     if (!origin || !DEV_ORIGINS.has(origin)) {
       json(res, 403, { error: 'studio only accepts requests from the local dev server' });
       return;
     }
-    const result = await journal.undo(ROOT);
-    json(res, result.ok ? 200 : 409, result);
+    const body = await readBody(req).catch(() => ({}));
+    const result = url.pathname === '/redo'
+      ? await journal.redo(ROOT)
+      : await journal.undo(ROOT, Math.min(15, Number(body.steps) || 1));
+    json(res, result.ok ? 200 : 409, { ...result, undo: journal.state() });
     return;
   }
 
@@ -1173,6 +1178,8 @@ const server = createServer(async (req, res) => {
     json(res, 400, { error: error.message });
   }
 });
+
+await journal.load(ROOT);
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`studio: writing to ${ROOT.replace(process.env.HOME ?? '', '~')}`);

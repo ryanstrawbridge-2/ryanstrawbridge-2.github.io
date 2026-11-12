@@ -12,7 +12,6 @@ import {
   size,
   toast,
   post,
-  doUndo,
   parkAltPrompt,
   label,
 } from './core.js';
@@ -249,13 +248,5 @@ root.querySelector('.studio-lib-close').addEventListener('click', () => { libPan
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && !libPanel.hidden) libPanel.hidden = true;
 
-  // ⌘Z is the browser's own undo inside a text field; only claim it when
-  // the caret isn't in one, or editing a caption would become impossible.
-  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName ?? '')
-    || document.activeElement?.isContentEditable;
-  if (!typing && (event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {
-    event.preventDefault();
-    doUndo();
-  }
 });
 

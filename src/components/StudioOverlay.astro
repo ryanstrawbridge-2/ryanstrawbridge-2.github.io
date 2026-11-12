@@ -51,11 +51,22 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
           <span class="studio-undo-label">Undo</span>
         </button>
+        <span class="studio-pair">
+          <button type="button" class="studio-btn studio-icon studio-redo" title="Nothing to redo" aria-label="Redo" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13" /></svg>
+          </button>
+          <button type="button" class="studio-btn studio-icon studio-history-open" title="Edit history" aria-label="Edit history">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
+          </button>
+        </span>
         <span class="studio-help">
           <button type="button" class="studio-btn studio-icon" aria-label="How to edit" aria-describedby="studio-hint">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M9.2 9.2a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.6-2.8 2.6" /><path d="M12 17h.01" /></svg>
           </button>
-          <span class="studio-hint" id="studio-hint" role="tooltip">{mode === 'home' ? 'Drag a photo to crop · pinch or ⌥scroll to zoom · hover a photo to replace it' : 'Drag a photo to crop · pinch or ⌥scroll to zoom · drop files anywhere to add them · drop on the main photo to replace it'}</span>
+          <span class="studio-hint" id="studio-hint" role="tooltip">
+            {mode === 'home' ? 'Drag a photo to crop · pinch or ⌥scroll to zoom · hover a photo to replace it' : 'Click a figure to edit it in the side panel · drag a photo to crop · pinch or ⌥scroll to zoom · drop files to add them'}
+            <span class="studio-keys"><kbd>T</kbd> text <kbd>P</kbd> preview <kbd>⌘S</kbd> save <kbd>⌘Z</kbd> undo <kbd>⌘⇧Z</kbd> redo <kbd>Esc</kbd> close / deselect <kbd>⌫</kbd> delete selected figure</span>
+          </span>
         </span>
         <button type="button" class="studio-btn studio-primary studio-save" title="Save a checkpoint on this Mac. Nothing goes live.">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3.5h11l3.5 3.5v11.5A2 2 0 0 1 17.5 20.5h-11A2 2 0 0 1 4.5 18.5V5.5a2 2 0 0 1 .5-2Z" /><path d="M8 3.5v5h7v-5" /><path d="M8 20.5v-6h8v6" /></svg>
@@ -127,6 +138,17 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           </button>
         </header>
         <iframe class="studio-phone-frame" title="Phone preview" />
+      </div>
+
+      <div class="studio-panel studio-history-panel" hidden>
+        <header>
+          <strong>History</strong>
+          <span class="studio-theme-note">click an edit to undo back to before it</span>
+          <button type="button" class="studio-btn studio-icon studio-history-close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </header>
+        <ol class="studio-history-list" />
       </div>
 
       <div class="studio-panel studio-save-panel" hidden>

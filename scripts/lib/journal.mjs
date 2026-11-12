@@ -95,9 +95,43 @@ export const trashFile = async (root, relPath) => {
 };
 
 // ---------------------------------------------------------------------------
+//
+// Two stacks. Undo pops `entries`, applies it, and pushes the inverse onto
+// `redos`; redo does the reverse. A new edit clears `redos`, like every editor.
+//
+// Both are written to .astro/studio-journal.json after every change, so
+// restarting studio (which used to wipe undo) keeps the history. Entries
+// older than a day are dropped on load: by then the files may have been
+// changed by git or the CMS, and an undo that silently reverts someone else's
+// edit is worse than no undo.
 
 const entries = [];
+const redos = [];
 let pending = null;
+let journalFile = null;
+const MAX_AGE = 24 * 60 * 60 * 1000;
+
+const serialise = (e) => ({ ...e, text: [...e.text] });
+const revive = (e) => ({ ...e, text: new Map(e.text) });
+
+const persist = async () => {
+  if (!journalFile) return;
+  try {
+    await mkdir(dirname(journalFile), { recursive: true });
+    await writeFile(journalFile, JSON.stringify({ entries: entries.map(serialise), redos: redos.map(serialise) }));
+  } catch { /* history is a convenience; never fail an edit over it */ }
+};
+
+/** Load the saved history. Call once at startup. */
+export const load = async (root) => {
+  journalFile = join(root, '.astro/studio-journal.json');
+  try {
+    const saved = JSON.parse(await readFile(journalFile, 'utf8'));
+    const fresh = (e) => Date.now() - e.at < MAX_AGE;
+    entries.push(...(saved.entries ?? []).filter(fresh).map(revive));
+    redos.push(...(saved.redos ?? []).filter(fresh).map(revive));
+  } catch { /* first run, or unreadable: start empty */ }
+};
 
 /** Called before a write route runs. */
 export const begin = async (root, label) => {
@@ -117,8 +151,12 @@ export const commit = async (root) => {
   const removed = [...pending.media].filter((f) => !now.media.has(f));
 
   if (textChanged || created.length || removed.length) {
-    entries.push({ label: pending.label, at: pending.at, text: pending.text, created, removed });
+    // Only the files this edit changed need remembering.
+    const text = new Map([...pending.text].filter(([file, before]) => now.text.get(file) !== before));
+    entries.push({ label: pending.label, at: pending.at, text, created, removed });
     while (entries.length > DEPTH) entries.shift();
+    redos.length = 0;
+    await persist();
   }
   pending = null;
 };
@@ -131,43 +169,37 @@ export const abort = () => {
 export const state = () => ({
   depth: entries.length,
   next: entries.length ? entries[entries.length - 1].label : null,
+  redo: redos.length ? redos[redos.length - 1].label : null,
+  history: entries.slice(-15).reverse().map((e) => ({ label: e.label, at: e.at })),
 });
 
 /**
- * Undo the most recent edit.
+ * Put one entry's "before" back, and return the entry that would undo THAT.
  *
  * Order matters: text first, so that if a media step fails the page is already
  * consistent with what the user expects to see.
  */
-export const undo = async (root) => {
-  const entry = entries.pop();
-  if (!entry) return { ok: false, reason: 'nothing to undo' };
-
+const apply = async (root, entry) => {
+  const inverse = { label: entry.label, at: Date.now(), text: new Map(), created: entry.removed, removed: entry.created };
   let restoredText = 0;
   for (const [file, before] of entry.text) {
-    try {
-      if ((await readFile(file, 'utf8')) === before) continue;
-      await writeFile(file, before, 'utf8');
-      restoredText += 1;
-    } catch {
-      // The file was deleted outside studio. Put the remembered copy back.
-      await mkdir(dirname(file), { recursive: true });
-      await writeFile(file, before, 'utf8');
-      restoredText += 1;
-    }
+    let current = null;
+    try { current = await readFile(file, 'utf8'); } catch { /* deleted outside studio */ }
+    if (current !== null) inverse.text.set(file, current);
+    if (current === before) continue;
+    await mkdir(dirname(file), { recursive: true });
+    await writeFile(file, before, 'utf8');
+    restoredText += 1;
   }
 
-  // Anything this edit created goes away again.
+  // Anything this edit created goes away again (to the trash, so redo works).
   let deleted = 0;
   for (const rel of entry.created) {
-    const full = join(root, rel);
-    if (!existsSync(full)) continue;
+    if (!existsSync(join(root, rel))) continue;
     try {
       await trashFile(root, rel);
       deleted += 1;
-    } catch {
-      /* leave it rather than fail the undo */
-    }
+    } catch { /* leave it rather than fail the undo */ }
   }
 
   // Anything it removed comes back out of the trash.
@@ -185,17 +217,31 @@ export const undo = async (root) => {
     await rename(trashed, full).catch(() => missing.push(rel));
     restoredMedia += 1;
   }
-
-  return {
-    ok: true,
-    label: entry.label,
-    restoredText,
-    restoredMedia,
-    deleted,
-    ...(missing.length ? { missing } : {}),
-    remaining: entries.length,
-  };
+  return { inverse, restoredText, restoredMedia, deleted, missing };
 };
+
+const step = async (root, from, to, nothing) => {
+  const entry = from.pop();
+  if (!entry) return { ok: false, reason: nothing };
+  const { inverse, missing, ...counts } = await apply(root, entry);
+  to.push(inverse);
+  await persist();
+  return { ok: true, label: entry.label, ...counts, ...(missing.length ? { missing } : {}), remaining: entries.length };
+};
+
+/** Undo the most recent edit (or the last `steps` of them). */
+export const undo = async (root, steps = 1) => {
+  let result = { ok: false, reason: 'nothing to undo' };
+  for (let i = 0; i < Math.max(1, steps); i++) {
+    const r = await step(root, entries, redos, 'nothing to undo');
+    if (!r.ok) break;
+    result = { ...r, steps: i + 1 };
+  }
+  return result;
+};
+
+/** Re-apply the most recently undone edit. */
+export const redo = (root) => step(root, redos, entries, 'nothing to redo');
 
 /** How much is sitting in the trash, for the housekeeping line in /health. */
 export const trashSize = async (root) => {
