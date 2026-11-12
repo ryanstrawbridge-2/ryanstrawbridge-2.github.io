@@ -21,9 +21,7 @@ figures:
     title: Holding a cantilevered cable by hand
     takeaway: PLACEHOLDER COPY — rewrite. This is the problem the tool removes.
     plan: >-
-      Three frames showing the old method: the cable cantilevered mid-air, the
-      strap holding it, and the sway and misalignment that followed as it
-      lowered. Arrows for the internal forces pushing it out of position.
+      Three frames showing the old method: the cable cantilevered mid-air, the strap holding it, and the sway and misalignment that followed as it lowered. Arrows for the internal forces pushing it out of position.
     aspect: 16/9
     points:
       - The first turn of the cable had to be placed by hand at the correct radial position.
@@ -34,20 +32,12 @@ figures:
     title: How the carriage sets the first turn
     takeaway: PLACEHOLDER COPY — rewrite.
     plan: >-
-      Section through the tool: the linear rail, the carriage, and the
-      adjustable stop a technician sets the radial position with. Show the cable
-      landing where it is meant to.
+      Section through the tool: the linear rail, the carriage, and the adjustable stop a technician sets the radial position with. Show the cable landing where it is meant to.
     aspect: 16/9
     points:
       - Passive, carriage-driven fixture that lays down the first turn, replacing a manual strap operation.
       - Off-the-shelf carriages and linear rails on a lightweight aluminium sheet-metal frame.
       - Adjustable, so technicians set the radial position directly.
-  - section: Outcome
-    kind: data
-    title: Time per magnet layer
-    takeaway: PLACEHOLDER COPY — rewrite.
-    plan: Bar showing the 0.5 to 3 hour saving per layer, with the range by configuration.
-    aspect: 16/9
 ---
 
 ## Problem

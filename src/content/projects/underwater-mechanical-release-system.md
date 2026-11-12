@@ -9,6 +9,11 @@ heroFocalPoint: '43% 29%'
 heroAspect: standard
 galleryLayout: stacked
 gallery:
+  - model: itd-release.glb
+    alt: ITD release assembly, interactive 3D model. The housing is drawn see-through so the electronics and release mechanism inside are visible.
+    caption: The release assembly in 3D. Drag to rotate; the housing is see-through.
+    section: What I did
+    width: full
   - image: ../../assets/images/projects/underwater-mechanical-release-system/prototype-assembly.jpeg
     caption: Prototype
   - image: ../../assets/images/projects/underwater-mechanical-release-system/cross-section.png
@@ -27,16 +32,6 @@ tools:
   - Mechanical design
 order: 4
 figures:
-  - section: Problem
-    kind: diagram
-    title: Cost against depth rating
-    takeaway: PLACEHOLDER COPY — rewrite. The gap this design aims at.
-    plan: >-
-      Scatter: depth rating on X, unit cost on Y. Plot the commercial systems above $2,000 and this one at under $400 and 300 m. One quadrant is empty and that is the point.
-    aspect: 4/3
-    points:
-      - Target production cost under $400 against $2,000+ commercial systems.
-      - Rated for 300 m depth and underwater environments.
   - section: What I did
     kind: diagram
     title: Seal stack at 470 psi
@@ -47,27 +42,6 @@ figures:
     points:
       - Sized dual dynamic nitrile O-rings and a static face seal to Parker Handbook design practice at 470 psi.
       - Resettable without opening the housing.
-  - section: What I did
-    kind: diagram
-    title: Load path, with a factor of safety at each check
-    takeaway: PLACEHOLDER COPY — rewrite. Six hand calculations, one picture.
-    plan: >-
-      One section view, six numbered callouts — shaft bending, tensile, torsional, shear tear-out, bolt pullout, face-seal clamping. Put the factor of safety next to each number. Use the callout markers below rather than drawing the numbers into the image.
-    aspect: 16/9
-    points:
-      - Shaft bending — ADD FS.
-      - Tensile — ADD FS.
-      - Torsional — ADD FS.
-      - Shear tear-out — ADD FS.
-      - Bolt pullout — ADD FS.
-      - Face-seal clamping force — ADD FS.
-  - section: What I did
-    kind: diagram
-    title: Release sequence
-    takeaway: PLACEHOLDER COPY — rewrite.
-    plan: >-
-      Four frames: armed, signal received, actuating, released and ready to reset. Same section view each time so only the mechanism moves.
-    aspect: 16/9
   - section: Outcome
     kind: photo
     title: Ocean test

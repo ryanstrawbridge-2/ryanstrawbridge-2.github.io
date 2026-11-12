@@ -26,7 +26,7 @@ figures:
     points:
       - Pressure regulators are too heavy to fly.
       - Previous needle valve and stepper motor had too low Cv and high breaking torque.
-      - PLACEHOLDER — add the third point this diagram should make.
+      - Full-port ball valves solve both
     image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-diagram-3.png
   - section: Outcome
     kind: data

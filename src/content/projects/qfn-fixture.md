@@ -19,10 +19,7 @@ figures:
     title: The reflow profile and the 93 °C limit
     takeaway: PLACEHOLDER COPY — rewrite. The filters saw more than they are rated for.
     plan: >-
-      Generic reflow temperature profile over time, with a horizontal line at
-      93 °C and the region above it shaded. Nothing program-specific — this is
-      the clearest way to explain the problem without showing restricted
-      geometry.
+      Generic reflow temperature profile over time, with a horizontal line at 93 °C and the region above it shaded. Nothing program-specific — this is the clearest way to explain the problem without showing restricted geometry.
     aspect: 16/9
     points:
       - Filters on the circuit boards were overheating above 93 °C during reflow, causing failures.
@@ -31,21 +28,11 @@ figures:
     title: How the shield works
     takeaway: PLACEHOLDER COPY — rewrite.
     plan: >-
-      Generic cross-section: board, the heat-sensitive component, and the shield
-      sitting over it with the pin alignment. Generic outlines only — no
-      program geometry.
+      Generic cross-section: board, the heat-sensitive component, and the shield sitting over it with the pin alignment. Generic outlines only — no program geometry.
     aspect: 16/9
     points:
       - Designed a universal PCB component heat shield with iterative pin alignment from Gerber files.
       - Printed 3 test fixtures to see how operators worked with the new tool.
-  - section: What I did
-    kind: diagram
-    title: Stencil study
-    takeaway: PLACEHOLDER COPY — rewrite.
-    plan: >-
-      The nine stencil configurations as a 3x3 grid of aperture patterns, with
-      the one that won marked. Self-explanatory at a glance.
-    aspect: 1/1
 ---
 
 > STOCK IMAGE SHOWN - *Specific designs are ITAR restricted*
