@@ -290,7 +290,7 @@ for (const slot of MODE === 'home' ? homeSlots() : []) {
     try { media.releasePointerCapture?.(event.pointerId); } catch {}
     if (!moved) return;
     try {
-      await post('/home/crop', { imagePath: path, focal: `${px}% ${py}%` });
+      await post('/home/crop', { imagePath: path, focal: `${px}% ${py}%` }, { quiet: true });
       toast(`crop → ${px}% ${py}%`);
     } catch (error) {
       toast(error.message, true);

@@ -22,8 +22,9 @@ import {
 //
 // Marker positions are percentages of the frame, so dragging writes
 // exactly what the page renders. Drag to move, ⌥-click to delete, and
-// "+ Marker" drops a new one in the middle. Labels and points are text;
-// edit those in Pages CMS.
+// "+ Marker" drops a new one in the middle. Double-click a marker (or click
+// it in Text mode) to rename it: the label lives inside a <button>, which a
+// browser won't let you type into, so it gets a text box of its own.
 //
 // Every figure, placeholder or not, gets a toolbar above it: put a photo
 // in (library or drop a file), or delete the whole figure. Undo covers
@@ -170,7 +171,7 @@ for (const fig of MODE === 'project' ? document.querySelectorAll('figure[data-st
       if (!moved) return;
       const focal = `${px}% ${py}%`;
       try {
-        await post('/project/patch', { patch: { [focalKey]: focal } });
+        await post('/project/patch', { patch: { [focalKey]: focal } }, { quiet: true });
         toast(`Fig. ${figIndex + 1}${sideName} crop → ${focal}`);
       } catch (error) { toast(error.message, true); }
     };
@@ -221,8 +222,48 @@ for (const fig of MODE === 'project' ? document.querySelectorAll('figure[data-st
   });
   tools.appendChild(add);
   tools.appendChild(Object.assign(document.createElement('span'), {
-    className: 'studio-tool-hint', textContent: 'drag markers · ⌥-click deletes one',
+    className: 'studio-tool-hint', textContent: 'drag markers · double-click renames · ⌥-click deletes',
   }));
+
+  const editLabel = (marker, n) => {
+    if (frame.querySelector('.studio-marker-input')) return;
+    let labelEl = marker.querySelector('.pfig-callout-label');
+    const current = labelEl?.textContent.trim() ?? '';
+    const input = Object.assign(document.createElement('input'), {
+      type: 'text', value: current, className: 'studio-marker-input', placeholder: 'Marker label',
+    });
+    input.setAttribute('aria-label', `Label for marker ${n}`);
+    input.style.left = marker.style.getPropertyValue('--cx') || '50%';
+    input.style.top = marker.style.getPropertyValue('--cy') || '50%';
+    for (const type of ['pointerdown', 'click', 'dblclick']) input.addEventListener(type, (e) => e.stopPropagation());
+    frame.appendChild(input);
+    input.focus();
+    input.select();
+    let closed = false;
+    const close = async (commit) => {
+      if (closed) return;
+      closed = true;
+      const next = input.value.trim();
+      input.remove();
+      if (!commit || next === current) return;
+      if (!labelEl) {
+        labelEl = Object.assign(document.createElement('span'), { className: 'pfig-callout-label' });
+        marker.appendChild(labelEl);
+      }
+      labelEl.textContent = next;
+      labelEl.hidden = !next;
+      try {
+        await post('/project/patch', { patch: { [`figures.${figIndex}.callouts.${n - 1}.label`]: next } }, { quiet: true });
+        toast(`marker ${n} → “${next}”`);
+      } catch (error) { toast(error.message, true); labelEl.textContent = current; labelEl.hidden = !current; }
+    };
+    input.addEventListener('keydown', (event) => {
+      event.stopPropagation(); // keep ⌫ / ⌘Z for the text, not studio's shortcuts
+      if (event.key === 'Enter') { event.preventDefault(); close(true); }
+      if (event.key === 'Escape') { event.preventDefault(); close(false); }
+    });
+    input.addEventListener('blur', () => close(true));
+  };
 
   for (const marker of frame.querySelectorAll('[data-studio-callout]')) {
     const n = Number(marker.dataset.studioCallout);
@@ -231,10 +272,16 @@ for (const fig of MODE === 'project' ? document.querySelectorAll('figure[data-st
     let x = parseFloat(marker.style.getPropertyValue('--cx')) || 50;
     let y = parseFloat(marker.style.getPropertyValue('--cy')) || 50;
 
+    marker.addEventListener('dblclick', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      editLabel(marker, n);
+    });
     marker.addEventListener('pointerdown', async (event) => {
       if (event.button !== 0) return;
       event.preventDefault();
       event.stopPropagation();
+      if (document.body.classList.contains('studio-text-mode')) { editLabel(marker, n); return; }
       if (event.altKey) {
         if (!confirm(`Delete marker ${n}? The point with the same number stays; remove it in Pages CMS.`)) return;
         try {
@@ -264,7 +311,7 @@ for (const fig of MODE === 'project' ? document.querySelectorAll('figure[data-st
       try { marker.releasePointerCapture?.(event.pointerId); } catch {}
       if (!moved) return;
       try {
-        await post('/project/patch', { patch: { [`figures.${figIndex}.callouts.${n - 1}.x`]: x, [`figures.${figIndex}.callouts.${n - 1}.y`]: y } });
+        await post('/project/patch', { patch: { [`figures.${figIndex}.callouts.${n - 1}.x`]: x, [`figures.${figIndex}.callouts.${n - 1}.y`]: y } }, { quiet: true });
         toast(`marker ${n} → ${x}%, ${y}%`);
       } catch (error) { toast(error.message, true); }
     };

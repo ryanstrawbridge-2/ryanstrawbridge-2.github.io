@@ -194,7 +194,7 @@ for (const figure of MODE === 'project' ? figures() : []) {
     const focal = `${px}% ${py}%`;
     figure.dataset.studioFocal = focal;
     try {
-      await patchRow(index, { focal });
+      await patchRow(index, { focal }, { quiet: true });
       toast(`crop → ${focal}`);
     } catch (error) { toast(error.message, true); }
   };

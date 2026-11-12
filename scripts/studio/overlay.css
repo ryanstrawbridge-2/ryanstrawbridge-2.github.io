@@ -737,3 +737,14 @@ body.studio-preview .studio-slot:hover video { outline: none; }
 .studio-review-group ul li { display: list-item; padding: 0; background: none !important; }
 .studio-pub-review { max-height: 38vh; overflow: auto; }
 .studio-publish-panel { max-height: calc(100vh - 2rem); overflow: auto; }
+
+/* Marker rename box: sits just right of the marker's dot. */
+.studio-marker-input {
+  position: absolute; z-index: 6;
+  transform: translate(1.1rem, -50%);
+  width: 14rem; max-width: 70%; height: 30px; margin: 0;
+  padding: 0 0.6rem; border-radius: 8px;
+  border: 1px solid var(--st-accent); outline: none;
+  background: var(--st-surface); color: var(--st-text); box-shadow: var(--st-shadow);
+  font: 500 13px/1 var(--st-font);
+}

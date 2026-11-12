@@ -227,3 +227,17 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     part of the site build at all, rather than merely hidden. */}
 {enabled && <link rel="stylesheet" href={`http://127.0.0.1:${studioPort}/overlay/overlay.css`} />}
 {enabled && <script is:inline type="module" src={`http://127.0.0.1:${studioPort}/overlay/main.js`} />}
+
+<script>
+  // Skip the full-page reload Astro sends after a "quiet" studio save (a crop,
+  // zoom, marker move or in-place text edit the page already shows). Vite's
+  // client reloads unless the payload names an .html page that isn't this
+  // one, so pointing it elsewhere cancels that one reload and nothing else.
+  // import.meta.hot is undefined in a build, so this compiles to nothing.
+  if (import.meta.hot) {
+    import.meta.hot.on('vite:beforeFullReload', (payload: { path?: string }) => {
+      const until = (window as unknown as { __studioQuietUntil?: number }).__studioQuietUntil ?? 0;
+      if (until > Date.now()) payload.path = '/__studio-quiet.html';
+    });
+  }
+</script>

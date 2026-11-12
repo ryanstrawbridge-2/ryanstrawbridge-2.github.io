@@ -348,6 +348,16 @@ GitHub SSH push from background processes stalls on large payloads.
     a clip-path on the img: that scaled with the transform and let a zoomed
     photo spill out. A figure at `aspect: auto` has no crop room until zoomed;
     give it a ratio to drag-crop.
+53. **"Quiet" saves skip Astro's reload.** A crop, zoom, marker move, marker
+    rename or in-place text edit is already on screen, so reloading the page
+    for it was pure lag. `post(..., { quiet: true })` in `core.js` opens a
+    2.5 s window; StudioOverlay's dev-only `vite:beforeFullReload` hook
+    rewrites that reload's `path` to a non-matching `.html`, which is the one
+    case where Vite's client returns without reloading. Any non-quiet save
+    closes the window. If an edit's on-screen result differs from what a
+    fresh render would show, it must NOT be quiet.
+    Marker labels live inside a `<button>`, which can't be contenteditable;
+    double-click (or Text mode click) opens a text box instead.
 
 ## macOS gotchas
 

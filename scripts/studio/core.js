@@ -129,17 +129,30 @@ const setUndo = (state) => {
 };
 
 /** Patch fields of one gallery row: patchRow(2, { width: 'half' }). */
-const patchRow = (index, fields) =>
-  post('/project/patch', { patch: Object.fromEntries(Object.entries(fields).map(([k, v]) => [`gallery.${index}.${k}`, v])) });
+const patchRow = (index, fields, opts) =>
+  post('/project/patch', { patch: Object.fromEntries(Object.entries(fields).map(([k, v]) => [`gallery.${index}.${k}`, v])) }, opts);
 
-const post = async (path, payload) => {
+/**
+ * A "quiet" save is one the page already shows: a crop dragged, a zoom, a
+ * marker moved, text typed in place. Astro would still reload the whole page
+ * for it, which is the flash and lag you feel while editing. StudioOverlay's
+ * Vite hook skips the reload that follows a quiet save; any other save
+ * (structure, undo, uploads) clears the window and reloads as normal.
+ */
+const QUIET_MS = 2500;
+const markQuiet = (on) => { window.__studioQuietUntil = on ? Date.now() + QUIET_MS : 0; };
+
+const post = async (path, payload, { quiet = false } = {}) => {
+  markQuiet(quiet);
   const response = await fetch(API + path, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ slug, ...payload }),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || `save failed (${response.status})`);
+  if (!response.ok) { markQuiet(false); throw new Error(data.error || `save failed (${response.status})`); }
+  // The reload arrives after the write, so start the window again from here.
+  markQuiet(quiet);
   setUndo(data.undo);
   return data;
 };
@@ -162,7 +175,7 @@ const queueSave = (key, path, payload, delay = 400) => {
   entry.timer = setTimeout(async () => {
     pending.delete(key);
     try {
-      await post(path, payload);
+      await post(path, payload, { quiet: true });
     } catch (error) { toast(error.message, true); }
   }, delay);
   pending.set(key, entry);

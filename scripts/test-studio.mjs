@@ -120,7 +120,9 @@ let done = 0;
 for (const [name, fn] of steps) {
   try { await fn(); done += 1; ok(name); } catch (e) { bad(`${name}: ${e.message}`); break; }
 }
-const made = (await health()).undo.depth - startDepth;
+// Depth stops growing at the journal's cap, so it can't count edits on a
+// long session. Every step above is exactly one journal entry.
+const made = done;
 try {
   if (made > 0) await post('/undo', { steps: made });
   ok(`undid ${made} edit(s) in one step`);

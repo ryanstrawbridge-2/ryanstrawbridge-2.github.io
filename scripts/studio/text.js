@@ -32,15 +32,17 @@ const textSlots = () =>
     .filter(({ el, path }) =>
       path && !TEXT_SKIP.test(path) &&
       !el.querySelector('img, video') &&
+      // Marker labels sit inside a <button>; figures.js gives them a text box.
+      !el.closest('.pfig-callout') &&
       // A wrapper around other editable text (a placeholder figure's
       // root, say) isn't a value itself; its children are.
       !el.querySelector('[data-field]') &&
       el.textContent.trim() !== '');
 
-const saveText = (slot, value) =>
+const saveText = (slot, value, opts) =>
   slot.isHome
-    ? post('/home/patch', { path: slot.path, value })
-    : post('/project/patch', { patch: { [slot.path]: value } });
+    ? post('/home/patch', { path: slot.path, value }, opts)
+    : post('/project/patch', { patch: { [slot.path]: value } }, opts);
 
 const readText = (slot) =>
   slot.isHome
@@ -74,7 +76,8 @@ const editText = async (slot) => {
       const next = el.textContent.trim();
       if (!commit || next === rendered) { el.textContent = rendered; return; }
       try {
-        await saveText(slot, next);
+        // What's on screen is already the new text: no reload needed.
+        await saveText(slot, next, { quiet: true });
         toast('text saved');
       } catch (error) { toast(error.message, true); el.textContent = rendered; }
     };

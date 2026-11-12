@@ -5,22 +5,17 @@ date: 2026-06-24T20:30:15.114Z
 summary: 'Designed the mechanical release for a resettable, low-cost underwater retrieval system rated to 300 m, targeting under $400 against $2,000+ commercial systems.'
 hero: ../../assets/images/projects/underwater-mechanical-release-system/hero-overview.png
 heroAlt: CAD mockup
-heroFocalPoint: '43% 29%'
+heroFocalPoint: '34% 33%'
 heroAspect: standard
 galleryLayout: stacked
 gallery:
-  - model: itd-release.glb
-    alt: ITD release assembly, interactive 3D model. The housing is drawn see-through so the electronics and release mechanism inside are visible.
-    caption: The release assembly in 3D. Drag to rotate; the housing is see-through.
-    section: What I did
-    width: full
   - image: ../../assets/images/projects/underwater-mechanical-release-system/prototype-assembly.jpeg
     caption: Prototype
     alt: "Prototype parts on the bench: housing, end caps, and the motor and electronics stack, with the drawings underneath."
-  - image: ../../assets/images/projects/underwater-mechanical-release-system/housing-drawing.png
-    alt: "Housing drawing: acetal copolymer, GD&T on the bore and O-ring face."
-  - image: ../../assets/images/projects/underwater-mechanical-release-system/pressure-test-300m.jpeg
-    alt: Pressure test vessel used for the 470 psi test.
+  - model: itd-release.glb
+    alt: ITD release assembly, interactive 3D model. The housing is drawn see-through so the electronics and release mechanism inside are visible.
+    caption: The release assembly in 3D. Drag to rotate; the housing is see-through.
+    width: full
 tools:
   - Mechanical design
 order: 4
@@ -31,17 +26,44 @@ figures:
     takeaway: Two dynamic O-rings and a face seal hold 470 psi, and the latch still resets from outside.
     plan: >-
       Section view through the housing: both dynamic nitrile O-rings and the static face seal, each called out, with the gland dimensions you sized to the Parker handbook.
-    points:
-      - Endcap
-      - Resettable without opening the housing.
+    points: []
     image: ../../assets/images/projects/underwater-mechanical-release-system/cross-section.png
     alt: "Section view of the release: electronics and battery inside the housing, motor driving the release shaft through the sealed end cap."
-    focal: 26% 96%
+    focal: 23% 98%
     callouts:
-      - { x: 85.2, y: 56.6, label: New marker, place: right }
-      - { x: 61.1, y: 75.6, label: New marker, place: right }
+      - { x: 75, y: 54.8, label: Endcap, place: right }
+      - { x: 57.1, y: 73, label: Release Arm, place: right }
+      - { x: 36, y: 62.8, label: Sheath, place: right }
     zoom: 1.5
     aspect: 3/4
+  - section: What I did
+    kind: diagram
+    title: FEA of the release arm
+    takeaway: "Peak stress on the release arm is 32.7 MPa, at the shaft step."
+    image: ../../assets/images/projects/underwater-mechanical-release-system/fea-sheath.png
+    alt: "Ansys static structural result, von Mises stress on the release arm: 32.7 MPa peak at the shaft step, 21.3 MPa at the shoulder."
+    aspect: auto
+    points:
+      - Ansys static structural, von Mises stress.
+      - 32.7 MPa peak at the shaft step; 21.3 MPa at the shoulder.
+      - Hand calculations covered bending, tension, torsion and shear tear-out on the same load path.
+    focal: 68% 41%
+  - section: What I did
+    kind: diagram
+    title: GD&T and drawings
+    takeaway: Drawings to ASME Y14.5-2018
+    image: ../../assets/images/projects/underwater-mechanical-release-system/housing-drawing.png
+    alt: "Housing drawing: acetal copolymer, GD&T on the bore and O-ring face."
+    aspect: auto
+    points: []
+  - section: Outcome
+    kind: photo
+    title: Pressure testing
+    takeaway: Version 1 held 470 psi with no leaks.
+    image: ../../assets/images/projects/underwater-mechanical-release-system/pressure-test-300m.jpeg
+    alt: Pressure test vessel used for the 470 psi test.
+    aspect: 4/3
+    points: []
   - section: Outcome
     kind: photo
     title: Ocean test
@@ -50,15 +72,10 @@ figures:
       A photo from the 60 ft, 5-day deployment if you have one; otherwise the bench pressure test at 470 psi. Pick from portfolio-photos.
     aspect: 3/2
     points:
-      - Version 1 pressure-tested to 470 psi with no leaks.
       - Achieved 2.25 FS on the release arm with an 80 lb weight.
       - More testing to come!
     image: ../../assets/images/projects/underwater-mechanical-release-system/v1-testing.png
     alt: Two V1 release units and an anchor on the dock.
-  - section: What I did
-    kind: diagram
-    title: New figure
-    takeaway: "New figure: one line on what it shows"
 ---
 
 ## Problem

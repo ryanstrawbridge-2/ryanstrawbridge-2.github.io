@@ -162,7 +162,7 @@ if (heroWrap && heroFrame && heroImg) {
     const focal = `${px}% ${py}%`;
     heroWrap.dataset.studioFocal = focal;
     try {
-      await post('/project/patch', { patch: { heroFocalPoint: focal } });
+      await post('/project/patch', { patch: { heroFocalPoint: focal } }, { quiet: true });
       toast(`main photo crop → ${focal}`);
     } catch (error) { toast(error.message, true); }
   };
