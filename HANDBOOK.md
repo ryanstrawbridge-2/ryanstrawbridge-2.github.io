@@ -255,6 +255,7 @@ spending that on someone who scrolled past would be rude.
 | **Phone** | Opens the same page in a real 390px frame beside it, so you can see the phone layout without resizing anything. |
 | **Undo** | Undoes the last edit, and says which one. ⌘Z does the same. |
 | **?** | Hover for the gestures. |
+| **Figures** | Hover any walkthrough figure for its toolbar: Add photo (or Before / After on a comparison) and Delete. Empty "to make" frames: drop a file on them or click to pick from the library. Undo brings back a deleted figure. |
 | **Save** | Saves a checkpoint on this Mac (⌘S). Lists what changed since the last save and shows your recent saves. Never touches the live site. The yellow badge counts unsaved changes. |
 | **Go live** | Pushes your saves to the live site: runs the publish script and shows its output. Two clicks, on purpose. Greyed out and refuses while publishing is locked (see below). |
 

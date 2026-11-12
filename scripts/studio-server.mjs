@@ -498,6 +498,61 @@ const figureCallout = ({ slug, figure, callout, x, y, add, remove }) =>
     return { x: pct(x), y: pct(y) };
   });
 
+/**
+ * Put an image into a walkthrough figure: its main picture, or the "after"
+ * side of a before/after (`slot: 'compare'`). A placeholder with an image
+ * stops being a placeholder, so this is also how a "to make" frame gets filled.
+ * The old crop belonged to the old picture, so it resets.
+ */
+const setFigureImage = async (slug, figure, ref, slot = 'image') => {
+  if (!['image', 'compare'].includes(slot)) throw new Error(`can't set ${slot} on a figure`);
+  let before = null;
+  await withProject(slug, (file) => {
+    if (!file.doc.getIn(['figures', figure])) throw new Error(`no figure ${figure + 1}`);
+    before = String(file.doc.getIn(['figures', figure, slot]) ?? '') || null;
+    file.doc.setIn(['figures', figure, slot], ref);
+    if (slot === 'image') {
+      file.doc.deleteIn(['figures', figure, 'focal']);
+      file.doc.deleteIn(['figures', figure, 'zoom']);
+    }
+  });
+  const displaced = before === ref ? null : await cleanupDisplaced(ROOT, before);
+  return { figure, slot, ...(displaced ? { displaced } : {}) };
+};
+
+/** A file dropped onto a figure. */
+const uploadFigure = async ({ slug, figure, slot, filename, data }) => {
+  const ext = extname(filename || '').toLowerCase();
+  if (!IMAGE_EXT.has(ext)) throw new Error('figures take an image here (png, jpg, webp, heic)');
+  const { title } = parseInboxName(filename || 'figure', await loadPrefixes(ROOT));
+  const { outName, before, after } = await importProjectImage(slug, Buffer.from(data, 'base64'), ext, title);
+  return { kind: 'image', file: outName, before, after, ...(await setFigureImage(slug, Number(figure), astroPath(slug, outName), slot)) };
+};
+
+/**
+ * Remove a whole walkthrough figure. Its images go to .photo-trash (only if
+ * nothing else on the site uses them), so undo can bring everything back.
+ */
+const deleteFigure = async ({ slug, figure }) => {
+  const refs = [];
+  await withProject(slug, (file) => {
+    const node = file.doc.getIn(['figures', figure]);
+    if (!node) throw new Error(`no figure ${figure + 1}`);
+    for (const key of ['image', 'compare', 'poster']) {
+      const ref = file.doc.getIn(['figures', figure, key]);
+      if (ref) refs.push(String(ref));
+    }
+    file.doc.deleteIn(['figures', figure]);
+    if (!file.doc.get('figures')?.items?.length) file.doc.delete('figures');
+  });
+  const displaced = [];
+  for (const ref of refs) {
+    const moved = await cleanupDisplaced(ROOT, ref);
+    if (moved) displaced.push(moved);
+  }
+  return { deleted: figure, ...(displaced.length ? { displaced } : {}) };
+};
+
 /** Replace the hero with a file dropped on it. */
 const uploadHero = async ({ slug, filename, data }) => {
   const ext = extname(filename || '').toLowerCase();
@@ -531,7 +586,7 @@ const libraryThumb = async (source, folder, file) => {
   return data;
 };
 
-const pickFromLibrary = async ({ slug, source = 'library', folder, file, section, width, homePath, hero }) => {
+const pickFromLibrary = async ({ slug, source = 'library', folder, file, section, width, homePath, hero, figure, figureSlot }) => {
   const src = sourcePath(source, folder, file);
   const ext = extname(file).toLowerCase();
   // Inbox files drop their PREFIX_ — "ABV_p-and-id" becomes "p-and-id".
@@ -559,6 +614,17 @@ const pickFromLibrary = async ({ slug, source = 'library', folder, file, section
     await writeFile(join(HOME_IMAGES, outName), encoded.data);
     const swap = await replaceHomeSlot(homePath, homeRef(outName));
     return { kind: 'image', file: outName, before: input.length, after: encoded.data.length, home: true, ...swap };
+  }
+
+  // Targeting a walkthrough figure: fill that frame instead of adding a row.
+  if (figure !== undefined && figure !== null) {
+    if (source === 'videos' || VIDEO_EXT.has(ext)) throw new Error('figures take an image here');
+    const idx = Number(figure);
+    if (!COPY_SOURCES.has(source)) {
+      return { kind: 'image', file, reused: true, ...(await setFigureImage(slug, idx, siteRef(source, folder, file), figureSlot)) };
+    }
+    const { outName, before, after } = await importProjectImage(slug, await readFile(src), ext, stem);
+    return { kind: 'image', file: outName, before, after, ...(await setFigureImage(slug, idx, astroPath(slug, outName), figureSlot)) };
   }
 
   // Targeting the project's main photo: set `hero` instead of adding a row.
@@ -906,9 +972,11 @@ const undoLabel = (pathname, payload = {}) => {
       if (keys.length === 1 && keys[0] === 'heroAlt') return 'main photo description';
       return keys.length === 1 ? keys[0] : 'page settings';
     case '/project/hero': return 'main photo';
+    case '/figure/upload': return `photo into figure ${Number(payload.figure) + 1}`;
+    case '/figure/delete': return `delete figure ${Number(payload.figure) + 1}`;
     case '/figure/callout': return payload.add ? 'add marker' : payload.remove ? 'remove marker' : `move marker ${payload.callout ?? ''}`.trim();
     case '/upload': return `add ${payload.filename ?? 'file'}`;
-    case '/library/pick': return payload.hero ? 'main photo' : `add ${payload.file ?? 'file'}`;
+    case '/library/pick': return payload.hero ? 'main photo' : payload.figure != null ? `photo into figure ${Number(payload.figure) + 1}` : `add ${payload.file ?? 'file'}`;
     case '/home/patch': return `home ${String(payload.path ?? '').split('.').pop()}`;
     case '/home/upload': return 'home photo';
     case '/home/alt': return 'home description';
@@ -1105,6 +1173,8 @@ const ROUTES = {
   '/upload': handleUpload,
   '/project/hero': uploadHero,
   '/figure/callout': figureCallout,
+  '/figure/upload': uploadFigure,
+  '/figure/delete': deleteFigure,
   '/library/pick': pickFromLibrary,
   '/home/patch': patchHome,
   '/home/upload': uploadHome,

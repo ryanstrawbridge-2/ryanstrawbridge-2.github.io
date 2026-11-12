@@ -789,8 +789,20 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
      and a toolbar covering the top-left corner swallowed drags on any marker
      placed there. The ::after bridges the gap so the toolbar stays open while
      the pointer travels up to it. */
-  .studio-figure-frame > .studio-tools { top: auto; bottom: calc(100% + 8px); left: 0; }
-  .studio-figure-frame > .studio-tools::after {
+  .studio-figure-media > .studio-tools { top: auto; bottom: calc(100% + 8px); left: 0; }
+  .studio-figure-media:hover > .studio-tools { opacity: 1; transform: none; pointer-events: auto; }
+  .studio-figure-media.studio-slot-over { outline-offset: 6px; border-radius: 12px; }
+  .studio-fig-dropzone { cursor: pointer; transition: background 140ms, border-color 140ms; }
+  .studio-fig-dropzone:hover, .studio-slot-over .studio-fig-dropzone {
+    background: rgb(59 130 246 / 0.07); border-color: rgb(59 130 246 / 0.7);
+  }
+  .studio-fig-cta {
+    display: inline-flex; align-items: center; gap: 0.45rem; justify-self: start;
+    margin: 0.4rem 0 0; padding: 0.5rem 0.8rem; border-radius: 99px;
+    background: #2563eb; color: white; font: 600 12.5px/1 system-ui, sans-serif;
+  }
+  .studio-fig-cta svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .studio-figure-media > .studio-tools::after {
     content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 10px;
   }
   .studio-tool-hint { padding: 0 0.45rem; color: var(--st-faint); font: 500 11px/1 var(--st-font); white-space: nowrap; }
@@ -1802,6 +1814,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     // shape and description. Writes top-level frontmatter: hero, heroAlt,
     // heroFocalPoint, heroZoom, heroAspect.
     let heroTarget = false; // true while the library is choosing a new main photo
+    let figureTarget = null; // { figure, slot } while it is filling a walkthrough figure
     const heroWrap = MODE === 'project' ? document.querySelector('[data-studio-hero]') : null;
     const heroFrame = heroWrap?.querySelector('.hero-frame');
     const heroImg = heroFrame?.querySelector('img');
@@ -1980,17 +1993,93 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     // exactly what the page renders. Drag to move, ⌥-click to delete, and
     // "+ Marker" drops a new one in the middle. Labels and points are text;
     // edit those in Pages CMS.
+    //
+    // Every figure, placeholder or not, gets a toolbar above it: put a photo
+    // in (library or drop a file), or delete the whole figure. Undo covers
+    // both. Empty placeholders are drop zones you can also click.
     for (const fig of MODE === 'project' ? document.querySelectorAll('figure[data-studio-figure]') : []) {
       const figIndex = Number(fig.dataset.studioFigure);
-      const frame = fig.querySelector('.pfig-frame');
-      if (!frame || !frame.querySelector('img')) continue; // placeholders, comparisons, video: no markers
+      const media = fig.querySelector('.pfig-media');
+      if (!media) continue;
+      const compareFrames = [...fig.querySelectorAll('.pfig-compare > .pfig-frame')];
+      const skeleton = fig.querySelector('.pfig-skeleton');
+      const figTitle = fig.querySelector('.pfig-skeleton-title')?.textContent?.trim()
+        || fig.querySelector('figcaption')?.textContent?.replace(/^Fig\. \d+\s*/, '').trim()
+        || fig.querySelector('.pfig-takeaway')?.textContent?.trim() || '';
 
-      frame.classList.add('studio-slot', 'studio-figure-frame');
+      media.classList.add('studio-slot', 'studio-figure-media');
       const tools = document.createElement('div');
       tools.className = 'studio-tools';
       tools.appendChild(Object.assign(document.createElement('span'), {
         className: 'studio-tool-label', textContent: `Fig. ${figIndex + 1}`,
       }));
+      if (compareFrames.length === 2) {
+        const before = toolButton({ icon: 'replace', text: 'Before', title: 'Pick the left (before) photo' });
+        before.addEventListener('click', () => openLibrary({ figure: figIndex, figureSlot: 'image' }));
+        const after = toolButton({ icon: 'replace', text: 'After', title: 'Pick the right (after) photo' });
+        after.addEventListener('click', () => openLibrary({ figure: figIndex, figureSlot: 'compare' }));
+        tools.append(before, after);
+      } else {
+        const photo = toolButton({ icon: skeleton ? 'plus' : 'replace', text: skeleton ? 'Add photo' : 'Replace', title: 'Pick a photo from the library, or drop a file on the figure' });
+        photo.addEventListener('click', () => openLibrary({ figure: figIndex, figureSlot: 'image' }));
+        tools.appendChild(photo);
+      }
+      tools.appendChild(toolSep());
+      const del = toolButton({ icon: 'trash', text: 'Delete', title: 'Delete this whole figure (undo brings it back)', className: 'studio-danger' });
+      del.addEventListener('click', async () => {
+        if (!confirm(`Delete Fig. ${figIndex + 1}${figTitle ? ` (“${figTitle.slice(0, 60)}”)` : ''}?\n\nUndo (⌘Z) brings it back.`)) return;
+        try {
+          await post('/figure/delete', { figure: figIndex });
+          toast(`Fig. ${figIndex + 1} deleted. ⌘Z to undo`);
+        } catch (error) { toast(error.message, true); }
+      });
+      tools.appendChild(del);
+      media.appendChild(tools);
+
+      if (skeleton) {
+        skeleton.classList.add('studio-fig-dropzone');
+        const cta = document.createElement('p');
+        cta.className = 'studio-fig-cta';
+        cta.innerHTML = `${svg('plus')}<span>Drop a photo here, or click to choose</span>`;
+        skeleton.appendChild(cta);
+        skeleton.addEventListener('click', () => openLibrary({ figure: figIndex, figureSlot: 'image' }));
+      }
+
+      // Drop a file on the figure to fill it. On a before/after, the side
+      // it lands on decides which picture it replaces.
+      const slotFor = (event) =>
+        compareFrames[1]?.contains(document.elementFromPoint(event.clientX, event.clientY)) ? 'compare' : 'image';
+      media.addEventListener('dragover', (event) => {
+        if (!isFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        media.classList.add('studio-slot-over');
+      });
+      media.addEventListener('dragleave', (event) => {
+        if (!media.contains(event.relatedTarget)) media.classList.remove('studio-slot-over');
+      });
+      media.addEventListener('drop', async (event) => {
+        if (!isFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        media.classList.remove('studio-slot-over');
+        dropEl.hidden = true;
+        const file = event.dataTransfer.files[0];
+        if (!file) return;
+        const slot = slotFor(event);
+        toast(`putting ${file.name} into Fig. ${figIndex + 1}…`);
+        try {
+          const data = await readAsBase64(file);
+          const result = await post('/figure/upload', { figure: figIndex, slot, filename: file.name, data });
+          toast(`Fig. ${figIndex + 1}${slot === 'compare' ? ' (after)' : ''} → ${file.name}  ${size(result.before)} → ${size(result.after)}${displacedNote(result.displaced)}`);
+        } catch (error) { toast(error.message, true); }
+      });
+
+      // Markers only on a single photo (not placeholders, comparisons, video).
+      const frame = fig.querySelector('.pfig-media > .pfig-frame');
+      if (!frame || !frame.querySelector('img')) continue;
+      frame.classList.add('studio-figure-frame');
+      tools.appendChild(toolSep());
       const add = toolButton({ icon: 'plus', text: 'Marker', title: 'Add a callout marker in the middle of the photo' });
       add.addEventListener('click', async () => {
         try {
@@ -2002,7 +2091,6 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       tools.appendChild(Object.assign(document.createElement('span'), {
         className: 'studio-tool-hint', textContent: 'drag markers · ⌥-click to delete',
       }));
-      frame.appendChild(tools);
 
       for (const marker of frame.querySelectorAll('[data-studio-callout]')) {
         const n = Number(marker.dataset.studioCallout);
@@ -2465,7 +2553,15 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
               width: libWidth.value || null,
               homePath: MODE === 'home' ? homeTarget : null,
               hero: heroTarget,
+              figure: figureTarget?.figure ?? null,
+              figureSlot: figureTarget?.slot ?? null,
             });
+            if (figureTarget) {
+              libPanel.hidden = true;
+              toast(`Fig. ${figureTarget.figure + 1} → ${file.name}${displacedNote(result.displaced)}`);
+              figureTarget = null;
+              return;
+            }
             toast(
               result.hero
                 ? `main photo → ${file.name}${displacedNote(result.displaced)}`
@@ -2496,11 +2592,14 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     };
 
     const libTarget = root.querySelector('.studio-lib-target');
-    const openLibrary = async ({ hero = false } = {}) => {
+    const openLibrary = async ({ hero = false, figure = null, figureSlot = 'image' } = {}) => {
       heroTarget = MODE === 'project' && hero;
+      figureTarget = MODE === 'project' && figure !== null ? { figure, slot: figureSlot } : null;
       libPanel.classList.toggle('is-hero', heroTarget);
-      for (const el of root.querySelectorAll('.studio-lib-opt')) el.hidden = MODE === 'home' || heroTarget;
-      libTarget.textContent = heroTarget
+      for (const el of root.querySelectorAll('.studio-lib-opt')) el.hidden = MODE === 'home' || heroTarget || !!figureTarget;
+      libTarget.textContent = figureTarget
+        ? `Choosing the ${figureTarget.slot === 'compare' ? 'after ' : figureTarget.slot === 'image' && document.querySelector(`figure[data-studio-figure="${figure}"] .pfig-compare`) ? 'before ' : ''}photo for Fig. ${figure + 1}`
+        : heroTarget
         ? 'Choosing a new main photo for this project'
         : MODE === 'home'
           ? (homeTarget ? `Replacing ${homeTarget}` : 'Hover a photo on the page and choose Replace')

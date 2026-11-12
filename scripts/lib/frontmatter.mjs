@@ -81,6 +81,16 @@ export const moveGalleryItem = (doc, from, to) => {
 /** Top-level frontmatter keys, e.g. heroFocalPoint / heroAspect / galleryLayout. */
 export const patchTopLevel = (doc, patch) => {
   for (const [key, value] of Object.entries(patch)) {
+    // A dotted key ("figures.0.takeaway") is a path into a list, not a new
+    // top-level key. Writing it literally used to leave `figures.0.takeaway:`
+    // at the bottom of the file, where nothing reads it.
+    if (key.includes('.')) {
+      const path = key.split('.').map((part) => (/^\d+$/.test(part) ? Number(part) : part));
+      if (!doc.getIn(path.slice(0, -1))) throw new Error(`${key}: no such item`);
+      if (value === null || value === undefined || value === '') doc.deleteIn(path);
+      else doc.setIn(path, value);
+      continue;
+    }
     if (value === null || value === undefined || value === '') doc.delete(key);
     else doc.set(key, value);
   }

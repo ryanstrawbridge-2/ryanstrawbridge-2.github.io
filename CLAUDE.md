@@ -344,6 +344,16 @@ GitHub SSH push from background processes stalls on large payloads.
     (gitignored, first line is the reason) and refuses on any branch but
     `main`. Ryan asked on 2026-11-11 for nothing to go live; the lock is in
     place. Don't delete it without him saying so.
+52. **Figure text edits are dotted paths; `patchTopLevel` must not write
+    them as keys.** Studio's Text mode sends `figures.0.takeaway` to
+    `/project/patch`. `doc.set()` wrote that as a literal top-level key, so the
+    edit landed at the bottom of the frontmatter where nothing reads it (Ryan's
+    "Redesigned the joint…" was lost that way). Dotted keys now go through
+    `setIn` with numeric list indexes, and refuse if the item doesn't exist.
+    Every figure has a studio toolbar (Add photo / Before / After / Delete);
+    placeholders are click-or-drop zones. `/figure/upload`, `/figure/delete`
+    and `/library/pick` with `figure` + `figureSlot` (`image` | `compare`)
+    back them, all journalled.
 
 ## macOS gotchas
 
