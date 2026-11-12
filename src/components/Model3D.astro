@@ -23,12 +23,36 @@ interface Props {
   sizeLabel?: string;
 }
 
-const { src, alt, poster, sizeLabel } = Astro.props;
-const modelSrc = `/models/${src.replace(/^\/?models\//, '')}`;
+import { statSync } from 'node:fs';
+import { join } from 'node:path';
+
+const { src, alt, poster, sizeLabel: givenLabel } = Astro.props;
+const file = src.replace(/^\/?models\//, '');
+const modelSrc = `/models/${file}`;
+// The download size goes on the button, so the cost is visible before the click.
+// `npm run model` renders a still next to the model; use it when the row
+// doesn't name its own poster.
+const autoPoster = file.replace(/\.glb$/i, '.webp');
+let posterSrc = '';
+try {
+  statSync(join(process.cwd(), 'public/models', autoPoster));
+  posterSrc = `/models/${autoPoster}`;
+} catch { /* no still: the panel shows its background */ }
+let sizeLabel = givenLabel;
+if (!sizeLabel) {
+  try {
+    const bytes = statSync(join(process.cwd(), 'public/models', file)).size;
+    sizeLabel = bytes > 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`;
+  } catch { /* missing file: the button just has no size */ }
+}
 ---
 
 <div class="model3d" data-model-src={modelSrc} data-model-alt={alt}>
-  {poster && <Image src={poster} alt={alt} widths={[600, 1200]} sizes="(min-width: 760px) 760px, 100vw" loading="lazy" />}
+  {poster ? (
+    <Image src={poster} alt={alt} widths={[600, 1200]} sizes="(min-width: 760px) 760px, 100vw" loading="lazy" />
+  ) : posterSrc ? (
+    <img class="model3d-still" src={posterSrc} alt={alt} loading="lazy" decoding="async" />
+  ) : null}
   <div class="model3d-overlay">
     <button type="button" class="model3d-load">
       View in 3D{sizeLabel ? ` · ${sizeLabel}` : ''}
@@ -46,8 +70,13 @@ const modelSrc = `/models/${src.replace(/^\/?models\//, '')}`;
     overflow: hidden;
     border-radius: var(--radius-lg);
     background: var(--bg-elevated);
-    min-height: 240px;
     display: grid;
+    /* A CAD model needs room to turn. width: 100% is load-bearing: with an
+       aspect-ratio and a min-height, an auto width resolves from the height
+       and overflows a phone column (gotcha 45). */
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    min-height: 320px;
   }
   .model3d :global(img),
   .model3d :global(model-viewer) {
@@ -55,7 +84,16 @@ const modelSrc = `/models/${src.replace(/^\/?models\//, '')}`;
     width: 100%;
     height: 100%;
     display: block;
-    min-height: 240px;
+    min-height: 320px;
+    object-fit: cover;
+  }
+  .model3d .model3d-still {
+    object-fit: contain;
+    padding: 4%;
+    box-sizing: border-box;
+  }
+  .model3d.is-loaded .model3d-still {
+    visibility: hidden;
   }
   .model3d :global(model-viewer) {
     /* The viewer takes the pointer once it exists, so the page can't be
@@ -66,7 +104,8 @@ const modelSrc = `/models/${src.replace(/^\/?models\//, '')}`;
   }
   .model3d-overlay {
     grid-area: 1 / 1;
-    place-self: center;
+    /* Bottom, so the button sits under the model instead of across it. */
+    place-self: end center;
     display: grid;
     gap: 0.4rem;
     justify-items: center;
@@ -128,6 +167,13 @@ const modelSrc = `/models/${src.replace(/^\/?models\//, '')}`;
           viewer.setAttribute('shadow-intensity', '1');
           viewer.setAttribute('exposure', '1');
           viewer.setAttribute('ar', '');
+          // A slow turn says "this is 3D" before anyone touches it; it stops
+          // as soon as they do.
+          viewer.setAttribute('auto-rotate', '');
+          viewer.setAttribute('auto-rotate-delay', '0');
+          viewer.setAttribute('rotation-per-second', '18deg');
+          viewer.setAttribute('interaction-prompt', 'none');
+          viewer.setAttribute('camera-orbit', '35deg 70deg auto');
           host.appendChild(viewer);
 
           viewer.addEventListener('load', () => host.classList.add('is-loaded'), { once: true });

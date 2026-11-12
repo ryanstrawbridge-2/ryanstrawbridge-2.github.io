@@ -256,11 +256,17 @@ GitHub SSH push from background processes stalls on large payloads.
     references only the stub. If that import is ever hoisted to the top of the
     module, every visitor pays for it. Re-check with:
     `grep -o 'src="/_astro/[^"]*\.js"' dist/projects/<slug>/index.html`
-39. **`npm run model` takes glTF only, and says so.** STEP/STL/OBJ go through
-    Blender first. Chaining npm converters for those was considered and
-    rejected: more dependencies, worse results. The script also refuses to
-    write a file over 4 MB rather than let it reach a commit, because >5 MB of
-    new binary in one push stalls the SSH transfer.
+39. **`npm run model` takes glTF or SolidWorks STL.** STL can be one file, a
+    folder, or a zip of the per-component export ("Save all components of an
+    assembly in a single file" unticked: each part arrives in assembly
+    coordinates). `scripts/lib/stl.mjs` colours parts by filename (boards,
+    fasteners, housing see-through), centres and converts mm -> m; then
+    meshopt simplifies toward `MODEL_TRIANGLES` (300k) and halves until under
+    the 4 MB budget, and Draco compresses. No normals are written (three.js
+    flat-shades, reads as CAD). `scripts/lib/poster.mjs` software-renders a
+    poster to `public/models/<name>.webp`, which `Model3D` uses automatically:
+    a browser can't read WebGL back from a background tab. STEP still needs
+    converting first. The ITD: 99 parts, 2.35M tris -> 0.73 MB.
 40. **gltf-transform brings its own sharp.** Importing sharp at the top of
     model-intake as well made macOS warn about two libvips in one process.
     It's imported lazily now, and only when the model actually has textures —
