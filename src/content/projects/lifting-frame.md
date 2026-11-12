@@ -14,6 +14,7 @@ gallery:
     focal: 61% 90%
   - image: ../../assets/images/projects/lifting-frame/lifting-frame-bth1-1.png
     alt: Service Class
+    width: half
 tools:
   - NX
   - Lifting Documentation (ASME BTH-1 | ASME B30.20)
@@ -35,6 +36,8 @@ figures:
     points:
       - Weld fusion on the Rev 1 joint could not be validated by NDT.
       - Rev 2 pivots to non-weldment features to simplify the joint.
+    focal: 88% 66%
+    zoom: 1
   - section: What I did
     kind: diagram
     title: Load path and sling angle
@@ -46,6 +49,7 @@ figures:
       - Validated against ASME BTH-1 and ASME B30.20, carried through sign-off with structural engineering and safety.
       - Worked with riggers on proof-load testing and walked the lift plan through with the safety team.
     image: ../../assets/images/projects/lifting-frame/lifting-frame-freebody.png
+    focal: 53% 7%
   - section: Outcome
     kind: comparison
     title: Floor space in storage
@@ -55,11 +59,13 @@ figures:
     beforeLabel: Previous frame
     afterLabel: New frame, broken down
     alt: Storage footprint of the previous lifting beam against the new frame disassembled
-    caption: PLACEHOLDER CAPTION.
+    caption: Before & After Floor Space
     aspect: 4/3
     points:
       - Saved 90 square feet of floor space in storage.
       - Increased table space for more fixture tooling for magnet stacking.
+    focal: 63% 13%
+    compareFocal: 53% 93%
 ---
 
 ## Problem
