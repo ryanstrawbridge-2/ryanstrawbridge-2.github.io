@@ -9,6 +9,11 @@ heroAlt: 3-point lifting frame on the manufacturing floor
 gallery:
   - image: ../../assets/images/projects/lifting-frame/lift-test.jpg
     focal: 59% 55%
+  - image: ../../assets/images/projects/lifting-frame/lifting-frame-bth1.png
+    alt: Design Category
+    focal: 61% 90%
+  - image: ../../assets/images/projects/lifting-frame/lifting-frame-bth1-1.png
+    alt: Service Class
 tools:
   - NX
   - Lifting Documentation (ASME BTH-1 | ASME B30.20)
@@ -20,7 +25,7 @@ figures:
   - section: What I did
     kind: comparison
     title: Joint revision
-    takeaway: Rev 2 redesigned the joint to eliminate welds.
+    takeaway: Redesign
     image: ../../assets/images/projects/lifting-frame/joint-rev1.jpg
     compare: ../../assets/images/projects/lifting-frame/joint-rev2.jpg
     beforeLabel: Rev 1
@@ -33,17 +38,18 @@ figures:
   - section: What I did
     kind: diagram
     title: Load path and sling angle
-    takeaway: PLACEHOLDER COPY — rewrite.
+    takeaway: Load Path
     plan: >-
       NX isometric of the frame with the three slings drawn in, the included angle dimensioned, and an arrow per arm showing the resulting compression. Note the ASME BTH-1 design factor you carried.
     aspect: 16/9
     points:
       - Validated against ASME BTH-1 and ASME B30.20, carried through sign-off with structural engineering and safety.
       - Worked with riggers on proof-load testing and walked the lift plan through with the safety team.
+    image: ../../assets/images/projects/lifting-frame/lifting-frame-freebody.png
   - section: Outcome
     kind: comparison
     title: Floor space in storage
-    takeaway: PLACEHOLDER COPY — rewrite. The new frame breaks down into six pieces and gives back 90 sq ft.
+    takeaway: Storage
     image: ../../assets/images/projects/lifting-frame/floor-space-before.jpg
     compare: ../../assets/images/projects/lifting-frame/floor-space-after.jpg
     beforeLabel: Previous frame
