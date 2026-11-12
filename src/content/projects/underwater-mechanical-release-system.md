@@ -1,6 +1,6 @@
 ---
 title: Underwater Mechanical Release System
-organization: 'Capstone Project - Underwater Acoustic Release System - It''s That Deep '
+organization: 'Capstone – It''s That Deep'
 date: 2026-06-24T20:30:15.114Z
 summary: 'Designed the mechanical release for a resettable, low-cost underwater retrieval system rated to 300 m, targeting under $400 against $2,000+ commercial systems.'
 hero: ../../assets/images/projects/underwater-mechanical-release-system/hero-overview.png
@@ -16,18 +16,15 @@ gallery:
     width: full
   - image: ../../assets/images/projects/underwater-mechanical-release-system/prototype-assembly.jpeg
     caption: Prototype
-  - image: ../../assets/images/projects/underwater-mechanical-release-system/cross-section.png
-    alt: itd cross section
+    alt: "Prototype parts on the bench: housing, end caps, and the motor and electronics stack, with the drawings underneath."
   - image: ../../assets/images/projects/underwater-mechanical-release-system/housing-drawing.png
-    alt: itd housingdrawing
+    alt: "Housing drawing: acetal copolymer, GD&T on the bore and O-ring face."
   - video: resetting-latch.mp4
-    alt: itd resettinglatch
+    alt: The release latch resetting.
   - image: ../../assets/images/projects/underwater-mechanical-release-system/fea-sheath.png
-    alt: itd feasheath
+    alt: FEA of the release sheath, von Mises stress, 32.7 MPa peak at the shaft step.
   - image: ../../assets/images/projects/underwater-mechanical-release-system/pressure-test-300m.jpeg
-    alt: itd 300mpressure test
-  - image: ../../assets/images/projects/underwater-mechanical-release-system/v1-testing.png
-    alt: itd v1testing
+    alt: Pressure test vessel used for the 470 psi test.
 tools:
   - Mechanical design
 order: 4
@@ -35,17 +32,19 @@ figures:
   - section: What I did
     kind: diagram
     title: Seal stack at 470 psi
-    takeaway: PLACEHOLDER COPY — rewrite.
+    takeaway: Two dynamic O-rings and a face seal hold 470 psi, and the latch still resets from outside.
     plan: >-
       Section view through the housing: both dynamic nitrile O-rings and the static face seal, each called out, with the gland dimensions you sized to the Parker handbook.
-    aspect: 16/9
+    aspect: auto
     points:
       - Sized dual dynamic nitrile O-rings and a static face seal to Parker Handbook design practice at 470 psi.
       - Resettable without opening the housing.
+    image: ../../assets/images/projects/underwater-mechanical-release-system/cross-section.png
+    alt: "Section view of the release: electronics and battery inside the housing, motor driving the release shaft through the sealed end cap."
   - section: Outcome
     kind: photo
     title: Ocean test
-    takeaway: PLACEHOLDER COPY — rewrite.
+    takeaway: Released 20 lb at 60 ft after 5 days in the ocean.
     plan: >-
       A photo from the 60 ft, 5-day deployment if you have one; otherwise the bench pressure test at 470 psi. Pick from portfolio-photos.
     aspect: 3/2
@@ -53,6 +52,8 @@ figures:
       - Version 1 pressure-tested to 470 psi with no leaks.
       - Released a 20 lb weight at 60 ft after 5 days in the ocean.
       - Achieved 2.25 FS on the release arm with an 80 lb weight.
+    image: ../../assets/images/projects/underwater-mechanical-release-system/v1-testing.png
+    alt: Two V1 release units and an anchor on the dock.
 ---
 
 ## Problem
@@ -73,7 +74,7 @@ figures:
 
 ## Outcome
 
-* Version 1, vessel pressure-tested to 470 psi with no leaks!
-* Successfully released a 20 lbs weight at 60 ft depth after 5 days in the ocean, proving adequate sealing and initial release reliability
-* Achieved 2.25 FS on release arm with 80 lbs weight
+* Version 1 vessel pressure-tested to 470 psi with no leaks.
+* Released a 20 lb weight at 60 ft depth after 5 days in the ocean, proving adequate sealing and initial release reliability.
+* Achieved 2.25 FS on the release arm with an 80 lb weight.
 * Additional testing to be carried out to prove maximum weight release at depth and duration underwater.
