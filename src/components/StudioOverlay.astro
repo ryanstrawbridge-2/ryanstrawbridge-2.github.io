@@ -1325,12 +1325,16 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
         ? `${info.notLive} not on the live site`
         : '';
 
+      const filing = info.inbox?.length ?? 0;
+      const inboxNote = filing
+        ? ` Also files ${filing} inbox photo${filing === 1 ? '' : 's'} into portfolio-photos/.`
+        : '';
       if (info.onMain) {
         saveGo.disabled = true;
         saveState.textContent = "On main, a save would go live within the hour. Switch to a working branch.";
       } else {
-        saveGo.disabled = n === 0;
-        saveState.textContent = 'A checkpoint on this Mac. Nothing goes to the live site.';
+        saveGo.disabled = n === 0 && filing === 0;
+        saveState.textContent = `A checkpoint on this Mac. Nothing goes to the live site.${inboxNote}`;
       }
     };
 
@@ -1353,7 +1357,11 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
       try {
         const data = await post('/save', { message: saveMsg.value });
         saveMsg.value = '';
-        toast(`saved ${data.count} change${data.count === 1 ? '' : 's'} on this Mac`);
+        const filed = data.filed?.length ?? 0;
+        const filedNote = filed ? `${data.saved ? ', ' : ''}filed ${filed} inbox photo${filed === 1 ? '' : 's'}` : '';
+        toast(data.saved
+          ? `saved ${data.count} change${data.count === 1 ? '' : 's'} on this Mac${filedNote}`
+          : filedNote.replace(/^, /, ''));
       } catch (error) {
         toast(error.message, true);
       }
@@ -1364,7 +1372,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
     window.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's' && !root.hidden) {
         e.preventDefault();
-        if (saveInfo && saveInfo.changes.length && !saveInfo.onMain) saveGo.click();
+        if (saveInfo && (saveInfo.changes.length || saveInfo.inbox?.length) && !saveInfo.onMain) saveGo.click();
         else { savePanel.hidden = false; refreshSave(); }
       }
     });

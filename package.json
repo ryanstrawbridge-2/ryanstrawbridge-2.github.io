@@ -13,6 +13,7 @@
     "build:tina": "tinacms build && node scripts/fix-cms-paths.mjs && astro build && node scripts/prune-unreferenced-assets.mjs && node scripts/generate-cms-thumbnails.mjs",
     "fix:paths": "node scripts/fix-cms-paths.mjs",
     "photos": "node scripts/media-intake.mjs",
+    "photos:sort": "node scripts/sort-inbox.mjs",
     "model": "node scripts/model-intake.mjs",
     "photos:shrink": "node scripts/media-intake.mjs --shrink",
     "check:tina": "node scripts/check-tina-fragment.mjs",

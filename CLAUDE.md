@@ -69,7 +69,7 @@ npm run studio           # dev server + live editor (drag-to-crop, drop-to-uploa
 | Placeholder-copy guard | `scripts/check-placeholder-copy.mjs` (`npm run check:copy`) |
 | Fragment/schema guard | `scripts/check-tina-fragment.mjs` (`npm run check:tina`) |
 | Media layout guard | `scripts/check-media-layout.mjs` (`npm run check:media`) |
-| Ryan's photo library (gitignored) | `portfolio-photos/<project-slug>/` — 138 originals, folders named for the site's project slugs; READ-ONLY, studio browses and copies from it, never writes. `wix-archive/` is the unsorted legacy Wix export. |
+| Ryan's photo library (gitignored) | `portfolio-photos/<project-slug>/` — 138 originals, folders named for the site's project slugs; studio browses and copies from it; the ONLY write is Save filing `photo-inbox/PREFIX_*` originals into `<slug>/` (or `general/`) via `scripts/lib/inbox-file.mjs`: a rename, add-only, never overwrites (`name 2.ext`). Also `npm run photos:sort [--dry-run]`. `wix-archive/` is the unsorted legacy Wix export. |
 | Intake queue (gitignored) | `photo-inbox/PREFIX_title.ext` routed by `photo-prefixes.json` (parser: `scripts/lib/prefixes.mjs`, shared by studio library + `npm run photos`); legacy `photo-inbox/<slug>/` still works; processed originals in `photo-inbox/_done/` |
 | SSH key for git | `~/.ssh/id_ed25519_portfolio` |
 | Auto-sync log | `~/Library/Logs/portfolio-sync/sync.log` |
@@ -145,6 +145,9 @@ GitHub SSH push from background processes stalls on large payloads.
     way — that folder is Ryan's organised archive of originals and is not backed
     up by git. `libraryPath()` resolves and rejects anything escaping the
     library root, so a crafted `folder=../../.ssh` can't read the filesystem.
+    One deliberate exception, at Ryan's request (2026-11-11): Save files
+    inbox originals INTO it by prefix (`scripts/lib/inbox-file.mjs`). Rename
+    only, add-only, never overwrites. Don't widen that into edits or deletes.
 19. **A deployed static site cannot read files off Ryan's Mac.** This comes up:
     anything a visitor sees must be committed. The library panel exists so the
     originals can STAY local while only the picked, optimised copies enter the

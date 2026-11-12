@@ -42,6 +42,7 @@ import { readHome, writeHome, setPath, getPath } from './lib/homejson.mjs';
 import { cleanupDisplaced } from './lib/orphans.mjs';
 import { loadPrefixes, parseInboxName } from './lib/prefixes.mjs';
 import * as journal from './lib/journal.mjs';
+import { fileInbox } from './lib/inbox-file.mjs';
 import {
   readProject,
   writeProject,
@@ -1114,9 +1115,11 @@ const saveStatus = async () => {
       const [hash, when, ...subject] = line.split('\t');
       return { hash, when, subject: subject.join('\t') };
     });
+  const { moved: inbox } = await fileInbox(ROOT, { dryRun: true });
   return {
     branch,
     onMain: branch === 'main',
+    inbox,
     changes,
     notLive,
     saves,
@@ -1128,13 +1131,20 @@ const saveLocal = async ({ message }) => {
   if (status.onMain) {
     throw new Error("you're on main, where a save would go live within the hour (auto-sync). Switch to a working branch first.");
   }
-  if (!status.changes.length) throw new Error('nothing new to save');
+  // Tidy the photo inbox on every save: PREFIX_ originals move into
+  // portfolio-photos/<project>/. Gitignored both sides, so it doesn't touch
+  // the commit; it's here because Save is the moment Ryan says "keep this".
+  const { moved } = await fileInbox(ROOT);
+  if (!status.changes.length) {
+    if (moved.length) return { saved: false, filed: moved, count: 0 };
+    throw new Error('nothing new to save');
+  }
   const note = String(message ?? '').trim()
     || `Save: ${[...new Set(status.changes.map((c) => (c.area === 'Project' ? c.name : c.area)))].slice(0, 4).join(', ')}`;
   await git(['add', '-A']);
   // Message as one argv entry, so quotes and newlines are data.
   await git(['commit', '--no-verify', '-q', '-m', note]);
-  return { saved: true, message: note, count: status.changes.length };
+  return { saved: true, message: note, count: status.changes.length, filed: moved };
 };
 
 // Reads that happen to be POSTs (they take a body); nothing to undo.

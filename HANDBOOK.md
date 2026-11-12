@@ -256,7 +256,7 @@ spending that on someone who scrolled past would be rude.
 | **Undo** | Undoes the last edit, and says which one. ⌘Z does the same. |
 | **?** | Hover for the gestures. |
 | **Figures** | Hover any walkthrough figure for its toolbar: Add photo (or Before / After on a comparison) and Delete. Empty "to make" frames: drop a file on them or click to pick from the library. Undo brings back a deleted figure. |
-| **Save** | Saves a checkpoint on this Mac (⌘S). Lists what changed since the last save and shows your recent saves. Never touches the live site. The yellow badge counts unsaved changes. |
+| **Save** | Saves a checkpoint on this Mac (⌘S). Also tidies `photo-inbox/`: `Lift_BTH1.png` moves to `portfolio-photos/lifting-frame/BTH1.png`, `gen_` files to `portfolio-photos/general/`. Files with no or an unknown prefix stay in the inbox. Nothing is ever overwritten. (`npm run photos:sort` does the same from Terminal.) Lists what changed since the last save and shows your recent saves. Never touches the live site. The yellow badge counts unsaved changes. |
 | **Go live** | Pushes your saves to the live site: runs the publish script and shows its output. Two clicks, on purpose. Greyed out and refuses while publishing is locked (see below). |
 
 ### The main photo
