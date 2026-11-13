@@ -478,7 +478,7 @@ const Tag = inline ? 'div' : 'section';
   .blk-draft { outline: 2px dashed color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: -6px; }
   .blk-draft-badge {
     position: absolute; top: 6px; left: 50%; transform: translateX(-50%); z-index: 2; font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
-    padding: 5px 8px; border-radius: 999px; background: var(--accent); color: #fff; letter-spacing: 0.02em;
+    padding: 5px 8px; border-radius: 999px; background: var(--accent); color: #fff; letter-spacing: 0.02em; white-space: nowrap;
   }
 
   /* grids */
@@ -491,7 +491,7 @@ const Tag = inline ? 'div' : 'section';
     .blk-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .blk-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
-  .blk-inline .blk-cols-3, .blk-inline .blk-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 720px) { .blk-inline .blk-cols-3, .blk-inline .blk-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
   /* cards */
   .blk-card { display: flex; flex-direction: column; color: inherit; text-decoration: none; min-width: 0; }
