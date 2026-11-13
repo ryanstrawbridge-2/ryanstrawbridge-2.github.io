@@ -951,6 +951,101 @@ window.addEventListener('keydown', (e) => {
   else if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) { e.preventDefault(); run('move', { dir: e.key === 'ArrowUp' ? -1 : 1 }, 'moved'); }
 }, true);
 
+// -- outline (home): every section in order, like a layers panel -----------
+const outline = el('aside', { className: 'studio-panel studio-outline', hidden: true });
+outline.setAttribute('aria-label', 'Page outline');
+root.appendChild(outline);
+const BUILT_NAMES = { hero: 'Top (name and photo)', showcase: 'Collage', projects: 'Projects', experience: 'Experience', about: 'About + interests', contact: 'Contact' };
+const SHOW_PATH = { showcase: 'showcase.show', projects: 'projectsSection.show', experience: 'experienceSection.show', about: 'aboutSection.show', contact: 'contactSection.show' };
+const renderOutline = () => {
+  const sections = [...document.querySelectorAll('.home-flow > [data-layout]')]
+    .sort((a, b) => Number(getComputedStyle(a).order) - Number(getComputedStyle(b).order));
+  const close = el('button', { type: 'button', className: 'studio-btn studio-tool-icon', title: 'Close' });
+  close.innerHTML = svg('x');
+  close.addEventListener('click', () => { outline.hidden = true; });
+  const list = el('ol', { className: 'studio-outline-list' });
+  let dragKey = null;
+  for (const sec of sections) {
+    const key = sec.dataset.layout;
+    const isBlock = key.startsWith('block:');
+    const off = isBlock ? sec.classList.contains('blk-draft') : sec.classList.contains('studio-section-off');
+    const name = isBlock
+      ? `${TYPE_NAME[sec.dataset.blockType] ?? 'Section'}${sec.dataset.layoutName && sec.dataset.layoutName !== sec.dataset.blockType ? ` · ${sec.dataset.layoutName.replace(/[*_|`]/g, '')}` : ''}`
+      : BUILT_NAMES[key] ?? key;
+    const li = el('li', { className: `studio-outline-row${off ? ' is-off' : ''}`, draggable: true });
+    li.dataset.key = key;
+    const grip = el('span', { className: 'studio-outline-grip', innerHTML: svg('grip') });
+    const label = el('button', { type: 'button', className: 'studio-outline-name', textContent: name, title: 'Jump to this section' });
+    label.addEventListener('click', () => {
+      sec.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      if (isBlock) select(sec);
+    });
+    const eye = el('button', { type: 'button', className: 'studio-btn studio-tool-icon', title: off ? (isBlock ? 'Draft: switch on for the live site' : 'Hidden: show on the site') : 'Visible: hide it' });
+    eye.innerHTML = svg('eye');
+    eye.classList.toggle('is-off', off);
+    eye.addEventListener('click', async () => {
+      try {
+        if (isBlock) await post('/blocks', { scope, op: 'patch', id: key.slice(6), patch: { draft: !off } });
+        else if (SHOW_PATH[key]) await post('/home/patch', { path: SHOW_PATH[key], value: off });
+        else { toast('The top section is always shown', true); return; }
+        try { sessionStorage.setItem('studio:outline-open', String(Date.now())); } catch { /* ignore */ }
+        toast(off ? 'now visible' : (isBlock ? 'back to draft' : 'hidden'));
+      } catch (error) { toast(error.message, true); }
+    });
+    if (key === 'hero') eye.disabled = true;
+    li.append(grip, label, eye);
+    li.addEventListener('dragstart', (e) => { dragKey = key; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/x-studio-outline', key); li.classList.add('is-dragging'); });
+    li.addEventListener('dragend', () => li.classList.remove('is-dragging'));
+    li.addEventListener('dragover', (e) => {
+      if (!dragKey) return;
+      e.preventDefault();
+      const r = li.getBoundingClientRect();
+      li.classList.toggle('drop-before', e.clientY < r.top + r.height / 2);
+      li.classList.toggle('drop-after', e.clientY >= r.top + r.height / 2);
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('drop-before', 'drop-after'));
+    li.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const after = li.classList.contains('drop-after');
+      li.classList.remove('drop-before', 'drop-after');
+      const order = sections.map((x) => x.dataset.layout).filter((k) => k !== dragKey);
+      const at = order.indexOf(key) + (after ? 1 : 0);
+      order.splice(at, 0, dragKey);
+      dragKey = null;
+      const builtIns = ['hero', 'showcase', 'projects', 'experience', 'about', 'contact'];
+      const full = [...order, ...builtIns.filter((k) => !order.includes(k))];
+      try {
+        try { sessionStorage.setItem('studio:outline-open', String(Date.now())); } catch { /* ignore */ }
+        await post('/home/layout', { patch: { order: full } });
+        toast('sections reordered');
+      } catch (error) { toast(error.message, true); }
+    });
+    list.append(li);
+  }
+  const add = el('button', { type: 'button', className: 'studio-btn studio-ins-add' });
+  add.innerHTML = `${svg('plus')} Add section at the end`;
+  add.addEventListener('click', () => openPicker(sections.at(-1)?.dataset.layout ?? 'contact', 'Adds at the end of the page'));
+  outline.replaceChildren(
+    el('header', {}, el('strong', { textContent: 'Outline' }), close),
+    el('div', { className: 'studio-ins-body' }, el('p', { className: 'studio-ins-tip', textContent: 'Drag to reorder · click a name to jump there · eye shows or hides' }), list, add),
+  );
+};
+if (scope === 'home') {
+  root.querySelector('.studio-outline-open')?.addEventListener('click', () => {
+    outline.hidden = !outline.hidden;
+    if (!outline.hidden) renderOutline();
+  });
+  try {
+    // Kept a few seconds rather than removed on read: a save can reload twice.
+    const at = Number(sessionStorage.getItem('studio:outline-open') || 0);
+    if (at && Date.now() - at < 10000) {
+      renderOutline();
+      outline.hidden = false;
+      setTimeout(() => { try { if (Number(sessionStorage.getItem('studio:outline-open')) === at) sessionStorage.removeItem('studio:outline-open'); } catch { /* ignore */ } }, 4000);
+    }
+  } catch { /* ignore */ }
+}
+
 // Studio bar: "Section". After the selected section if there is one, else
 // at the end of the page.
 root.querySelector('.studio-add-section')?.addEventListener('click', () => {

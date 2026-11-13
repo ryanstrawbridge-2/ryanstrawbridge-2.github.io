@@ -38,6 +38,12 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4.5h16V7" /><path d="M12 4.5v15" /><path d="M9 19.5h6" /></svg>
           <span>Text</span>
         </button>
+        {mode === 'home' && (
+          <button type="button" class="studio-btn studio-outline-open" title="Every section in order: drag to reorder, click to jump, eye to show or hide">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12" /><circle cx="4" cy="6" r="1" /><circle cx="4" cy="12" r="1" /><circle cx="4" cy="18" r="1" /></svg>
+            <span>Outline</span>
+          </button>
+        )}
         <button type="button" class="studio-btn studio-add-section" title="Add a section: cards, stats, gallery, video, banner and more">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5" /><path d="M12 8.5v7M8.5 12h7" /></svg>
           <span>Section</span>
