@@ -17,6 +17,8 @@ const year = new Date().getFullYear();
     </div>
 
     <p class="copy muted">© {year} Ryan Strawbridge</p>
+
+    <p class="disclaimer muted">Company names, logos, and footage shown are trademarks or property of their respective owners and are used for identification only.</p>
   </div>
 </footer>
 
@@ -63,7 +65,18 @@ const year = new Date().getFullYear();
     margin: 0;
   }
 
+  .disclaimer {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.6rem;
+    line-height: 1.4;
+    opacity: 0.6;
+  }
+
   @media (min-width: 720px) {
+    .disclaimer {
+      text-align: center;
+    }
     .footer-inner {
       grid-template-columns: 1fr auto 1fr;
       align-items: center;

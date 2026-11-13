@@ -45,9 +45,11 @@
         "focal": "45% 39%"
       },
       {
-        "image": "/src/assets/images/projects/lifting-frame/lift-test.jpg",
+        "image": "/src/assets/images/home/me-cfsphotoofme.jpg",
         "alt": "Lifting test for a 3-point lifting frame",
-        "size": "video"
+        "size": "video",
+        "zoom": 2.07,
+        "focal": "52% 38%"
       }
     ]
   },
