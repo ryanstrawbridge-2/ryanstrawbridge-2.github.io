@@ -114,8 +114,16 @@ const steps = [
     return post('/project/section', { slug: SLUG, section: 'outcome', value: `${v}\n\n* studio:test` });
   }],
   ['add a home tile', () => post('/home/list', { path: 'showcase.items', op: 'add' })],
+  ['add a home section', async () => { ids.home = (await post('/blocks', { scope: 'home', op: 'add', type: 'cards', after: 'projects' })).id; }],
+  ['edit a home section', () => post('/blocks', { scope: 'home', op: 'patch', id: ids.home, patch: { heading: 'studio:test', 'style.bg': 'subtle', 'items.0.title': 'studio:test' } })],
+  ['add a section item', () => post('/blocks', { scope: 'home', op: 'item', id: ids.home, patch: { op: 'add' } })],
+  ['layout spacing', () => post('/home/layout', { patch: { 'sections.projects.padTop': 120, 'experience.split': 40 } })],
+  ['add a project section', async () => { ids.project = (await post('/blocks', { scope: 'project', slug: SLUG, op: 'add', type: 'gallery', after: 'Outcome' })).id; }],
+  ['upload into a section', () => post('/media', { slug: SLUG, target: { kind: 'block', scope: 'project', path: 'blocks.0.items.0.image' }, filename: 'studio-test-3.png', data: pixel })],
+  ['paste a section', () => post('/blocks', { scope: 'project', slug: SLUG, op: 'add', type: 'stats', patch: { paste: { heading: 'studio:test', items: [{ value: '1', label: 'x' }], style: { countup: true } } } })],
   ['theme setting', () => post('/site/theme', { patch: { cornerStyle: 'sharp' } })],
 ];
+const ids = {};
 let done = 0;
 for (const [name, fn] of steps) {
   try { await fn(); done += 1; ok(name); } catch (e) { bad(`${name}: ${e.message}`); break; }
@@ -123,9 +131,17 @@ for (const [name, fn] of steps) {
 // Depth stops growing at the journal's cap, so it can't count edits on a
 // long session. Every step above is exactly one journal entry.
 const made = done;
+// The server undoes at most 15 steps per request, so go in batches, and
+// check the count actually undone rather than trusting the request.
 try {
-  if (made > 0) await post('/undo', { steps: made });
-  ok(`undid ${made} edit(s) in one step`);
+  let left = made;
+  let undone = 0;
+  while (left > 0) {
+    const r = await post('/undo', { steps: Math.min(15, left) });
+    undone += r.steps ?? 0;
+    left -= Math.min(15, left);
+  }
+  if (undone === made) ok(`undid ${made} edit(s)`); else bad(`undo: asked for ${made}, undid ${undone}`);
 } catch (e) { bad(`undo: ${e.message}`); }
 // Redo then undo once more, to prove redo works and leaves nothing behind.
 try {
