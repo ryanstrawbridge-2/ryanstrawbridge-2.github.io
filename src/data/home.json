@@ -82,7 +82,7 @@
         "videoSource": "raytheon-merged.mp4",
         "video": "/videos/experience-raytheon-missiles-defense.mp4",
         "videoStart": 0,
-        "videoEnd": 24.97,
+        "videoEnd": 24.12,
         "focal": "44% 39%"
       },
       {
@@ -92,9 +92,9 @@
         "logo": "/src/assets/images/experience/aeronu.png",
         "dates": "",
         "videoSource": "aeronu-merged.mp4",
-        "video": "/videos/experience-northeastern-aerospace-club-aeronu-2.mp4",
+        "video": "/videos/experience-northeastern-aerospace-club-aeronu.mp4",
         "videoStart": 0,
-        "videoEnd": 13.4,
+        "videoEnd": 7.76,
         "focal": "51% 53%"
       }
     ]

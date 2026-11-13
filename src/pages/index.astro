@@ -224,7 +224,8 @@ const aboutBioParagraphs = home.aboutSection.bio
             // can preview and cut it. The live site shows a banner once cut.
             const showBanner = video || (import.meta.env.DEV && source);
             return (
-              <li class="experience-card reveal">
+              <li class={`experience-card reveal${showBanner ? ' has-banner' : ''}`}>
+                <div class="experience-text">
                 <header class="experience-head">
                   {logo && (
                     <div class="experience-logo" data-field={f('experienceSection', 'items', i, 'logo')}>
@@ -239,6 +240,8 @@ const aboutBioParagraphs = home.aboutSection.bio
                     )}
                   </div>
                 </header>
+                <p class="experience-blurb muted" data-field={f('experienceSection', 'items', i, 'blurb')}>{item.blurb}</p>
+                </div>
                 {showBanner && (
                   <div
                     class="experience-banner"
@@ -254,7 +257,6 @@ const aboutBioParagraphs = home.aboutSection.bio
                     <video data-src={video || undefined} muted loop playsinline preload="none" aria-label={`${item.org} video, muted`}></video>
                   </div>
                 )}
-                <p class="experience-blurb muted" data-field={f('experienceSection', 'items', i, 'blurb')}>{item.blurb}</p>
               </li>
             );
           })
@@ -730,21 +732,32 @@ const aboutBioParagraphs = home.aboutSection.bio
       display: grid;
       gap: clamp(2.5rem, 6vw, 4.5rem);
     }
+    /* Half and half: who and what on the left, the video on the right.
+       Stacks on phones, text first. */
     .experience-card {
       display: grid;
-      gap: 1.25rem;
-    }
-    /* Logo and company name lead, above the video, so who it was is the
-       first thing read. */
-    .experience-head {
-      display: flex;
+      gap: 1.5rem;
       align-items: center;
-      gap: clamp(1rem, 3vw, 2rem);
-      flex-wrap: wrap;
+    }
+    @media (min-width: 900px) {
+      .experience-card.has-banner {
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(2rem, 4vw, 3.5rem);
+      }
+    }
+    .experience-text {
+      display: grid;
+      gap: 1.1rem;
+      min-width: 0;
+    }
+    /* Logo and company name lead, so who it was is the first thing read. */
+    .experience-head {
+      display: grid;
+      gap: 1rem;
+      justify-items: start;
     }
     .experience-logo {
-      flex: 0 0 auto;
-      width: clamp(150px, 26vw, 280px);
+      width: clamp(180px, 40%, 260px);
       height: calc(var(--logo-height, 150px) * 0.7);
       /* Fixed light plate in both themes — the logo files assume a light
          backdrop. See --logo-plate in global.css. */
@@ -770,18 +783,17 @@ const aboutBioParagraphs = home.aboutSection.bio
       object-fit: contain;
     }
     .experience-id {
-      flex: 1 1 16rem;
       min-width: 0;
     }
     .experience-org {
       margin: 0;
-      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-size: clamp(1.6rem, 3vw, 2.3rem);
       line-height: 1.1;
       letter-spacing: -0.01em;
     }
     .experience-role {
       margin: 0.35rem 0 0;
-      color: var(--accent);
+      color: var(--text);
       font-weight: 600;
       font-size: 1.1rem;
     }
@@ -802,9 +814,6 @@ const aboutBioParagraphs = home.aboutSection.bio
       border-radius: var(--radius-lg);
       background: #000;
       box-shadow: var(--shadow);
-    }
-    @media (min-width: 768px) {
-      .experience-banner { aspect-ratio: 21 / 9; }
     }
     .experience-banner video {
       display: block;
