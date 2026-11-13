@@ -379,7 +379,12 @@ GitHub SSH push from background processes stalls on large payloads.
     inserters, show/hide chips for built-in home sections, project photo
     framing). New blocks are `draft: true` — dev-only until switched on, so
     starter copy can't ship. Home block photo crops go to `blocks.N.focal/zoom`
-    (`homeCropPaths`), not `imageFocalPoint`.
+    (`homeCropPaths`), not `imageFocalPoint`. Paste and the picker's
+    Starters both go through `op: 'add'` with `patch.paste`, which re-runs
+    every leaf through `blockValue` — so a starter using a new field needs
+    that field whitelisted first. Panel state survives reloads via
+    sessionStorage `studio:block-ui`, kept ~4 s after use because a project
+    save can reload twice.
 
 ## macOS gotchas
 

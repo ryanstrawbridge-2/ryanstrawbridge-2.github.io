@@ -72,7 +72,7 @@ const Tag = inline ? 'div' : 'section';
 <Tag
   class:list={[
     'blk', `blk-${type}`, `blk-bg-${bg}`, `blk-w-${width}`, `blk-a-${align}`,
-    { 'section': !inline && type !== 'spacer' && type !== 'marquee' && type !== 'banner', 'blk-inline': inline, 'blk-draft': isDraft },
+    { [`blk-space-${pick(style.space, ['tight', 'normal', 'loose'] as const, 'normal')}`]: inline, 'section': !inline && type !== 'spacer' && type !== 'marquee' && type !== 'banner', 'blk-inline': inline, 'blk-draft': isDraft },
   ]}
   id={block.anchor ? str(block.anchor) : undefined}
   data-block={DEV ? index : undefined}
@@ -449,6 +449,8 @@ const Tag = inline ? 'div' : 'section';
      theme panel's colours, corners and fonts like the rest of the site. */
   .blk { position: relative; }
   .blk-inline { margin: 2.5rem 0; }
+  .blk-inline.blk-space-tight { margin: 1.25rem 0; }
+  .blk-inline.blk-space-loose { margin: 4.5rem 0; }
   .blk-bg-subtle { background: var(--bg-elevated); border-block: 1px solid var(--border); }
   .blk-bg-accent { background: var(--accent-soft); }
   .blk-bg-dark { background: var(--text); color: var(--bg); }

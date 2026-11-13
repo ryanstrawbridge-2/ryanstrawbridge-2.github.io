@@ -1245,7 +1245,7 @@ const BLOCK_ITEM = Object.fromEntries(Object.entries(BLOCK_TEMPLATES).filter(([,
 const BLOCK_STYLE = {
   bg: ['none', 'subtle', 'accent', 'dark'], width: ['contained', 'narrow', 'wide', 'full'], align: ['left', 'center'],
   columns: ['1', '2', '3', '4'], variant: ['cards', 'plain', 'numbered', 'overlay', 'grid', 'masonry', 'strip'],
-  side: ['left', 'right'], ratio: ['40', '50', '60'], height: ['short', 'medium', 'tall', 'screen'], shade: ['0', '20', '40', '60', '80'],
+  side: ['left', 'right'], ratio: ['40', '50', '60'], height: ['short', 'medium', 'tall', 'screen'], shade: ['0', '20', '40', '60', '80'], space: ['tight', 'normal', 'loose'],
 };
 const BLOCK_BOOL = new Set(['draft', 'style.numbered', 'style.open', 'style.line', 'style.countup', 'style.reveal']);
 const newBlockId = () => Math.random().toString(36).slice(2, 8);

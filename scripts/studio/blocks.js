@@ -43,6 +43,20 @@ const GROUPS = [
     ['spacer', 'Spacer', 'Extra space, with or without a line'],
   ]],
 ];
+// Ready-made versions of patterns from engineering portfolios: a block type
+// plus starter content and style. Inserted through the same paste path, so
+// the server re-checks every field.
+const STARTERS = [
+  ['cards', 'Numbered services', 'What I do, 01 to 06, no photos', { eyebrow: 'What I do', heading: 'Areas I work in', items: ['Design', 'Analysis', 'Prototyping', 'Testing'].map((t) => ({ title: t, text: 'One sentence on what this covers.' })), style: { variant: 'numbered', columns: '4' } }],
+  ['cards', 'Project cards', 'Photo cards that link to case studies', { eyebrow: 'Selected work', heading: 'Projects', items: [1, 2, 3].map((n) => ({ title: `Project ${n}`, text: 'One line on the problem and the result.', tag: 'Category', url: '/projects/' })), style: { variant: 'cards', columns: '3' } }],
+  ['quote', 'Testimonials', 'Three short quotes with names', { eyebrow: 'What people say', heading: '', items: [1, 2, 3].map(() => ({ text: 'A sentence from a manager, teammate or professor.', name: 'Name', role: 'Role, Company' })), style: { bg: 'subtle' } }],
+  ['timeline', 'Experience with logos', 'Roles, dates and a logo each', { eyebrow: 'Experience', heading: 'Where I have worked', items: [1, 2, 3].map(() => ({ date: 'Dates', title: 'Role', org: 'Company', text: 'One or two lines on what you did.' })) }],
+  ['stats', 'Key numbers', 'Three big figures, counting up', { heading: '', items: [1, 2, 3].map(() => ({ value: 'Value', label: 'What it measures' })), style: { countup: true, columns: '3', align: 'center', bg: 'subtle' } }],
+  ['banner', 'Intro over a photo', 'Name and role over a full-width photo', { eyebrow: 'Mechanical engineer', heading: 'Headline about what you build', body: 'One line under it.', style: { height: 'tall', shade: '40', width: 'full' } }],
+  ['steps', 'How I work', 'A three-step process', { eyebrow: 'Process', heading: 'How I approach a project', items: ['Define', 'Build', 'Test'].map((t) => ({ title: t, text: 'One sentence on this step.' })), style: { columns: '3' } }],
+  ['links', 'Publications', 'Papers, press and downloads', { eyebrow: 'Writing', heading: 'Publications and press', items: [{ title: 'Title', source: 'Where it appeared', year: 'Year', url: '' }] }],
+];
+
 const TYPE_NAME = Object.fromEntries(GROUPS.flatMap(([, t]) => t.map(([k, n]) => [k, n])));
 
 // Small wireframe for each tile in the picker.
@@ -181,6 +195,19 @@ const openPicker = (after, label) => {
     tiles.push(paste);
     body.append(el('section', { className: 'studio-picker-group' }, el('h4', { textContent: 'Clipboard' }), el('div', { className: 'studio-picker-grid' }, paste)));
   }
+  {
+    const grid = el('div', { className: 'studio-picker-grid' });
+    for (const [type, name, desc, data] of STARTERS) {
+      const tile = el('button', { type: 'button', className: 'studio-picker-tile is-starter' });
+      tile.innerHTML = `<svg viewBox="0 0 64 40" aria-hidden="true" fill="currentColor">${WIRE[type]}</svg>`;
+      tile.append(el('strong', { textContent: name }), el('span', { textContent: desc }));
+      tile.dataset.search = `${name} ${desc} ${type} starter`.toLowerCase();
+      tile.addEventListener('click', () => addBlock(type, data));
+      grid.append(tile);
+      tiles.push(tile);
+    }
+    body.append(el('section', { className: 'studio-picker-group' }, el('h4', { textContent: 'Starters' }), grid));
+  }
   for (const [group, types] of GROUPS) {
     const grid = el('div', { className: 'studio-picker-grid' });
     for (const [type, name, desc] of types) {
@@ -306,6 +333,45 @@ const run = async (op, body, note) => {
   } catch (error) { toast(error.message, true); return null; }
 };
 
+/** Wrap the selection in markers (or insert them around a placeholder). */
+const wrap = (input, before, after, placeholder = 'text') => {
+  const { selectionStart: a, selectionEnd: b, value } = input;
+  const picked = value.slice(a, b) || placeholder;
+  input.setRangeText(`${before}${picked}${after}`, a, b, 'select');
+  input.setSelectionRange(a + before.length, a + before.length + picked.length);
+  input.focus();
+};
+const link = (input) => {
+  const url = prompt('Link to (https://…, /page, or mailto:)', 'https://');
+  if (!url || url === 'https://') return;
+  wrap(input, '[', `](${url})`, 'link text');
+};
+const prefixLines = (input, prefix) => {
+  const { selectionStart: a, selectionEnd: b, value } = input;
+  const start = value.lastIndexOf('\n', a - 1) + 1;
+  const end = value.indexOf('\n', b) === -1 ? value.length : value.indexOf('\n', b);
+  const lines = value.slice(start, end).split('\n').map((l, i) => (prefix === '1.' ? `${i + 1}. ` : `${prefix} `) + l.replace(/^(\s*[-*]|\s*\d+[.)])\s+/, ''));
+  input.setRangeText(lines.join('\n'), start, end, 'select');
+  input.focus();
+};
+const formatBar = (input) => {
+  const bar = el('div', { className: 'studio-fmt', role: 'toolbar', 'aria-label': 'Formatting' });
+  for (const [label, title, fn] of [
+    ['B', 'Bold (⌘B)', () => wrap(input, '**', '**')],
+    ['I', 'Italic (⌘I)', () => wrap(input, '*', '*')],
+    ['Link', 'Link (⌘K)', () => link(input)],
+    ['• List', 'Bullet list', () => prefixLines(input, '-')],
+    ['1. List', 'Numbered list', () => prefixLines(input, '1.')],
+    ['█ Redact', 'Hide words behind bars, for work you can\'t name', () => wrap(input, '||', '||', 'hidden')],
+  ]) {
+    const b = el('button', { type: 'button', textContent: label, title });
+    b.addEventListener('mousedown', (e) => e.preventDefault()); // keep the selection
+    b.addEventListener('click', fn);
+    bar.append(b);
+  }
+  return bar;
+};
+
 const textInput = (key, label, value, kind = 'text') => {
   const multiline = kind === 'area';
   const input = el(multiline ? 'textarea' : 'input', { className: 'studio-input', value: value ?? '' });
@@ -318,10 +384,19 @@ const textInput = (key, label, value, kind = 'text') => {
     if (e.key === 'Enter' && (!multiline || e.metaKey || e.ctrlKey)) { e.preventDefault(); input.blur(); }
     if (e.key === 'Escape') { input.value = start; input.blur(); }
   });
-  const hint = multiline && key !== 'words' && !key.endsWith('tags')
-    ? el('small', { textContent: '**bold**  *italic*  [link](url)  - bullet  ||redacted||  ·  ⌘↵ saves' })
-    : null;
-  return el('label', { className: 'studio-ins-field' }, el('span', { textContent: label }), input, hint);
+  const rich = multiline && key !== 'words' && !key.endsWith('tags');
+  const hint = rich ? el('small', { textContent: '⌘B bold · ⌘I italic · ⌘K link · ⌘↵ saves' }) : null;
+  const bar = rich ? formatBar(input) : null;
+  if (rich) {
+    input.addEventListener('keydown', (e) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const k = e.key.toLowerCase();
+      if (k === 'b') { e.preventDefault(); wrap(input, '**', '**'); }
+      if (k === 'i') { e.preventDefault(); wrap(input, '*', '*'); }
+      if (k === 'k') { e.preventDefault(); link(input); }
+    });
+  }
+  return el('label', { className: 'studio-ins-field' }, el('span', { textContent: label }), bar, input, hint);
 };
 
 const segmented = (key, label, options, value, fallback) => {
@@ -562,6 +637,7 @@ function render() {
       g.append(segmented('style.height', 'Height', [['short', 'Short'], ['medium', 'Medium'], ['tall', 'Tall'], ['screen', 'Full screen']], style.height, 'medium'));
       g.append(segmented('style.shade', 'Darken photo', [['0', 'None'], ['20', '20%'], ['40', '40%'], ['60', '60%'], ['80', '80%']], style.shade, '40'));
     }
+    if (scope === 'project') g.append(segmented('style.space', 'Space around', [['tight', 'Tight'], ['normal', 'Normal'], ['loose', 'Loose']], style.space, 'normal'));
     if (type === 'faq') g.append(toggle('style.open', 'Start expanded', style.open));
     if (type === 'stats') g.append(toggle('style.countup', 'Count up on scroll', style.countup, 'Numbers run up from 0 the first time they come into view.'));
     if (type !== 'spacer' && type !== 'marquee') {
