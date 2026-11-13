@@ -172,7 +172,7 @@
     {
       "id": "hxadvn",
       "type": "spacer",
-      "draft": true,
+      "draft": false,
       "size": 64,
       "style": {
         "line": false
