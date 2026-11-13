@@ -1284,7 +1284,7 @@ const blockValue = (key, value) => {
   if (key === 'anchor' && !/^[a-z0-9][a-z0-9-]{0,40}$/i.test(String(value))) throw new Error('anchor: letters, numbers and dashes only');
   if (key === 'split') return Math.min(95, Math.max(5, Math.round(Number(value) || 50)));
   if (/^(eyebrow|heading|intro|body|alt|url|src|video|image|compare|beforeLabel|afterLabel|badge|caption|words|anchor|section|focal|imageFocalPoint)$/.test(key)
-    || /^items\.\d+\.(title|text|image|url|tag|value|label|name|role|q|a|date|org|caption|alt|tags|source|year|focal)$/.test(key)
+    || /^items\.\d+\.(title|text|image|url|tag|value|label|name|role|q|a|date|org|caption|alt|tags|source|year|focal|icon)$/.test(key)
     || /^buttons\.\d+\.(label|url|style)$/.test(key)) {
     return String(value).slice(0, 4000);
   }

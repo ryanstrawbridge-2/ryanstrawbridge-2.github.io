@@ -361,6 +361,7 @@ content:
               - { name: tags, label: "Chips (comma separated)", type: text }
               - { name: source, label: Source, type: string }
               - { name: year, label: Year, type: string }
+              - { name: icon, label: Icon, type: select, options: { values: [gear, wrench, rocket, bolt, chip, cube, ruler, flask, chart, layers, target, flame, droplet, magnet, printer, users, check, book, code, shield, pencil, search] } }
           - name: style
             label: Style
             type: object

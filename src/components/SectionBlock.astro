@@ -18,6 +18,7 @@ import { Image } from 'astro:assets';
 import { resolveSiteImage } from '../lib/site-images';
 import { inlineRich, richText, embedUrl, safeUrl } from '../lib/rich-text';
 import { focalCss, clampZoom } from '../lib/gallery';
+import { BLOCK_ICONS } from '../lib/block-icons';
 
 type Item = Record<string, unknown>;
 type Block = Record<string, unknown> & { id?: string; type?: string; items?: Item[]; style?: Record<string, unknown> };
@@ -43,6 +44,7 @@ const field = (...path: (string | number)[]) => (DEV ? `${doc}:blocks.${index}.$
 const type = String(block.type ?? 'text');
 const style = (block.style ?? {}) as Record<string, unknown>;
 const items = (Array.isArray(block.items) ? block.items : []).filter((i) => i && typeof i === 'object') as Item[];
+const icon = (name: unknown) => (BLOCK_ICONS[str(name)] ? `<svg viewBox="0 0 24 24" aria-hidden="true">${BLOCK_ICONS[str(name)]}</svg>` : '');
 const href = (v: unknown) => { const u = str(v).trim(); return u ? safeUrl(u) : ''; };
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
 const pick = <T extends string>(v: unknown, allowed: readonly T[], fallback: T): T =>
@@ -186,6 +188,7 @@ const Tag = inline ? 'div' : 'section';
                 </div>
               )}
               <div class="blk-card-body">
+                {item.icon && <span class="blk-icon" set:html={icon(item.icon)} />}
                 {variant === 'numbered' && <span class="blk-num">{String(k + 1).padStart(2, '0')}</span>}
                 {item.tag && <span class="blk-tag" data-field={field('items', k, 'tag')}>{str(item.tag)}</span>}
                 {item.title && <h3 data-field={field('items', k, 'title')} set:html={inlineRich(str(item.title))} />}
@@ -228,7 +231,7 @@ const Tag = inline ? 'div' : 'section';
       <ol class:list={['blk-steps', `blk-cols-${columns}`]}>
         {items.map((item, k) => (
           <li class="blk-step">
-            <span class="blk-num">{String(k + 1).padStart(2, '0')}</span>
+            {item.icon ? <span class="blk-icon" set:html={icon(item.icon)} /> : <span class="blk-num">{String(k + 1).padStart(2, '0')}</span>}
             <div>
               {item.title && <h3 data-field={field('items', k, 'title')} set:html={inlineRich(str(item.title))} />}
               {item.text && <div class="muted" data-field={field('items', k, 'text')} set:html={richText(str(item.text))} />}
@@ -557,6 +560,10 @@ const Tag = inline ? 'div' : 'section';
   .blk-cards-overlay .blk-card-text { color: rgb(255 255 255 / 0.85); }
   .blk-num { font: 600 0.85rem/1 var(--font-mono, ui-monospace, monospace); color: var(--accent); }
   .blk-tag { justify-self: start; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+
+  .blk-icon { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); }
+  .blk-icon :global(svg) { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .blk-bg-dark .blk-icon { background: color-mix(in srgb, var(--bg) 15%, transparent); color: var(--bg); }
 
   /* stats */
   .blk-stat { border-left: 2px solid var(--accent); padding-left: 1rem; }

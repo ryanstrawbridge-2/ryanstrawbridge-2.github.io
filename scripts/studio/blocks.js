@@ -49,6 +49,7 @@ const GROUPS = [
 // the server re-checks every field.
 const STARTERS = [
   ['cards', 'Numbered services', 'What I do, 01 to 06, no photos', { eyebrow: 'What I do', heading: 'Areas I work in', items: ['Design', 'Analysis', 'Prototyping', 'Testing'].map((t) => ({ title: t, text: 'One sentence on what this covers.' })), style: { variant: 'numbered', columns: '4' } }],
+  ['cards', 'Services with icons', 'Four areas, each with a line icon', { eyebrow: 'What I do', heading: 'Areas I work in', items: [['gear', 'Mechanical design'], ['chart', 'Analysis'], ['wrench', 'Prototyping'], ['flask', 'Testing']].map(([icon, t]) => ({ icon, title: t, text: 'One sentence on what this covers.' })), style: { variant: 'plain', columns: '4' } }],
   ['cards', 'Project cards', 'Photo cards that link to case studies', { eyebrow: 'Selected work', heading: 'Projects', items: [1, 2, 3].map((n) => ({ title: `Project ${n}`, text: 'One line on the problem and the result.', tag: 'Category', url: '/projects/' })), style: { variant: 'cards', columns: '3' } }],
   ['quote', 'Testimonials', 'Three short quotes with names', { eyebrow: 'What people say', heading: '', items: [1, 2, 3].map(() => ({ text: 'A sentence from a manager, teammate or professor.', name: 'Name', role: 'Role, Company' })), style: { bg: 'subtle' } }],
   ['timeline', 'Experience with logos', 'Roles, dates and a logo each', { eyebrow: 'Experience', heading: 'Where I have worked', items: [1, 2, 3].map(() => ({ date: 'Dates', title: 'Role', org: 'Company', text: 'One or two lines on what you did.' })) }],
@@ -104,10 +105,10 @@ const FIELDS = {
   spacer: [['size', 'Height (px)', 'number']],
 };
 const ITEM_FIELDS = {
-  cards: [['image', 'Photo', 'media'], ['tag', 'Tag'], ['title', 'Title'], ['text', 'Text', 'area'], ['url', 'Link (optional)']],
+  cards: [['icon', 'Icon', 'icon'], ['image', 'Photo', 'media'], ['tag', 'Tag'], ['title', 'Title'], ['text', 'Text', 'area'], ['url', 'Link (optional)']],
   stats: [['value', 'Number'], ['label', 'Label']],
   quote: [['text', 'Quote', 'area'], ['name', 'Name'], ['role', 'Role']],
-  steps: [['title', 'Title'], ['text', 'Text', 'area']],
+  steps: [['icon', 'Icon (replaces the number)', 'icon'], ['title', 'Title'], ['text', 'Text', 'area']],
   timeline: [['date', 'Dates'], ['title', 'Title'], ['org', 'Organization'], ['text', 'Text', 'area'], ['image', 'Logo (optional)', 'media']],
   tags: [['label', 'Group name'], ['tags', 'Chips, separated by commas', 'area']],
   links: [['title', 'Title'], ['source', 'Source'], ['year', 'Year'], ['url', 'Link']],
@@ -545,6 +546,18 @@ const mediaField = (path, label, value) => {
   return wrap;
 };
 
+// Same names as src/lib/block-icons.ts; previews are drawn from the page's
+// own icons when present, otherwise listed by name.
+const ICON_NAMES = ['gear', 'wrench', 'rocket', 'bolt', 'chip', 'cube', 'ruler', 'flask', 'chart', 'layers', 'target', 'flame', 'droplet', 'magnet', 'printer', 'users', 'check', 'book', 'code', 'shield', 'pencil', 'search'];
+const iconField = (key, label, value) => {
+  const sel = el('select', { className: 'studio-input' });
+  sel.append(new Option('None', ''));
+  for (const n of ICON_NAMES) sel.append(new Option(n[0].toUpperCase() + n.slice(1), n));
+  sel.value = value ?? '';
+  sel.addEventListener('change', () => save({ [key]: sel.value || null }, key));
+  return el('label', { className: 'studio-ins-field' }, el('span', { textContent: label }), sel);
+};
+
 const itemList = (data) => {
   const type = current.type;
   const fields = ITEM_FIELDS[type];
@@ -602,7 +615,9 @@ const itemList = (data) => {
     det.addEventListener('toggle', () => { try { sessionStorage.setItem(openKey, det.open ? String(k) : '-1'); } catch { /* ignore */ } });
     const inner = el('div', { className: 'studio-item-body' });
     for (const [f, label, kind] of fields) {
-      inner.append(kind === 'media' ? mediaField(`items.${k}.${f}`, label, item[f]) : textInput(`items.${k}.${f}`, label, item[f], kind));
+      inner.append(kind === 'media' ? mediaField(`items.${k}.${f}`, label, item[f])
+        : kind === 'icon' ? iconField(`items.${k}.${f}`, label, item[f])
+        : textInput(`items.${k}.${f}`, label, item[f], kind));
     }
     det.append(inner);
     group.append(det);
