@@ -131,11 +131,19 @@
         "image": "/src/assets/images/about/music.jpg",
         "extraImages": [
           "/src/assets/images/about/extras/music-2.jpg",
-          "/src/assets/images/about/extras/music-3.jpeg"
+          "/src/assets/images/home/img-8988.jpg"
         ],
         "alt": "Music",
         "body": "I have a great appreciation for music. I played trumpet in high school, picked up guitar my junior year, and now play rhythm guitar in an alt-rock band.",
-        "focal": "8% 65%"
+        "focal": "8% 65%",
+        "extraCrops": [
+          {
+            "focal": "50% 0%"
+          },
+          {
+            "focal": "38% 58%"
+          }
+        ]
       },
       {
         "title": "Interior Design & Plants",
