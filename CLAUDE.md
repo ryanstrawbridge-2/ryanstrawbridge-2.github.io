@@ -384,7 +384,11 @@ GitHub SSH push from background processes stalls on large payloads.
     every leaf through `blockValue` — so a starter using a new field needs
     that field whitelisted first. Panel state survives reloads via
     sessionStorage `studio:block-ui`, kept ~4 s after use because a project
-    save can reload twice.
+    save can reload twice. All block fields, layout keys, experience
+    banner fields and interest crops are in `.pages.yml` (gotcha 41); the
+    blocks schema is one YAML anchor (`&blocks`) reused for projects. An added
+    section's Layout-mode spacing lives in its own `style.padTop/padBottom`
+    (patchLayout redirects `sections.block:<id>.*`), not in layout.sections.
 
 ## macOS gotchas
 

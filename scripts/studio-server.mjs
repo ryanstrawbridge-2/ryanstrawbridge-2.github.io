@@ -1183,6 +1183,18 @@ const patchLayout = async ({ patch }) => {
       }
       const rule = LAYOUT_RULES.find(([re]) => re.test(key));
       if (!rule) throw new Error(`unknown layout setting: ${key}`);
+      // An added section keeps its own spacing in its style, so it travels
+      // with the section (copy, duplicate, CMS) instead of a key named after it.
+      const own = key.match(/^sections\.block:([a-z0-9]+)\.(padTop|padBottom)$/);
+      if (own) {
+        const block = (home.blocks ?? []).find((b) => b.id === own[1]);
+        if (!block) throw new Error('that section no longer exists');
+        block.style = block.style && typeof block.style === 'object' ? block.style : {};
+        if (raw === null) delete block.style[own[2]];
+        else block.style[own[2]] = Math.round(Math.min(rule[2], Math.max(rule[1], Number(raw) || 0)));
+        if (!Object.keys(block.style).length) delete block.style;
+        continue;
+      }
       const keys = key.split('.');
       let node = home.layout;
       for (const k of keys.slice(0, -1)) node = node[k] = node[k] && typeof node[k] === 'object' ? node[k] : {};
@@ -1260,6 +1272,7 @@ const blockValue = (key, value) => {
     return String(value);
   }
   if (key === 'size') return Math.min(400, Math.max(8, Math.round(Number(value) || 64)));
+  if (key === 'style.padTop' || key === 'style.padBottom') return Math.min(400, Math.max(0, Math.round(Number(value) || 0)));
   if (/^(eyebrow|heading|intro|body|alt|url|src|video|image|caption|words|anchor|section|focal|imageFocalPoint)$/.test(key)
     || /^items\.\d+\.(title|text|image|url|tag|value|label|name|role|q|a|date|org|caption|alt|tags|source|year|focal)$/.test(key)
     || /^buttons\.\d+\.(label|url|style)$/.test(key)) {

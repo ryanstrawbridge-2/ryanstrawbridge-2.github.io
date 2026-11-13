@@ -133,6 +133,8 @@ content:
                   output: /src/assets/images/home/{name}{extension}
               - { name: video, label: Video path (optional), type: string, description: "e.g. /videos/aero-testing.mp4 — set instead of a photo for a video cell." }
               - { name: alt, label: Alt text, type: string }
+              - { name: focal, label: Crop position, type: string, description: "Set by dragging the photo in studio, e.g. 50% 40%." }
+              - { name: zoom, label: Zoom, type: number, description: "Set in studio with ⌥-scroll. 1 = no zoom." }
               - name: size
                 label: Cell size
                 type: select
@@ -174,6 +176,13 @@ content:
                 options:
                   input: src/assets/images
                   output: /src/assets/images/home/{name}{extension}
+              - { name: dates, label: Dates, type: string, description: "e.g. Jan 2025 – Present. Left empty, nothing shows." }
+              - { name: video, label: Banner video, type: string, description: "Set by studio's trim panel, e.g. /videos/experience-cfs.mp4." }
+              - { name: videoSource, label: Full-length source video, type: string, description: "File in video-sources/ (local only). Set by studio." }
+              - { name: videoStart, label: Trim start (s), type: number }
+              - { name: videoEnd, label: Trim end (s), type: number }
+              - { name: focal, label: Crop position, type: string, description: "Set by dragging the photo in studio, e.g. 50% 40%." }
+              - { name: zoom, label: Zoom, type: number, description: "Set in studio with ⌥-scroll. 1 = no zoom." }
 
       - name: aboutSection
         label: About section
@@ -187,6 +196,7 @@ content:
               input: src/assets/images
               output: /src/assets/images/home/{name}{extension}
           - { name: photoAlt, label: Portrait alt text, type: string }
+          - { name: photoZoom, label: Portrait zoom, type: number, description: "Set in studio with ⌥-scroll. 1 = no zoom." }
           - name: photoPosition
             label: Photo position
             type: select
@@ -247,6 +257,16 @@ content:
                   output: /src/assets/images/home/{name}{extension}
               - { name: alt, label: Alt text, type: string }
               - { name: body, label: Body, type: text }
+              - { name: focal, label: Crop position, type: string, description: "Set by dragging the photo in studio, e.g. 50% 40%." }
+              - { name: zoom, label: Zoom, type: number, description: "Set in studio with ⌥-scroll. 1 = no zoom." }
+              - name: extraCrops
+                label: Extra photo crops
+                type: object
+                list: true
+                description: One per extra photo, in the same order. Set by dragging in studio.
+                fields:
+                  - { name: focal, label: Crop position, type: string }
+                  - { name: zoom, label: Zoom, type: number }
 
       - name: contactSection
         label: Contact section
@@ -258,6 +278,157 @@ content:
           - { name: body, label: Body, type: text }
           - { name: email, label: Email, type: string }
           - { name: phone, label: Phone, type: string }
+
+      # Section blocks added with studio's "+ Add section". Edit them in studio;
+      # they're listed here so saving this page in the CMS keeps them.
+      # Leave "Draft" on for anything not ready: drafts never reach the live site.
+      - &blocks
+        name: blocks
+        label: Added sections
+        type: object
+        list: true
+        description: Sections added in studio (cards, stats, quotes, timeline, gallery, video, banner…). Easiest to edit in studio.
+        fields:
+          - { name: id, label: ID (don't change), type: string }
+          - name: type
+            label: Section type
+            type: select
+            options:
+              values: [banner, text, split, cards, stats, quote, steps, timeline, logos, faq, gallery, video, tags, links, cta, marquee, spacer]
+          - { name: draft, label: "Draft (hidden on the live site)", type: boolean, default: true }
+          - { name: section, label: "Project heading it sits under (projects only)", type: string }
+          - { name: eyebrow, label: Eyebrow, type: string }
+          - { name: heading, label: Heading, type: string }
+          - { name: intro, label: Intro, type: text }
+          - { name: body, label: Text, type: text }
+          - { name: image, label: Photo path, type: string }
+          - { name: video, label: Video path, type: string }
+          - { name: alt, label: Photo description, type: string }
+          - { name: focal, label: Crop position, type: string }
+          - { name: zoom, label: Zoom, type: number }
+          - { name: url, label: "Video link (YouTube / Vimeo)", type: string }
+          - { name: src, label: Video file, type: string }
+          - { name: caption, label: Caption, type: string }
+          - { name: words, label: "Scrolling words (comma separated)", type: text }
+          - { name: size, label: Spacer height (px), type: number }
+          - { name: anchor, label: "Anchor name (for #links)", type: string }
+          - name: buttons
+            label: Buttons
+            type: object
+            list: true
+            fields:
+              - { name: label, label: Label, type: string }
+              - { name: url, label: Link, type: string }
+              - name: style
+                label: Style
+                type: select
+                options:
+                  values: [primary, secondary]
+          - name: items
+            label: Items
+            type: object
+            list: true
+            description: Cards, stats, quotes, steps, entries, photos… Which fields matter depends on the section type.
+            fields:
+              - { name: title, label: Title, type: string }
+              - { name: text, label: Text, type: text }
+              - { name: image, label: Photo path, type: string }
+              - { name: focal, label: Crop position, type: string }
+              - { name: zoom, label: Zoom, type: number }
+              - { name: url, label: Link, type: string }
+              - { name: tag, label: Tag, type: string }
+              - { name: value, label: Number, type: string }
+              - { name: label, label: Label, type: string }
+              - { name: name, label: Name, type: string }
+              - { name: role, label: Role, type: string }
+              - { name: q, label: Question, type: string }
+              - { name: a, label: Answer, type: text }
+              - { name: date, label: Dates, type: string }
+              - { name: org, label: Organization, type: string }
+              - { name: caption, label: Caption, type: string }
+              - { name: alt, label: Photo description, type: string }
+              - { name: tags, label: "Chips (comma separated)", type: text }
+              - { name: source, label: Source, type: string }
+              - { name: year, label: Year, type: string }
+          - name: style
+            label: Style
+            type: object
+            fields:
+              - { name: bg, label: Background, type: select, options: { values: [none, subtle, accent, dark] } }
+              - { name: width, label: Width, type: select, options: { values: [narrow, contained, wide, full] } }
+              - { name: align, label: Alignment, type: select, options: { values: [left, center] } }
+              - { name: columns, label: Columns, type: select, options: { values: ['1', '2', '3', '4'] } }
+              - { name: variant, label: Look, type: select, options: { values: [cards, plain, numbered, overlay, grid, masonry, strip] } }
+              - { name: side, label: Photo side, type: select, options: { values: [left, right] } }
+              - { name: ratio, label: Photo width, type: select, options: { values: ['40', '50', '60'] } }
+              - { name: height, label: Banner height, type: select, options: { values: [short, medium, tall, screen] } }
+              - { name: shade, label: Darken photo, type: select, options: { values: ['0', '20', '40', '60', '80'] } }
+              - { name: space, label: "Space around (projects)", type: select, options: { values: [tight, normal, loose] } }
+              - { name: numbered, label: Numbered eyebrow, type: boolean }
+              - { name: open, label: "Questions start expanded", type: boolean }
+              - { name: line, label: Spacer divider line, type: boolean }
+              - { name: countup, label: Count up on scroll, type: boolean }
+              - { name: reveal, label: Fade in on scroll, type: boolean, default: true }
+              - { name: padTop, label: "Space above (px, home)", type: number }
+              - { name: padBottom, label: "Space below (px, home)", type: number }
+
+      # Layout mode (studio, L): spacing, gaps, split and section order.
+      - name: layout
+        label: Layout (set in studio)
+        type: object
+        fields:
+          - name: order
+            label: Section order
+            type: string
+            list: true
+          - name: sections
+            label: Section spacing (px)
+            type: object
+            fields:
+              - name: hero
+                type: object
+                fields:
+                  - { name: padTop, label: Space above, type: number }
+                  - { name: padBottom, label: Space below, type: number }
+              - name: showcase
+                type: object
+                fields:
+                  - { name: padTop, label: Space above, type: number }
+                  - { name: padBottom, label: Space below, type: number }
+              - name: projects
+                type: object
+                fields:
+                  - { name: padTop, label: Space above, type: number }
+                  - { name: padBottom, label: Space below, type: number }
+              - name: experience
+                type: object
+                fields:
+                  - { name: padTop, label: Space above, type: number }
+                  - { name: padBottom, label: Space below, type: number }
+              - name: about
+                type: object
+                fields:
+                  - { name: padTop, label: Space above, type: number }
+                  - { name: padBottom, label: Space below, type: number }
+              - name: contact
+                type: object
+                fields:
+                  - { name: padTop, label: Space above, type: number }
+                  - { name: padBottom, label: Space below, type: number }
+          - name: experience
+            type: object
+            fields:
+              - { name: split, label: Text / video split (% text), type: number }
+              - { name: gap, label: Gap between entries, type: number }
+          - name: projects
+            type: object
+            fields:
+              - { name: gap, label: Gap between cards, type: number }
+          - name: interests
+            type: object
+            fields:
+              - { name: gap, label: Gap between cards, type: number }
+              - { name: top, label: Space above, type: number }
 
   # =========================================================================
   # PROJECTS — one entry per project file
@@ -383,6 +554,7 @@ content:
       # photo/video/model is a PLACEHOLDER — visible only on localhost, never
       # on the live site.
       # -------------------------------------------------------------------
+      - *blocks
       - name: figures
         label: Walkthrough figures
         type: object

@@ -60,8 +60,10 @@ const sectionOrder = Array.isArray(layout.order)
   : SECTION_KEYS;
 const px = (v: unknown, max = 400) => (typeof v === 'number' && v >= 0 && v <= max ? v : undefined);
 const scaled = (n: number) => `calc(${n}px * var(--space-scale, 1))`;
+const blockStyle = (key: string) => loose(blocks.find((b) => b.key === key)?.block.style);
 const sectionLayout = (key: string, extra = '') => {
-  const s = loose(layoutSections[key]);
+  // Added sections carry their spacing in their own style.
+  const s = key.startsWith('block:') ? blockStyle(key) : loose(layoutSections[key]);
   const bits = [`order: ${sectionOrder.indexOf(key)}`];
   const top = px(s.padTop);
   const bottom = px(s.padBottom);
