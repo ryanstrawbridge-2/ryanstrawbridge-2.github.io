@@ -37,7 +37,9 @@ const textSlots = () =>
       // A wrapper around other editable text (a placeholder figure's
       // root, say) isn't a value itself; its children are.
       !el.querySelector('[data-field]') &&
-      el.textContent.trim() !== '');
+      // Empty fields are skipped, except ones that show a placeholder
+      // (data-empty, e.g. experience dates): those are there to be filled in.
+      (el.textContent.trim() !== '' || el.hasAttribute('data-empty')));
 
 const saveText = (slot, value, opts) =>
   slot.isHome

@@ -757,8 +757,8 @@ const aboutBioParagraphs = home.aboutSection.bio
       justify-items: start;
     }
     .experience-logo {
-      width: clamp(180px, 40%, 260px);
-      height: calc(var(--logo-height, 150px) * 0.7);
+      width: clamp(220px, 70%, 380px);
+      height: calc(var(--logo-height, 150px) * 0.9);
       /* Fixed light plate in both themes — the logo files assume a light
          backdrop. See --logo-plate in global.css. */
       background: var(--logo-plate);
@@ -771,8 +771,8 @@ const aboutBioParagraphs = home.aboutSection.bio
     }
     @media (min-width: 768px) {
       .experience-logo {
-        height: var(--logo-height, 150px);
-        padding: 1rem 1.5rem;
+        height: calc(var(--logo-height, 150px) * 1.25);
+        padding: 1rem 1.75rem;
       }
     }
     .experience-logo :global(img) {
