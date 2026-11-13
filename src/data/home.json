@@ -65,9 +65,9 @@
       {
         "role": "Manufacturing Engineering Co-op",
         "org": "Commonwealth Fusion Systems",
-        "blurb": "Two terms supporting the poloidal field magnets for the SPARC tokamak. Designed a 2,100 lb lifting frame certified to ASME BTH-1, conformal fixturing for 11 cable configurations, and tooling that cut hours out of the insulation-wrapping process.",
+        "blurb": "Supported production of the poloidal field magnets for the SPARC tokamak. I designed, prototyped, and implemented custom tooling, fixtures, and mechanical equipment to improve manufacturing processes. My work combined CAD design, first-principles engineering calculations, hands-on testing, and collaboration with technicians to develop practical solutions for the factory floor.",
         "logo": "/src/assets/images/experience/cfs.png",
-        "dates": "January - June 2025 & January - June 2026 (1 Year)",
+        "dates": "January - June 2025 + January - June 2026 (1 Year)",
         "videoSource": "cfs-merged.mp4",
         "video": "/videos/experience-commonwealth-fusion-systems.mp4",
         "videoStart": 0,
@@ -76,7 +76,7 @@
       {
         "role": "Operations Engineering Co-op",
         "org": "Raytheon Missiles & Defense",
-        "blurb": "Circuit card production for missile and radar systems. Designed a composite fixture shielding heat-sensitive filters from 93 °C reflow, and ran a nine-configuration solder stencil study that reduced rework across 15 programs.",
+        "blurb": "As an Operations Engineering Co-op at Raytheon, I supported the production of circuit cards for missile and radar systems. My work spanned manufacturing process development, tooling design, and production improvement. I developed thermal profiles and custom tools to improve solder rework, conducted stencil studies to control solder volume, and streamlined operator interfaces for rework equipment.",
         "logo": "/src/assets/images/experience/raytheon.png",
         "dates": "January 2024 – September 2024 (9 Months)",
         "videoSource": "raytheon-merged.mp4",
@@ -88,7 +88,7 @@
       {
         "role": "Propulsion Team",
         "org": "Northeastern Aerospace Club (AeroNU)",
-        "blurb": "I've been involved with Northeastern's Aerospace Club (AeroNU) as a member, Liquid Rocketry Lead, and Vice President. Through these roles, I've helped design, build, and test liquid rocket propulsion systems while developing experience in both engineering and team leadership.\n\nAs part of the Liquid Rocketry team, I've worked on injector design, fluid and pressurization systems, instrumentation, and test hardware. I've also supported the setup and execution of three successful static-fire tests, integrating propulsion, electrical, and instrumentation systems while configuring test hardware and data acquisition equipment.",
+        "blurb": "I've been involved with Northeastern's Aerospace Club (AeroNU) as a member, Liquid Rocketry Lead, and Vice President. Through these roles, I've helped design, build, and test liquid rocket propulsion systems while developing experience in both engineering and team leadership.\n\nAs part of the Liquid Rocketry team, I've worked on injector design, fluid and pressurization systems, instrumentation, and test hardware.",
         "logo": "/src/assets/images/experience/aeronu.png",
         "dates": "September 2023 - Present (3 years)",
         "videoSource": "aeronu-merged.mp4",
