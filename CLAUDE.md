@@ -368,6 +368,18 @@ GitHub SSH push from background processes stalls on large payloads.
     `LAYOUT_SECTIONS` (studio-server), plus `data-layout` + `sectionLayout()`.
     Experience banners: full-length originals in gitignored `video-sources/`,
     cut clips in `public/videos/experience-*.mp4` (see banner.js).
+55. **Section blocks (studio "Add section").** Data: home.json `blocks[]`
+    (ordered via `layout.order` keys `block:<id>`) and project frontmatter
+    `blocks[]` (placed under the heading named in `section`, like figures;
+    schema is a loose `z.record` on purpose). Renderer:
+    `src/components/SectionBlock.astro` (17 types, theme tokens only, text via
+    `lib/rich-text.ts`). Writer: `/blocks` route (`BLOCK_TEMPLATES`,
+    `blockValue` whitelist; add a field there or it's refused) and
+    `/media` `kind: 'block'`. UI: `scripts/studio/blocks.js` (picker, panel,
+    inserters, show/hide chips for built-in home sections, project photo
+    framing). New blocks are `draft: true` — dev-only until switched on, so
+    starter copy can't ship. Home block photo crops go to `blocks.N.focal/zoom`
+    (`homeCropPaths`), not `imageFocalPoint`.
 
 ## macOS gotchas
 

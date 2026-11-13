@@ -954,3 +954,5 @@ body.studio-layout-mode .studio-insert, body.studio-layout-mode .studio-block-ch
 .studio-section-off > :not(.studio-vis-chip):not(.studio-insert) { opacity: 0.32; filter: grayscale(0.6); }
 .studio-section-off > .studio-vis-chip { opacity: 1; background: var(--st-danger-tint); border-color: rgb(239 68 68 / 0.5); }
 body.studio-preview .studio-section-off { display: none !important; }
+.studio-block-crop img { cursor: grab; }
+.studio-block-crop img:active { cursor: grabbing; }

@@ -361,7 +361,7 @@ const mediaField = (path, label, value) => {
     row.append(rm);
   }
   wrap.append(row);
-  if (scope === 'home' && value) wrap.append(el('small', { textContent: 'Drag the photo on the page to reframe it; ⌥-scroll to zoom.' }));
+  if (value) wrap.append(el('small', { textContent: 'Drag the photo on the page to reframe it; ⌥-scroll to zoom.' }));
   return wrap;
 };
 
@@ -575,6 +575,65 @@ for (const sec of document.querySelectorAll('[data-hidden-section]')) {
   });
   if (getComputedStyle(sec).position === 'static') sec.style.position = 'relative';
   sec.append(chip);
+}
+
+// Project pages: drag a block photo to reframe it, ⌥-scroll to zoom. (The
+// home page already gets this from home.js, which handles every home photo.)
+if (scope === 'project') {
+  for (const slot of document.querySelectorAll('[data-block-id] [data-field*=":blocks."]')) {
+    const m = slot.dataset.field.match(/^project:blocks\.(\d+)\.((?:items\.\d+\.)?)image$/);
+    const media = slot.querySelector('img');
+    if (!m || !media) continue;
+    const [, bi, itemPrefix] = m;
+    const blockEl = slot.closest('[data-block-id]');
+    const host = slot.style.getPropertyValue('--focal') ? slot : slot.closest('[style*="--focal"]') ?? slot;
+    const read = () => {
+      const cs = getComputedStyle(host);
+      const f = (cs.getPropertyValue('--focal') || '50% 50%').match(/(-?[\d.]+)%\s+(-?[\d.]+)%/);
+      return { x: f ? parseFloat(f[1]) : 50, y: f ? parseFloat(f[2]) : 50, z: parseFloat(cs.getPropertyValue('--zoom')) || 1 };
+    };
+    let { x, y, z } = read();
+    const show = () => { host.style.setProperty('--focal', `${x}% ${y}%`); host.style.setProperty('--zoom', String(z)); };
+    const saveCrop = async (patch) => {
+      try { await post('/blocks', { scope, op: 'patch', id: blockEl.dataset.blockId, patch }, { quiet: true }); }
+      catch (error) { toast(error.message, true); }
+    };
+    slot.classList.add('studio-block-crop');
+    let drag = null;
+    media.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || document.body.classList.contains('studio-text-mode')) return;
+      e.preventDefault();
+      drag = { moved: false };
+      try { media.setPointerCapture(e.pointerId); } catch { /* fine */ }
+    });
+    media.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      drag.moved = true;
+      const r = media.getBoundingClientRect();
+      x = Math.round(Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100)));
+      y = Math.round(Math.min(100, Math.max(0, ((e.clientY - r.top) / r.height) * 100)));
+      show();
+    });
+    const end = () => {
+      if (!drag) return;
+      const moved = drag.moved;
+      drag = null;
+      if (moved) { saveCrop({ [`${itemPrefix}focal`]: `${x}% ${y}%` }); toast(`framing → ${x}% ${y}%`); }
+    };
+    media.addEventListener('pointerup', end);
+    media.addEventListener('pointercancel', end);
+    let zoomTimer = 0;
+    media.addEventListener('wheel', (e) => {
+      if (!e.altKey && !e.ctrlKey) return;
+      e.preventDefault();
+      z = Math.min(4, Math.max(1, z * Math.exp(-e.deltaY / 400)));
+      show();
+      clearTimeout(zoomTimer);
+      zoomTimer = setTimeout(() => saveCrop({ [`${itemPrefix}zoom`]: z > 1.001 ? Number(z.toFixed(2)) : null }), 400);
+    }, { passive: false });
+    // Clicks on a framed photo shouldn't open the lightbox while editing.
+    media.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); }, true);
+  }
 }
 
 placeInserters();

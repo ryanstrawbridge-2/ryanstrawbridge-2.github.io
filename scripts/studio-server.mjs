@@ -708,6 +708,9 @@ const homeCropPaths = (data, imagePath) => {
   const parent = imagePath.split('.').slice(0, -1).join('.');
   // Extra photos (interestsSection.items.0.extraImages.1) are plain strings in
   // a list, so their crops live in a parallel list on the row: extraCrops.1.
+  // Section blocks keep a plain focal / zoom beside their photo.
+  const blockPhoto = imagePath.match(/^(blocks\.\d+)\.image$/);
+  if (blockPhoto) return { focal: `${blockPhoto[1]}.focal`, zoom: `${blockPhoto[1]}.zoom` };
   const extra = imagePath.match(/^(.*)\.extraImages\.(\d+)$/);
   if (extra) return { focal: `${extra[1]}.extraCrops.${extra[2]}.focal`, zoom: `${extra[1]}.extraCrops.${extra[2]}.zoom` };
   if (/\.items\.\d+\.[^.]+$/.test(imagePath)) return { focal: `${parent}.focal`, zoom: `${parent}.zoom` };
