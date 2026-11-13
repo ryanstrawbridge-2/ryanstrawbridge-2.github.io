@@ -956,3 +956,9 @@ body.studio-layout-mode .studio-insert, body.studio-layout-mode .studio-block-ch
 body.studio-preview .studio-section-off { display: none !important; }
 .studio-block-crop img { cursor: grab; }
 .studio-block-crop img:active { cursor: grabbing; }
+.studio-picker-paste { border-style: dashed; border-color: var(--st-accent); }
+.studio-item.is-dragging { opacity: 0.45; }
+.studio-item.drop-before { box-shadow: 0 -2px 0 var(--st-accent); }
+.studio-item.drop-after { box-shadow: 0 2px 0 var(--st-accent); }
+.studio-item > summary { cursor: grab; }
+.studio-drop-over { outline: 2px dashed var(--st-accent) !important; outline-offset: -4px; background: rgb(59 130 246 / 0.08); }

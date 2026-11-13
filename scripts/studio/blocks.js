@@ -120,16 +120,24 @@ const el = (tag, props = {}, ...kids) => {
   for (const kid of kids) if (kid != null && kid !== false) node.append(kid);
   return node;
 };
+const CLIP = 'studio:block-clipboard';
+const readClip = () => { try { return JSON.parse(localStorage.getItem(CLIP) || 'null'); } catch { return null; } };
 const blocksOnPage = () => [...document.querySelectorAll('[data-block-id]')];
 const send = (op, body) => post('/blocks', { scope, op, ...body });
 const keep = (extra = {}) => {
   try { sessionStorage.setItem(KEEP, JSON.stringify({ path: location.pathname, at: Date.now(), ...extra })); } catch { /* ignore */ }
 };
+// Not removed on read: a project save can reload the page twice (content
+// sync, then the page), and the second load must land in the same place.
+// It is cleared a few seconds after it has been applied instead.
 const readKeep = () => {
   try {
     const v = JSON.parse(sessionStorage.getItem(KEEP) || 'null');
-    sessionStorage.removeItem(KEEP);
-    return v && v.path === location.pathname && Date.now() - v.at < 15000 ? v : null;
+    if (!v || v.path !== location.pathname || Date.now() - v.at > 15000) { sessionStorage.removeItem(KEEP); return null; }
+    setTimeout(() => {
+      try { if (JSON.parse(sessionStorage.getItem(KEEP) || 'null')?.at === v.at) sessionStorage.removeItem(KEEP); } catch { /* ignore */ }
+    }, 4000);
+    return v;
   } catch { return null; }
 };
 
@@ -163,6 +171,16 @@ const openPicker = (after, label) => {
   );
   const body = el('div', { className: 'studio-picker-body' });
   const tiles = [];
+  const clip = readClip();
+  if (clip?.type && TYPE_NAME[clip.type]) {
+    const paste = el('button', { type: 'button', className: 'studio-picker-tile studio-picker-paste' });
+    paste.innerHTML = `<svg viewBox="0 0 64 40" aria-hidden="true" fill="currentColor">${WIRE[clip.type] ?? ''}</svg>`;
+    paste.append(el('strong', { textContent: `Paste: ${TYPE_NAME[clip.type]}` }), el('span', { textContent: clip.label ? `“${clip.label}”, copied ${clip.from}` : `Copied ${clip.from}` }));
+    paste.dataset.search = `paste ${TYPE_NAME[clip.type]}`.toLowerCase();
+    paste.addEventListener('click', () => addBlock(clip.type, clip.data));
+    tiles.push(paste);
+    body.append(el('section', { className: 'studio-picker-group' }, el('h4', { textContent: 'Clipboard' }), el('div', { className: 'studio-picker-grid' }, paste)));
+  }
   for (const [group, types] of GROUPS) {
     const grid = el('div', { className: 'studio-picker-grid' });
     for (const [type, name, desc] of types) {
@@ -191,11 +209,14 @@ const openPicker = (after, label) => {
 };
 picker.addEventListener('click', (e) => { if (e.target === picker) closePicker(); });
 
-const addBlock = async (type) => {
+const addBlock = async (type, paste) => {
   const after = pickTarget;
   closePicker();
+  // The reload can beat the reply, so note what exists now and pick the
+  // newcomer after the reload rather than waiting for its id.
+  keep({ selectNew: blocksOnPage().map((b) => b.dataset.blockId), tab: 'content' });
   try {
-    const r = await send('add', { type, after });
+    const r = await send('add', { type, after, ...(paste ? { patch: { paste } } : {}) });
     keep({ select: r.id, tab: 'content' });
     toast(`${TYPE_NAME[type]} section added (draft)`);
   } catch (error) { toast(error.message, true); }
@@ -378,6 +399,33 @@ const itemList = (data) => {
   items.forEach((item, k) => {
     const title = String(item.title ?? item.q ?? item.label ?? item.name ?? item.value ?? item.caption ?? item.text ?? '').replace(/[*_|`]/g, '').slice(0, 48) || `${noun} ${k + 1}`;
     const det = el('details', { className: 'studio-item', open: open === k });
+    det.draggable = true;
+    det.dataset.index = String(k);
+    det.addEventListener('dragstart', (e) => {
+      if (e.target.closest('input, textarea, select')) { e.preventDefault(); return; }
+      e.dataTransfer.setData('text/x-studio-item', String(k));
+      e.dataTransfer.effectAllowed = 'move';
+      det.classList.add('is-dragging');
+    });
+    det.addEventListener('dragend', () => det.classList.remove('is-dragging'));
+    det.addEventListener('dragover', (e) => {
+      if (!e.dataTransfer.types.includes('text/x-studio-item')) return;
+      e.preventDefault();
+      const r = det.getBoundingClientRect();
+      det.classList.toggle('drop-before', e.clientY < r.top + r.height / 2);
+      det.classList.toggle('drop-after', e.clientY >= r.top + r.height / 2);
+    });
+    det.addEventListener('dragleave', () => det.classList.remove('drop-before', 'drop-after'));
+    det.addEventListener('drop', (e) => {
+      const from = Number(e.dataTransfer.getData('text/x-studio-item'));
+      if (!Number.isInteger(from)) return;
+      e.preventDefault();
+      const after = det.classList.contains('drop-after');
+      det.classList.remove('drop-before', 'drop-after');
+      let to = k + (after ? 1 : 0);
+      if (from < to) to -= 1;
+      if (to !== from) run('item', { patch: { op: 'move' }, from, to }, 'reordered');
+    });
     const sum = el('summary', {}, el('span', { className: 'studio-item-n', textContent: String(k + 1) }), el('span', { className: 'studio-item-title', textContent: title }));
     const btns = el('span', { className: 'studio-item-btns' });
     for (const [icon, tip, fn, disabled] of [
@@ -447,6 +495,16 @@ const sectionPlacement = (data) => {
   s.addEventListener('change', () => run('move', { to: s.value }, 'moved'));
   return el('label', { className: 'studio-ins-field' }, el('span', { textContent: 'Where it sits' }), s);
 };
+
+function copyCurrent() {
+  if (!current) return;
+  const { id, type, draft, section, ...data } = current.data;
+  const label = String(data.heading ?? data.eyebrow ?? '').replace(/[*_|`]/g, '').slice(0, 40);
+  try {
+    localStorage.setItem(CLIP, JSON.stringify({ type: current.type, data, label, from: scope === 'home' ? 'from the home page' : 'from a project page' }));
+    toast(`copied: paste it from "+ Add section" on any page`);
+  } catch { toast('could not copy (browser storage is blocked)', true); }
+}
 
 function render() {
   const { data, type } = current;
@@ -532,10 +590,18 @@ function render() {
   }
   const dup = el('button', { type: 'button', className: 'studio-btn', textContent: 'Duplicate' });
   dup.addEventListener('click', async () => {
-    const r = await run('duplicate', {}, 'duplicated');
-    if (r?.id) keep({ select: r.id, tab: current.tab });
+    const tab = current.tab;
+    keep({ selectNew: blocksOnPage().map((b) => b.dataset.blockId), tab });
+    try {
+      const r = await send('duplicate', { id: current.id });
+      toast('duplicated');
+      if (r?.id) keep({ select: r.id, tab });
+    } catch (error) { toast(error.message, true); }
   });
   left.append(dup);
+  const copy = el('button', { type: 'button', className: 'studio-btn', textContent: 'Copy', title: 'Copy this section to paste on any page (⌘C with the section selected)' });
+  copy.addEventListener('click', copyCurrent);
+  left.append(copy);
   const del = el('button', { type: 'button', className: 'studio-btn studio-danger', textContent: 'Delete' });
   del.addEventListener('click', async () => {
     if (!confirm(`Delete this ${TYPE_NAME[type] ?? 'section'} section? Undo (⌘Z) brings it back.`)) return;
@@ -642,6 +708,42 @@ if (scope === 'project') {
   }
 }
 
+// Drop a photo file straight onto a section's photo spot (filled or empty).
+// Home photos that home.js already manages keep its handler instead.
+for (const spot of document.querySelectorAll('[data-block-id] [data-field]')) {
+  const m = spot.dataset.field.match(/^(home|project):(blocks\.\d+\.(?:items\.\d+\.)?image)$/);
+  if (!m || spot.classList.contains('studio-slot')) continue;
+  const path = m[2];
+  const isFile = (e) => [...(e.dataTransfer?.types ?? [])].includes('Files');
+  spot.addEventListener('dragover', (e) => { if (!isFile(e)) return; e.preventDefault(); e.stopPropagation(); spot.classList.add('studio-drop-over'); });
+  spot.addEventListener('dragleave', () => spot.classList.remove('studio-drop-over'));
+  spot.addEventListener('drop', async (e) => {
+    if (!isFile(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    spot.classList.remove('studio-drop-over');
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    toast(`adding ${f.name}…`);
+    const blockEl = spot.closest('[data-block-id]');
+    if (current?.el === blockEl) keep({ select: current.id, tab: current.tab, scrollTop: panel.querySelector('.studio-ins-body')?.scrollTop ?? 0 });
+    try {
+      await post('/media', { target: { kind: 'block', scope, path }, filename: f.name, data: await readAsBase64(f) });
+      toast(`${f.name} added`);
+    } catch (error) { toast(error.message, true); }
+  });
+}
+
+// Shortcuts while a section is selected (and you're not typing).
+window.addEventListener('keydown', (e) => {
+  if (!current || e.target.closest?.('input, textarea, select, [contenteditable="true"], [contenteditable="plaintext-only"]')) return;
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); e.stopImmediatePropagation(); panel.querySelector('footer .studio-btn:not(.studio-tool-icon)')?.click(); }
+  else if (mod && e.key.toLowerCase() === 'c' && !String(window.getSelection())) { e.preventDefault(); copyCurrent(); }
+  else if ((e.key === 'Backspace' || e.key === 'Delete') && !mod) { e.preventDefault(); e.stopImmediatePropagation(); panel.querySelector('footer .studio-danger')?.click(); }
+  else if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) { e.preventDefault(); run('move', { dir: e.key === 'ArrowUp' ? -1 : 1 }, 'moved'); }
+}, true);
+
 placeInserters();
 window.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
@@ -651,6 +753,10 @@ window.addEventListener('keydown', (e) => {
 
 // Reopen after the reload a save causes.
 const kept = readKeep();
+if (kept && !kept.select && Array.isArray(kept.selectNew)) {
+  const fresh = blocksOnPage().find((b) => !kept.selectNew.includes(b.dataset.blockId));
+  if (fresh) kept.select = fresh.dataset.blockId;
+}
 if (kept?.select) {
   const target = document.querySelector(`[data-block-id="${CSS.escape(kept.select)}"]`);
   if (target) {

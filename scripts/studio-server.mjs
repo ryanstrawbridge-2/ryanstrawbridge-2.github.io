@@ -1319,7 +1319,32 @@ const blocksRoute = async ({ scope = 'home', slug, op, id, type, after, patch, d
     if (op === 'add') {
       const template = BLOCK_TEMPLATES[type];
       if (!template) throw new Error(`unknown section type "${type}"`);
-      const block = { id: newBlockId(), type, draft: true, ...structuredClone(template) };
+      let block = { id: newBlockId(), type, draft: true, ...structuredClone(template) };
+      // Paste: a copied block's content, re-checked field by field against
+      // the same whitelist as an edit, so a clipboard can't smuggle anything in.
+      if (patch && typeof patch === 'object' && patch.paste) {
+        block = { id: block.id, type, draft: true };
+        const walk = (value, path) => {
+          if (Array.isArray(value)) value.forEach((v, i) => walk(v, [...path, i]));
+          else if (value && typeof value === 'object') for (const [k, v] of Object.entries(value)) walk(v, [...path, k]);
+          else if (path.length) {
+            const key = path.join('.');
+            if (['id', 'type', 'draft', 'section'].includes(key)) return;
+            const clean = blockValue(key, value);
+            if (clean !== null) {
+              // Arrays: create the slot before setDotted descends into it.
+              let node = block;
+              path.slice(0, -1).forEach((k, i) => {
+                const nextIsIndex = typeof path[i + 1] === 'number';
+                node[k] ??= nextIsIndex ? [] : {};
+                node = node[k];
+              });
+              node[path.at(-1)] = clean;
+            }
+          }
+        };
+        walk(patch.paste, []);
+      }
       if (scope === 'home') {
         blocks.push(block);
         const order = homeOrder(home).filter((k) => k !== `block:${block.id}`);

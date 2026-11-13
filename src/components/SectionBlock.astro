@@ -146,7 +146,7 @@ const Tag = inline ? 'div' : 'section';
             ) : pic ? (
               <Image src={pic} alt={str(block.alt)} widths={[480, 800, 1200]} sizes="(min-width: 900px) 50vw, 100vw" loading="lazy" />
             ) : DEV ? (
-              <div class="blk-empty">Add a photo or video</div>
+              <div class="blk-empty">Drop a photo or video here, or add one in the panel</div>
             ) : null}
           </div>
           <div class="blk-split-text">
@@ -300,7 +300,7 @@ const Tag = inline ? 'div' : 'section';
               {item.caption && <figcaption class="muted" data-field={field('items', k, 'caption')}>{str(item.caption)}</figcaption>}
             </figure>
           ) : DEV ? (
-            <div class="blk-empty">Photo {k + 1}: add one in the panel</div>
+            <div class="blk-empty" data-field={field('items', k, 'image')}>Photo {k + 1}: drop a photo here or add one in the panel</div>
           ) : null;
         })}
       </div>
