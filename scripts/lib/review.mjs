@@ -40,6 +40,30 @@ const parseProject = (text) => {
 };
 
 const figName = (f, i) => f?.title || f?.takeaway || `figure ${i + 1}`;
+
+// Section blocks (studio "Add section"), matched by id.
+const BLOCK_NAMES = { banner: 'Banner', text: 'Text', split: 'Photo + text', cards: 'Cards', stats: 'Stats', quote: 'Quote', steps: 'Steps', timeline: 'Timeline', logos: 'Logo strip', faq: 'Questions', gallery: 'Gallery', video: 'Video', compare: 'Before / after', tags: 'Skills', links: 'Links list', cta: 'Call to action', marquee: 'Scrolling text', spacer: 'Spacer' };
+const blockName = (b) => {
+  const kind = BLOCK_NAMES[b?.type] ?? 'section';
+  const head = String(b?.heading ?? b?.eyebrow ?? '').replace(/[*_|`]/g, '').trim();
+  return head ? `${kind} ${quote(head)}` : kind;
+};
+export const describeBlocks = (before = [], after = []) => {
+  const out = [];
+  const a = new Map((before ?? []).map((b) => [b?.id, b]));
+  const b = new Map((after ?? []).map((x) => [x?.id, x]));
+  for (const [id, blk] of b) {
+    const old = a.get(id);
+    if (!old) out.push(`Added section: ${blockName(blk)}${blk?.draft ? ' (draft)' : ''}`);
+    else if (!same(old, blk)) {
+      if (old.draft && !blk.draft) out.push(`Section now live: ${blockName(blk)}`);
+      else if (!old.draft && blk.draft) out.push(`Section back to draft: ${blockName(blk)}`);
+      else out.push(`Section edited: ${blockName(blk)}`);
+    }
+  }
+  for (const [id, blk] of a) if (!b.has(id)) out.push(`Deleted section: ${blockName(blk)}`);
+  return out;
+};
 const CROP = ['focal', 'zoom', 'compareFocal', 'compareZoom', 'aspect'];
 
 const describeFigure = (a, b) => {
@@ -130,7 +154,8 @@ export const describeProject = (beforeText, afterText) => {
     if (!same(before.sections[name], after.sections[name])) out.push(`${name === '(intro)' ? 'Intro' : `“${name}”`} text edited`);
   }
 
-  const known = new Set(['title', 'subtitle', 'summary', 'date', 'organization', 'hero', 'heroAlt', 'heroFocalPoint', 'heroZoom', 'heroAspect', 'figures', 'gallery', 'draft']);
+  out.push(...describeBlocks(A.blocks, B.blocks));
+  const known = new Set(['title', 'subtitle', 'summary', 'date', 'organization', 'hero', 'heroAlt', 'heroFocalPoint', 'heroZoom', 'heroAspect', 'figures', 'gallery', 'draft', 'blocks']);
   for (const key of new Set([...Object.keys(A), ...Object.keys(B)])) {
     if (!known.has(key) && !same(A[key], B[key])) out.push(`${key} changed`);
   }
@@ -174,8 +199,16 @@ export const review = async (root, base = 'HEAD') => {
       continue;
     }
     if (path === 'src/data/home.json') {
-      const keys = describeJson(await show(path), await disk(path));
-      groups.push({ area: 'Home page', items: keys.length ? keys.map((k) => `${HOME_SECTIONS[k] ?? k} edited`) : ['formatting only'] });
+      const beforeText = await show(path);
+      const afterText = await disk(path);
+      const keys = describeJson(beforeText, afterText);
+      let blockItems = [];
+      try { blockItems = describeBlocks(JSON.parse(beforeText || '{}').blocks, JSON.parse(afterText || '{}').blocks); } catch { /* fall back to key names */ }
+      const items = [
+        ...keys.filter((k) => k !== 'blocks').map((k) => (k === 'layout' ? 'layout (spacing, order) edited' : `${HOME_SECTIONS[k] ?? k} edited`)),
+        ...blockItems,
+      ];
+      groups.push({ area: 'Home page', items: items.length ? items : ['formatting only'] });
       continue;
     }
     if (path === 'src/data/site.json') { groups.push({ area: 'Theme', items: describeJson(await show(path), await disk(path)).map((k) => `${k} changed`) }); continue; }
