@@ -167,5 +167,95 @@
     "body": "I'm always up for chatting about clean energy, aerospace, manufacturing, or design. Drop me a line!",
     "email": "rjstraw21@gmail.com",
     "phone": "508-594-9661"
+  },
+  "blocks": [
+    {
+      "id": "hxadvn",
+      "type": "spacer",
+      "draft": true,
+      "size": 64,
+      "style": {
+        "line": false
+      }
+    },
+    {
+      "id": "4emfzj",
+      "type": "quote",
+      "draft": true,
+      "eyebrow": "What people say",
+      "items": [
+        {
+          "text": "He consistently demonstrated strong technical skills, a proactive approach, and a positive attitude... I highly recommend him for future opportunities.",
+          "name": "Nick Goumas",
+          "role": "Lead Manufacturing Engineer, Commonwealth Fusion Systems"
+        },
+        {
+          "text": "Ryan is a go getter that you can depend on. He will not hesitate to ask whenever he doesn't understand something in order for him to grow in any position he is in and be able to perform quality work.",
+          "name": "Jean Riveria",
+          "role": "Sr. Manufacturing Engineer, Raytheon Technologies"
+        },
+        {
+          "text": "Ryan demonstrated a remarkable ability to balance independence with an eagerness to learn, always striving to take the next step in his career... His problem-solving skills, paired with his drive and determination, made him an invaluable asset to our team.",
+          "name": "Brianna Bomi",
+          "role": "R&D Engineer, Johnson & Johnson Depuy Synthes"
+        }
+      ],
+      "style": {
+        "bg": "subtle",
+        "numbered": false,
+        "align": "left",
+        "width": "contained"
+      }
+    },
+    {
+      "id": "ls85bl",
+      "type": "logos",
+      "draft": true,
+      "eyebrow": "Worked with",
+      "items": [
+        {
+          "name": "CFS",
+          "image": "/src/assets/images/home/commonwealth-fusion-systems.png",
+          "url": "https://cfs.energy/"
+        },
+        {
+          "name": "Raytheon",
+          "image": "/src/assets/images/home/raytheon-logo.png",
+          "url": "https://www.rtx.com/raytheon"
+        },
+        {
+          "name": "Aero",
+          "image": "/src/assets/images/home/aeronu-logo.png",
+          "url": "https://www.aerospacenu.com/"
+        },
+        {
+          "name": "J&J",
+          "image": "/src/assets/images/home/j-jlogo.jpg",
+          "url": "https://www.depuysynthes.com/"
+        },
+        {
+          "name": "SRPEDD",
+          "image": "/src/assets/images/home/srpeddlogo.png",
+          "url": "https://srpedd.org/"
+        }
+      ],
+      "style": {
+        "align": "center",
+        "bg": "subtle"
+      }
+    }
+  ],
+  "layout": {
+    "order": [
+      "hero",
+      "block:hxadvn",
+      "showcase",
+      "projects",
+      "experience",
+      "block:4emfzj",
+      "about",
+      "contact",
+      "block:ls85bl"
+    ]
   }
 }
