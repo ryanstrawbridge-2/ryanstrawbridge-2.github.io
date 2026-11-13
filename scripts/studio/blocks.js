@@ -733,6 +733,26 @@ for (const blockEl of blocksOnPage()) {
   });
 }
 
+// "+ Add card" (photo, step, …) at the end of each list, on the page itself.
+const LIST_SELECTOR = '.blk-grid, .blk-steps, .blk-timeline, .blk-logos, .blk-faq, .blk-gallery, .blk-quotes, .blk-taggroups, .blk-links';
+for (const blockEl of blocksOnPage()) {
+  const type = blockEl.dataset.blockType;
+  const list = blockEl.querySelector(LIST_SELECTOR);
+  if (!list || !ITEM_FIELDS[type]) continue;
+  const noun = ITEM_NOUN[type] ?? 'item';
+  const add = el('button', { type: 'button', className: 'studio-add-item' });
+  add.innerHTML = `${svg('plus')}<span>Add ${noun}</span>`;
+  add.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const items = list.children.length;
+    keep({ select: blockEl.dataset.blockId, tab: 'content' });
+    try { sessionStorage.setItem(`studio:block-open:${blockEl.dataset.blockId}`, String(items)); } catch { /* ignore */ }
+    try { await send('item', { id: blockEl.dataset.blockId, patch: { op: 'add' } }); toast(`${noun} added`); }
+    catch (error) { toast(error.message, true); }
+  });
+  list.after(add);
+}
+
 // Built-in home sections: a show / hide switch. A hidden section still
 // renders here, dimmed, so it can be switched back on.
 for (const sec of document.querySelectorAll('[data-hidden-section]')) {

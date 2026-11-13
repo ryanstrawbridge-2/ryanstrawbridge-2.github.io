@@ -971,3 +971,12 @@ body.studio-preview .studio-section-off { display: none !important; }
 .studio-fmt button:nth-child(2) { font-style: italic; font-family: Georgia, serif; }
 .studio-fmt button:hover { color: var(--st-text); background: var(--st-hover); }
 .studio-picker-tile.is-starter { border-color: rgb(59 130 246 / 0.25); }
+.studio-add-item {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; height: 30px; padding: 0 12px 0 9px;
+  font: 600 12px/1 var(--st-font); color: rgb(96 165 250); background: transparent;
+  border: 1.5px dashed rgb(59 130 246 / 0.45); border-radius: 8px; cursor: pointer; opacity: 0; transition: opacity 140ms, background 140ms;
+}
+.studio-add-item svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; }
+[data-block-id]:hover .studio-add-item, .studio-block-selected .studio-add-item { opacity: 1; }
+.studio-add-item:hover { background: rgb(59 130 246 / 0.08); border-color: rgb(59 130 246 / 0.85); }
+body.studio-preview .studio-add-item, body.studio-layout-mode .studio-add-item { display: none; }
