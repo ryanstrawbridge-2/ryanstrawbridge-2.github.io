@@ -93,6 +93,11 @@ const projects = defineCollection({
       // A figure with no media is a PLACEHOLDER — rendered as a labelled
       // skeleton in dev, skipped entirely in a production build.
       // -----------------------------------------------------------------
+      // Section blocks added in studio (cards, stats, quotes, timeline, ...).
+      // Free-form on purpose: SectionBlock.astro reads each field defensively,
+      // and studio's /blocks route is what validates what gets written.
+      // `section` names the body heading a block follows, like figures.
+      blocks: z.array(z.record(z.string(), z.any())).optional(),
       figures: z
         .array(
           z.object({

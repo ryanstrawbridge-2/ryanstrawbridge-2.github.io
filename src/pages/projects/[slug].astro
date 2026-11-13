@@ -6,6 +6,7 @@ import Lightbox from '../../components/Lightbox.astro';
 import StudioOverlay from '../../components/StudioOverlay.astro';
 import GalleryGrid from '../../components/GalleryGrid.astro';
 import ProjectFigure from '../../components/ProjectFigure.astro';
+import SectionBlock from '../../components/SectionBlock.astro';
 import { projectField as f } from '../../lib/edit-fields';
 import {
   clampZoom,
@@ -13,6 +14,7 @@ import {
   groupBySection,
   normalizeGallery,
   splitBodySections,
+  slugify,
 } from '../../lib/gallery';
 import { groupFigures, normalizeFigures } from '../../lib/figures';
 import type { GetStaticPaths } from 'astro';
@@ -41,6 +43,7 @@ const {
   galleryLayout,
   gallery,
   figures,
+  blocks: rawBlocks,
 } = project.data;
 
 // Format in UTC. Frontmatter dates are UTC midnight and stand for a calendar
@@ -89,11 +92,20 @@ const { bySection: figuresBySection, trailing: trailingFigures } = groupFigures(
   bodyChunks,
 );
 
+// Section blocks: under the heading they name, or at the end of the page.
+// Drafts render only in dev.
+const projectBlocks = (rawBlocks ?? [])
+  .map((block, index) => ({ block, index, sectionId: typeof block.section === 'string' ? slugify(block.section) : '' }))
+  .filter(({ block }) => import.meta.env.DEV || block.draft !== true);
+const chunkIds = new Set(bodyChunks.map((c) => c.id));
+const blocksIn = (id: string) => projectBlocks.filter((b) => b.sectionId === id);
+const trailingBlocks = projectBlocks.filter((b) => !chunkIds.has(b.sectionId));
+
 // Inline placement needs the body split to have worked AND something to place.
 // In dev it always splits, so studio can edit each section on its own.
 const useInlineBody =
   bodyChunks.length > 0 &&
-  (bySection.size > 0 || figuresBySection.size > 0 || import.meta.env.DEV);
+  (bySection.size > 0 || figuresBySection.size > 0 || projectBlocks.length > 0 || import.meta.env.DEV);
 
 // Jump links in the sticky rail. Derived from the headings that actually
 // rendered, so a project that drops a section doesn't get a dead link.
@@ -184,6 +196,9 @@ const figureField = (index: number, key: string) => f('figures', index, key);
                       field={galleryField}
                       class="section-gallery"
                     />
+                    {blocksIn(chunk.id).map(({ block, index }) => (
+                      <SectionBlock block={block} index={index} doc="project" inline />
+                    ))}
                   </>
                 ))
               ) : (
@@ -201,6 +216,10 @@ const figureField = (index: number, key: string) => f('figures', index, key);
               <GalleryGrid items={trailing} field={galleryField} class="trailing-gallery" />
             )
           }
+
+          {trailingBlocks.map(({ block, index }) => (
+            <SectionBlock block={block} index={index} doc="project" inline />
+          ))}
         </div>
 
         {/* Sticky rail. Holds the facts you want while looking at a photo

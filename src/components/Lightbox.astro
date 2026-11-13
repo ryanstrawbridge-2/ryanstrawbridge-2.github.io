@@ -159,10 +159,14 @@
     let images: HTMLImageElement[] = [];
     let index = 0;
 
+    // The set is the root around the clicked image, so separate galleries
+    // (e.g. two gallery sections on the home page) browse on their own.
+    // Images marked data-no-lightbox (logos, icons) never open it.
+    let activeRoot: Element | null = null;
     const collect = () => {
-      const root = document.querySelector('[data-lightbox-root]');
+      const root = activeRoot ?? document.querySelector('[data-lightbox-root]');
       if (!root) return [] as HTMLImageElement[];
-      return Array.from(root.querySelectorAll<HTMLImageElement>('img'));
+      return Array.from(root.querySelectorAll<HTMLImageElement>('img:not([data-no-lightbox])'));
     };
 
     const render = () => {
@@ -214,9 +218,10 @@
     // Wire any image inside a data-lightbox-root to open the lightbox.
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
-      const img = target.closest?.('[data-lightbox-root] img') as HTMLImageElement | null;
+      const img = target.closest?.('[data-lightbox-root] img:not([data-no-lightbox])') as HTMLImageElement | null;
       if (!img) return;
       e.preventDefault();
+      activeRoot = img.closest('[data-lightbox-root]');
       const all = collect();
       open(all.indexOf(img));
     });

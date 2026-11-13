@@ -358,6 +358,16 @@ GitHub SSH push from background processes stalls on large payloads.
     fresh render would show, it must NOT be quiet.
     Marker labels live inside a `<button>`, which can't be contenteditable;
     double-click (or Text mode click) opens a text box instead.
+54. **Home layout lives in `home.json` "layout"; Layout mode (L) edits it.**
+    Section padding, list gaps, the interests top margin, the experience
+    text/video split and section `order` — validated by `/home/layout`
+    (`LAYOUT_RULES`). Values are desktop px; index.astro multiplies by
+    `--space-scale` (0.67 under 768 px) so phones reflow. Sections sit in
+    `.home-flow` (flex column) and are reordered with CSS `order`, so a new
+    home section needs a key in BOTH `SECTION_KEYS` (index.astro) and
+    `LAYOUT_SECTIONS` (studio-server), plus `data-layout` + `sectionLayout()`.
+    Experience banners: full-length originals in gitignored `video-sources/`,
+    cut clips in `public/videos/experience-*.mp4` (see banner.js).
 
 ## macOS gotchas
 

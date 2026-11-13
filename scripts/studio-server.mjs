@@ -164,7 +164,8 @@ const storeVideo = async (base, { input, srcPath, ext }) => {
 const placeMedia = async ({ slug, target = {}, filename, data, source, folder, file }) => {
   const kind = target.kind ?? 'gallery';
   const home = kind === 'home';
-  if (!['gallery', 'hero', 'figure', 'home'].includes(kind)) throw new Error(`unknown target "${kind}"`);
+  if (!['gallery', 'hero', 'figure', 'home', 'block'].includes(kind)) throw new Error(`unknown target "${kind}"`);
+  if (kind === 'block') return placeBlockMedia({ slug, target, filename, data, source, folder, file });
   const name = filename ?? file;
   if (!name) throw new Error('nothing to place');
   const ext = extname(name).toLowerCase();
@@ -810,10 +811,12 @@ const siteRead = async () => ({ site: JSON.parse(await readFile(SITE_JSON, 'utf8
  * asterisks, so the editor seeds itself from the source rather than from
  * textContent, and only offers in-place editing when the two agree.
  */
-const homeValue = async ({ path }) => {
+const homeValue = async ({ path, json }) => {
   const data = await readHome(HOME_JSON);
   const value = getPath(data, path);
   if (value === undefined) throw new Error(`no such field: ${path}`);
+  // json: the section panel reads a whole block at once.
+  if (json) return { path, value };
   if (typeof value === 'object') throw new Error(`${path} is not text`);
   return { path, value: value ?? '' };
 };
@@ -874,6 +877,8 @@ const undoLabel = (pathname, payload = {}) => {
     case '/home/list': return payload.op === 'move' ? 'reorder tiles' : `${payload.op} tile`;
     case '/home/alt': return 'home description';
     case '/home/video/cut': return 'trim banner';
+    case '/blocks': return { add: `add ${payload.type} section`, remove: 'delete section', duplicate: 'duplicate section', move: 'move section', patch: 'edit section', item: 'section items', button: 'section buttons' }[payload.op] ?? 'section';
+    case '/home/layout': return Object.keys(payload.patch ?? {}).includes('order') ? 'reorder sections' : 'layout';
     case '/home/crop': return payload.zoom !== undefined && payload.focal === undefined ? 'home zoom' : 'home crop';
     case '/site/theme': return 'theme';
     default: return pathname.replace(/^\//, '');
@@ -1144,6 +1149,307 @@ const storeBannerSource = async (path, { input, srcPath, name }) => {
   return { kind: 'video', file: `video-sources/${outName}`, banner: i, needsTrim: true };
 };
 
+
+// ---------------------------------------------------------------------------
+// Home layout: spacing, gaps, the experience split and section order, all
+// under home.json "layout". Keys are dotted paths inside it
+// ("sections.experience.padTop"); missing objects are created, null removes a
+// value, and emptied objects are pruned so a reset leaves no residue.
+// ---------------------------------------------------------------------------
+const LAYOUT_SECTIONS = ['hero', 'showcase', 'projects', 'experience', 'about', 'contact'];
+const LAYOUT_RULES = [
+  [/^sections\.(hero|showcase|projects|experience|about|contact|block:[a-z0-9]+)\.(padTop|padBottom)$/, 0, 400],
+  [/^(projects|experience|interests)\.gap$/, 0, 200],
+  [/^interests\.top$/, 0, 300],
+  [/^experience\.split$/, 25, 75],
+];
+const patchLayout = async ({ patch }) => {
+  if (!patch || typeof patch !== 'object') throw new Error('nothing to change');
+  return withHome((home) => {
+    home.layout = home.layout && typeof home.layout === 'object' ? home.layout : {};
+    for (const [key, raw] of Object.entries(patch)) {
+      if (key === 'order') {
+        if (raw === null) { delete home.layout.order; continue; }
+        const blockKeys = (home.blocks ?? []).map((b) => `block:${b.id}`);
+        if (!Array.isArray(raw) || new Set(raw).size !== raw.length || !LAYOUT_SECTIONS.every((k) => raw.includes(k))
+          || raw.some((k) => !LAYOUT_SECTIONS.includes(k) && !blockKeys.includes(k))) {
+          throw new Error('order must list every section once');
+        }
+        home.layout.order = raw;
+        continue;
+      }
+      const rule = LAYOUT_RULES.find(([re]) => re.test(key));
+      if (!rule) throw new Error(`unknown layout setting: ${key}`);
+      const keys = key.split('.');
+      let node = home.layout;
+      for (const k of keys.slice(0, -1)) node = node[k] = node[k] && typeof node[k] === 'object' ? node[k] : {};
+      const leaf = keys.at(-1);
+      if (raw === null) delete node[leaf];
+      else {
+        const n = Number(raw);
+        if (!Number.isFinite(n)) throw new Error(`${key} must be a number`);
+        node[leaf] = Math.round(Math.min(rule[2], Math.max(rule[1], n)));
+      }
+    }
+    const prune = (o) => {
+      for (const [k, v] of Object.entries(o)) {
+        if (v && typeof v === 'object' && !Array.isArray(v)) { prune(v); if (!Object.keys(v).length) delete o[k]; }
+      }
+    };
+    prune(home.layout);
+    if (!Object.keys(home.layout).length) delete home.layout;
+    return { layout: home.layout ?? {} };
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Section blocks ("Add section"). Home: home.json "blocks" plus a
+// block:<id> entry in layout.order. Projects: frontmatter "blocks", each with
+// the body heading it follows in `section`.
+//
+//   { scope: 'home' | 'project', slug, op, ... }
+//   add       { type, after }      after = order key (home) or heading (project)
+//   remove    { id }
+//   duplicate { id }
+//   move      { id, dir: -1 | 1 } (project) / { id, to: heading }
+//   patch     { id, patch: { 'heading': '…', 'style.bg': 'subtle', 'items.0.title': '…' } }
+//   item      { id, op: add | remove | move, index, from, to }
+//   button    { id, op: add | remove, index }
+//
+// New blocks start as drafts: shown in studio, hidden on the live site until
+// switched on, so starter copy can never be published by accident.
+// ---------------------------------------------------------------------------
+const BLOCK_TEMPLATES = {
+  text: { eyebrow: 'Eyebrow', heading: 'Section heading', body: 'Write a paragraph here. Use **bold**, *italic*, [links](https://example.com), and lines starting with "- " for bullets.' },
+  split: { eyebrow: '', heading: 'Heading beside a photo', body: 'A paragraph next to a photo or video. Pick the photo in the panel.', image: '', alt: '', style: { side: 'left', ratio: '50' } },
+  cards: { heading: 'Cards', items: [1, 2, 3].map((n) => ({ title: `Card ${n}`, text: 'One or two sentences.', image: '', url: '', tag: '' })), style: { columns: '3', variant: 'cards' } },
+  stats: { heading: 'By the numbers', items: [1, 2, 3].map(() => ({ value: 'Value', label: 'What this number measures' })), style: { columns: '3' } },
+  quote: { heading: '', items: [{ text: 'A quote from a manager, teammate or professor.', name: 'Name', role: 'Role, Company' }] },
+  steps: { heading: 'How I work', items: [1, 2, 3].map((n) => ({ title: `Step ${n}`, text: 'What happens in this step.' })), style: { columns: '3' } },
+  timeline: { heading: 'Timeline', items: [{ date: 'Dates', title: 'Role', org: 'Organization', text: 'What you did there.', image: '' }, { date: 'Dates', title: 'Role', org: 'Organization', text: 'What you did there.', image: '' }] },
+  logos: { eyebrow: 'Worked with', items: [1, 2, 3].map((n) => ({ name: `Company ${n}`, image: '', url: '' })), style: { align: 'center' } },
+  faq: { heading: 'Questions', items: [{ q: 'A question people ask', a: 'The answer.' }, { q: 'Another question', a: 'The answer.' }] },
+  gallery: { heading: 'Gallery', items: [{ image: '', caption: '' }, { image: '', caption: '' }, { image: '', caption: '' }], style: { columns: '3', variant: 'grid' } },
+  video: { heading: '', url: '', caption: '' },
+  tags: { heading: 'Skills', items: [{ label: 'Group', tags: 'Skill one, Skill two, Skill three' }, { label: 'Group', tags: 'Skill one, Skill two' }] },
+  links: { heading: 'Publications', items: [{ title: 'Title of the paper, article or file', source: 'Publisher', year: 'Year', url: '' }] },
+  cta: { heading: 'Call to action', body: 'One line that tells people what to do next.', buttons: [{ label: 'Button', url: '/', style: 'primary' }], style: { align: 'center', bg: 'subtle' } },
+  marquee: { words: 'Word one, Word two, Word three, Word four' },
+  spacer: { size: 64, style: { line: false } },
+};
+const BLOCK_ITEM = Object.fromEntries(Object.entries(BLOCK_TEMPLATES).filter(([, t]) => Array.isArray(t.items)).map(([k, t]) => [k, t.items[0]]));
+const BLOCK_STYLE = {
+  bg: ['none', 'subtle', 'accent', 'dark'], width: ['contained', 'narrow', 'wide', 'full'], align: ['left', 'center'],
+  columns: ['1', '2', '3', '4'], variant: ['cards', 'plain', 'numbered', 'overlay', 'grid', 'masonry', 'strip'],
+  side: ['left', 'right'], ratio: ['40', '50', '60'],
+};
+const BLOCK_BOOL = new Set(['draft', 'style.numbered', 'style.open', 'style.line']);
+const newBlockId = () => Math.random().toString(36).slice(2, 8);
+
+/** Check one dotted field write against what blocks can hold. */
+const blockValue = (key, value) => {
+  if (value === null || value === '') return null;
+  if (BLOCK_BOOL.has(key)) return value === true || value === 'true';
+  const style = key.match(/^style\.(\w+)$/);
+  if (style && BLOCK_STYLE[style[1]]) {
+    if (!BLOCK_STYLE[style[1]].includes(String(value))) throw new Error(`${key} can't be ${value}`);
+    return String(value);
+  }
+  if (key === 'size') return Math.min(400, Math.max(8, Math.round(Number(value) || 64)));
+  if (/^(eyebrow|heading|intro|body|alt|url|src|video|image|caption|words|anchor|section|focal|imageFocalPoint)$/.test(key)
+    || /^items\.\d+\.(title|text|image|url|tag|value|label|name|role|q|a|date|org|caption|alt|tags|source|year|focal)$/.test(key)
+    || /^buttons\.\d+\.(label|url|style)$/.test(key)) {
+    return String(value).slice(0, 4000);
+  }
+  if (/^(zoom|items\.\d+\.zoom)$/.test(key)) return Math.min(4, Math.max(1, Number(value) || 1));
+  throw new Error(`blocks don't have a "${key}" field`);
+};
+const setDotted = (obj, key, value) => {
+  const keys = key.split('.');
+  let node = obj;
+  for (const k of keys.slice(0, -1)) {
+    if (node[k] == null || typeof node[k] !== 'object') {
+      if (/^\d+$/.test(k)) throw new Error(`no item ${k}`);
+      node[k] = {};
+    }
+    node = node[k];
+  }
+  if (value === null) delete node[keys.at(-1)]; else node[keys.at(-1)] = value;
+};
+
+/** Run `mutate(blocks, extras)` on the right file; blocks is a plain array. */
+const withBlocks = async (scope, slug, mutate) => {
+  if (scope === 'home') {
+    return withHome((home) => {
+      home.blocks = Array.isArray(home.blocks) ? home.blocks : [];
+      home.layout = home.layout && typeof home.layout === 'object' ? home.layout : {};
+      const result = mutate(home.blocks, { home });
+      if (!home.blocks.length) delete home.blocks;
+      if (!Object.keys(home.layout).length) delete home.layout;
+      return result;
+    });
+  }
+  if (scope !== 'project') throw new Error('scope must be home or project');
+  return withProject(slug, (file) => {
+    const blocks = file.doc.toJS().blocks ?? [];
+    const result = mutate(blocks, {});
+    if (blocks.length) file.doc.set('blocks', file.doc.createNode(blocks));
+    else file.doc.delete('blocks');
+    return result;
+  });
+};
+
+const homeOrder = (home) => {
+  const known = [...LAYOUT_SECTIONS, ...(home.blocks ?? []).map((b) => `block:${b.id}`)];
+  const saved = Array.isArray(home.layout?.order) ? home.layout.order.filter((k) => known.includes(k)) : [];
+  return [...saved, ...known.filter((k) => !saved.includes(k))];
+};
+
+const blocksRoute = async ({ scope = 'home', slug, op, id, type, after, patch, dir, to, index, from }) => {
+  const find = (blocks) => {
+    const i = blocks.findIndex((b) => b.id === id);
+    if (i === -1) throw new Error('that section no longer exists');
+    return i;
+  };
+  return withBlocks(scope, slug, (blocks, { home }) => {
+    if (op === 'add') {
+      const template = BLOCK_TEMPLATES[type];
+      if (!template) throw new Error(`unknown section type "${type}"`);
+      const block = { id: newBlockId(), type, draft: true, ...structuredClone(template) };
+      if (scope === 'home') {
+        blocks.push(block);
+        const order = homeOrder(home).filter((k) => k !== `block:${block.id}`);
+        const at = after ? order.indexOf(after) + 1 : order.length;
+        order.splice(at > 0 ? at : order.length, 0, `block:${block.id}`);
+        home.layout.order = order;
+      } else {
+        if (after) block.section = String(after);
+        // After the last block already in that section, so new ones stack downward.
+        const last = blocks.map((b, i) => [b, i]).filter(([b]) => (b.section ?? '') === (block.section ?? '')).at(-1);
+        blocks.splice(last ? last[1] + 1 : blocks.length, 0, block);
+      }
+      return { id: block.id };
+    }
+    const i = find(blocks);
+    if (op === 'remove') {
+      const [gone] = blocks.splice(i, 1);
+      if (scope === 'home' && Array.isArray(home.layout.order)) {
+        home.layout.order = home.layout.order.filter((k) => k !== `block:${gone.id}`);
+        if (home.layout.sections) delete home.layout.sections[`block:${gone.id}`];
+      }
+      return { removed: gone.id };
+    }
+    if (op === 'duplicate') {
+      const copy = { ...structuredClone(blocks[i]), id: newBlockId(), draft: true };
+      blocks.splice(i + 1, 0, copy);
+      if (scope === 'home') {
+        const order = homeOrder(home).filter((k) => k !== `block:${copy.id}`);
+        order.splice(order.indexOf(`block:${blocks[i].id}`) + 1, 0, `block:${copy.id}`);
+        home.layout.order = order;
+      }
+      return { id: copy.id };
+    }
+    if (op === 'move') {
+      if (scope === 'home') {
+        const order = homeOrder(home);
+        const k = order.indexOf(`block:${id}`);
+        const j = Math.min(order.length - 1, Math.max(0, k + Number(dir)));
+        order.splice(j, 0, ...order.splice(k, 1));
+        home.layout.order = order;
+        return { moved: true };
+      }
+      if (to !== undefined) { blocks[i].section = String(to) || undefined; if (!to) delete blocks[i].section; return { moved: true }; }
+      const sec = blocks[i].section ?? '';
+      const peers = blocks.map((b, n) => [b, n]).filter(([b]) => (b.section ?? '') === sec).map(([, n]) => n);
+      const p = peers.indexOf(i) + Number(dir);
+      if (p < 0 || p >= peers.length) return { moved: false };
+      [blocks[i], blocks[peers[p]]] = [blocks[peers[p]], blocks[i]];
+      return { moved: true };
+    }
+    if (op === 'patch') {
+      for (const [key, raw] of Object.entries(patch ?? {})) {
+        const value = blockValue(key, raw);
+        if (key === 'section' && scope === 'project') { if (value) blocks[i].section = value; else delete blocks[i].section; continue; }
+        setDotted(blocks[i], key, value);
+      }
+      if (blocks[i].style && !Object.keys(blocks[i].style).length) delete blocks[i].style;
+      return { id };
+    }
+    if (op === 'item' || op === 'button') {
+      const listKey = op === 'item' ? 'items' : 'buttons';
+      const list = (blocks[i][listKey] = Array.isArray(blocks[i][listKey]) ? blocks[i][listKey] : []);
+      const sub = patch?.op ?? dir;
+      if (sub === 'add') {
+        const blank = op === 'item' ? BLOCK_ITEM[blocks[i].type] : { label: 'Button', url: '/', style: list.length ? 'secondary' : 'primary' };
+        if (!blank) throw new Error('this section has no list');
+        const at = Number.isInteger(index) ? index + 1 : list.length;
+        list.splice(at, 0, structuredClone(op === 'item' && list[at - 1] ? Object.fromEntries(Object.keys(blank).map((k) => [k, k === 'image' || k === 'url' ? '' : blank[k]])) : blank));
+        return { index: at };
+      }
+      if (sub === 'remove') { list.splice(Number(index), 1); return { removed: Number(index) }; }
+      if (sub === 'move') {
+        const a = Number(from);
+        const b = Math.min(list.length - 1, Math.max(0, Number(to)));
+        list.splice(b, 0, ...list.splice(a, 1));
+        return { moved: true };
+      }
+      throw new Error(`unknown ${op} operation`);
+    }
+    throw new Error(`unknown section operation "${op}"`);
+  });
+};
+
+/**
+ * A photo (or, for a split section, a video) dropped into a section block's
+ * field: target { kind: 'block', scope, path: 'blocks.2.items.0.image' }.
+ */
+const placeBlockMedia = async ({ slug, target, filename, data, source, folder, file }) => {
+  const scope = target.scope === 'project' ? 'project' : 'home';
+  const path = String(target.path ?? '');
+  const m = path.match(/^blocks\.(\d+)\.((?:items\.\d+\.)?(?:image|video))$/);
+  if (!m) throw new Error('not a section photo field');
+  const name = filename ?? file;
+  const ext = extname(name ?? '').toLowerCase();
+  const isVideo = source === 'videos' || VIDEO_EXT.has(ext);
+  if (isVideo && !m[2].endsWith('video') && !/^image$/.test(m[2])) throw new Error('that spot takes a photo');
+  if (!isVideo && !IMAGE_EXT.has(ext)) throw new Error(`${ext || 'that file'} isn't an image`);
+  const title = await titleOf(name);
+  let ref;
+  let meta;
+  if (source && !COPY_SOURCES.has(source)) {
+    const rel = [folder, file].filter(Boolean).join('/');
+    ref = isVideo ? homeVideoRef(file) : scope === 'home' ? `/src/assets/images/${rel}` : siteRef(source, folder, file);
+    meta = { file, reused: true };
+  } else {
+    const srcPath = source ? sourcePath(source, folder, file) : null;
+    const input = srcPath ? null : Buffer.from(data ?? '', 'base64');
+    if (isVideo) {
+      const { outName, after } = await storeVideo(scope === 'home' ? title : `${slug}-${title}`, { input, srcPath, ext });
+      ref = homeVideoRef(outName);
+      meta = { file: `public/videos/${outName}`, after };
+    } else {
+      const bytes = input ?? (await readFile(srcPath));
+      const dir = scope === 'home' ? HOME_IMAGES : join(IMAGES, slug);
+      await mkdir(dir, { recursive: true });
+      const encoded = await encode(bytes, ext);
+      const outName = await uniqueName(dir, scope === 'home' ? title : `${slug}-${title}`, encoded.ext);
+      await writeFile(join(dir, outName), encoded.data);
+      ref = scope === 'home' ? homeRef(outName) : astroPath(slug, outName);
+      meta = { file: outName, before: bytes.length, after: encoded.data.length };
+    }
+  }
+  // A split section shows a video instead of its photo when it has one.
+  const field = isVideo ? m[2].replace(/image$/, 'video') : m[2];
+  const other = isVideo ? null : m[2].replace(/image$/, 'video');
+  await withBlocks(scope, slug, (blocks) => {
+    const block = blocks[Number(m[1])];
+    if (!block) throw new Error('that section no longer exists');
+    setDotted(block, field, ref);
+    if (other && other !== field && !other.startsWith('items')) delete block.video;
+  });
+  return { kind: isVideo ? 'video' : 'image', ...meta, path: field };
+};
+
 const NOT_JOURNALLED = new Set(['/publish', '/save', '/project/section/read', '/home/value', '/project/value', '/site/read']);
 
 const ROUTES = {
@@ -1166,6 +1472,8 @@ const ROUTES = {
   '/home/crop': homeCrop,
   '/home/alt': homeAlt,
   '/home/video/cut': cutBanner,
+  '/home/layout': patchLayout,
+  '/blocks': blocksRoute,
   '/site/theme': siteTheme,
   // Reads (never journalled).
   '/project/value': projectValue,

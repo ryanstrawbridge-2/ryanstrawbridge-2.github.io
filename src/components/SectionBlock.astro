@@ -1,0 +1,581 @@
+---
+/**
+ * One section block: the building blocks studio's "Add section" inserts.
+ *
+ * Every block is plain data (home.json "blocks", or a project's frontmatter
+ * "blocks") with a `type` and its content, plus a shared `style` object. It
+ * renders in the site's own theme tokens — fonts, colours, radius and spacing
+ * all come from global.css — so a new section looks like the rest of the
+ * site, not like a template dropped on top of it.
+ *
+ * Types: text, split, cards, stats, quote, steps, timeline, logos, faq,
+ * gallery, video, tags, links, cta, marquee, spacer.
+ *
+ * `draft: true` blocks render only in dev (with a badge) so starter copy can
+ * never reach the live site.
+ */
+import { Image } from 'astro:assets';
+import { resolveSiteImage } from '../lib/site-images';
+import { inlineRich, richText, embedUrl } from '../lib/rich-text';
+import { focalCss, clampZoom } from '../lib/gallery';
+
+type Item = Record<string, unknown>;
+type Block = Record<string, unknown> & { id?: string; type?: string; items?: Item[]; style?: Record<string, unknown> };
+
+interface Props {
+  block: Block;
+  index: number;
+  doc: 'home' | 'project';
+  /** Inline style for the outer section (order, spacing). */
+  sectionStyle?: string;
+  /** Inside a project body column rather than a full-width home section. */
+  inline?: boolean;
+  /** Section number for numbered eyebrows, when the style asks for it. */
+  number?: number;
+}
+
+const { block, index, doc, sectionStyle, inline = false, number } = Astro.props;
+const DEV = import.meta.env.DEV;
+const field = (...path: (string | number)[]) => (DEV ? `${doc}:blocks.${index}.${path.join('.')}` : undefined);
+
+const type = String(block.type ?? 'text');
+const style = (block.style ?? {}) as Record<string, unknown>;
+const items = (Array.isArray(block.items) ? block.items : []) as Item[];
+const str = (v: unknown) => (typeof v === 'string' ? v : '');
+const pick = <T extends string>(v: unknown, allowed: readonly T[], fallback: T): T =>
+  allowed.includes(v as T) ? (v as T) : fallback;
+
+const bg = pick(style.bg, ['none', 'subtle', 'accent', 'dark'] as const, 'none');
+const width = pick(style.width, ['contained', 'narrow', 'wide', 'full'] as const, 'contained');
+const align = pick(style.align, ['left', 'center'] as const, 'left');
+const columns = pick(String(style.columns ?? ''), ['1', '2', '3', '4'] as const, type === 'cards' || type === 'stats' ? '3' : '2');
+const variant = str(style.variant);
+const numbered = style.numbered === true && typeof number === 'number';
+const eyebrow = numbered ? `(${String(number).padStart(3, '0')}) ${str(block.eyebrow)}`.trim() : str(block.eyebrow);
+
+const img = (path: unknown) => resolveSiteImage(str(path) || undefined);
+const crop = (o: Item, prefix = '') => ({
+  focal: focalCss(str(o[`${prefix}focal`]) || undefined),
+  zoom: clampZoom(typeof o[`${prefix}zoom`] === 'number' ? (o[`${prefix}zoom`] as number) : undefined),
+});
+const buttons = (Array.isArray(block.buttons) ? block.buttons : []) as Item[];
+const isDraft = block.draft === true;
+
+const embed = type === 'video' ? embedUrl(str(block.url)) : null;
+const localVideo = (v: unknown) => (/^\/videos\/[\w./-]+\.(mp4|webm)$/.test(str(v)) ? str(v) : '');
+const marqueeWords = str(block.words).split(/\s*[,·|]\s*/).filter(Boolean);
+const containerClass = width === 'narrow' ? 'container-narrow' : 'container';
+const Tag = inline ? 'div' : 'section';
+---
+
+{(!isDraft || DEV) && (
+<Tag
+  class:list={[
+    'blk', `blk-${type}`, `blk-bg-${bg}`, `blk-w-${width}`, `blk-a-${align}`,
+    { 'section': !inline && type !== 'spacer' && type !== 'marquee', 'blk-inline': inline, 'blk-draft': isDraft },
+  ]}
+  id={block.anchor ? str(block.anchor) : undefined}
+  data-block={DEV ? index : undefined}
+  data-block-id={DEV ? block.id : undefined}
+  data-block-type={DEV ? type : undefined}
+  data-block-doc={DEV ? doc : undefined}
+  data-layout={DEV && !inline ? `block:${block.id}` : undefined}
+  data-layout-name={DEV && !inline ? (str(block.heading) || type) : undefined}
+  style={sectionStyle}
+>
+  {isDraft && <span class="blk-draft-badge">Draft · hidden on the live site</span>}
+  <div class:list={[inline ? 'blk-inner' : containerClass, { 'blk-full': width === 'full' }]}>
+
+    {(eyebrow || block.heading || block.intro) && type !== 'cta' && type !== 'split' && type !== 'marquee' && type !== 'spacer' && (
+      <header class="blk-head">
+        {eyebrow && <p class="eyebrow" data-field={field('eyebrow')}>{eyebrow}</p>}
+        {block.heading && <h2 data-field={field('heading')} set:html={inlineRich(str(block.heading))} />}
+        {block.intro && <div class="blk-intro muted" data-field={field('intro')} set:html={richText(str(block.intro))} />}
+      </header>
+    )}
+
+    {type === 'text' && (
+      <>
+        {block.body && <div class="blk-prose" data-field={field('body')} set:html={richText(str(block.body))} />}
+      </>
+    )}
+
+    {type === 'split' && (() => {
+      const pic = img(block.image);
+      const vid = localVideo(block.video);
+      const c = crop(block as Item, '');
+      const ratio = pick(String(style.ratio ?? ''), ['40', '50', '60'] as const, '50');
+      return (
+        <div class:list={['blk-split', `blk-split-${pick(style.side, ['left', 'right'] as const, 'left')}`, `blk-ratio-${ratio}`]}>
+          <div class="blk-split-media" data-field={field('image')} style={`--focal: ${c.focal}; --zoom: ${c.zoom};`}>
+            {vid ? (
+              <video src={vid} muted loop playsinline autoplay preload="metadata" aria-label={str(block.alt) || str(block.heading)}></video>
+            ) : pic ? (
+              <Image src={pic} alt={str(block.alt)} widths={[480, 800, 1200]} sizes="(min-width: 900px) 50vw, 100vw" loading="lazy" />
+            ) : DEV ? (
+              <div class="blk-empty">Add a photo or video</div>
+            ) : null}
+          </div>
+          <div class="blk-split-text">
+            {eyebrow && <p class="eyebrow" data-field={field('eyebrow')}>{eyebrow}</p>}
+            {block.heading && <h2 data-field={field('heading')} set:html={inlineRich(str(block.heading))} />}
+            {block.body && <div class="blk-prose" data-field={field('body')} set:html={richText(str(block.body))} />}
+            {buttons.length > 0 && (
+              <div class="blk-buttons">
+                {buttons.map((b, k) => (
+                  <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={str(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    })()}
+
+    {type === 'cards' && (
+      <div class:list={['blk-grid', `blk-cols-${columns}`, `blk-cards-${pick(variant, ['cards', 'plain', 'numbered', 'overlay'] as const, 'cards')}`]}>
+        {items.map((item, k) => {
+          const pic = img(item.image);
+          const c = crop(item);
+          const url = str(item.url);
+          const CardTag = url ? 'a' : 'article';
+          return (
+            <CardTag class="blk-card" href={url || undefined}>
+              {pic && (
+                <div class="blk-card-media" data-field={field('items', k, 'image')} style={`--focal: ${c.focal}; --zoom: ${c.zoom};`}>
+                  <Image src={pic} alt={str(item.alt) || str(item.title)} widths={[400, 800]} sizes="(min-width: 900px) 33vw, 100vw" loading="lazy" />
+                </div>
+              )}
+              <div class="blk-card-body">
+                {variant === 'numbered' && <span class="blk-num">{String(k + 1).padStart(2, '0')}</span>}
+                {item.tag && <span class="blk-tag" data-field={field('items', k, 'tag')}>{str(item.tag)}</span>}
+                {item.title && <h3 data-field={field('items', k, 'title')} set:html={inlineRich(str(item.title))} />}
+                {item.text && <div class="blk-card-text muted" data-field={field('items', k, 'text')} set:html={richText(str(item.text))} />}
+              </div>
+            </CardTag>
+          );
+        })}
+      </div>
+    )}
+
+    {type === 'stats' && (
+      <div class:list={['blk-grid', 'blk-stats', `blk-cols-${columns}`]}>
+        {items.map((item, k) => (
+          <div class="blk-stat">
+            <p class="blk-stat-value" data-field={field('items', k, 'value')}>{str(item.value)}</p>
+            <p class="blk-stat-label muted" data-field={field('items', k, 'label')}>{str(item.label)}</p>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {type === 'quote' && (
+      <div class:list={['blk-quotes', { 'blk-quotes-grid': items.length > 1 }]}>
+        {items.map((item, k) => (
+          <figure class="blk-quote">
+            <blockquote data-field={field('items', k, 'text')} set:html={richText(str(item.text))} />
+            {(item.name || item.role) && (
+              <figcaption>
+                {item.name && <strong data-field={field('items', k, 'name')}>{str(item.name)}</strong>}
+                {item.role && <span class="muted" data-field={field('items', k, 'role')}>{str(item.role)}</span>}
+              </figcaption>
+            )}
+          </figure>
+        ))}
+      </div>
+    )}
+
+    {type === 'steps' && (
+      <ol class:list={['blk-steps', `blk-cols-${columns}`]}>
+        {items.map((item, k) => (
+          <li class="blk-step">
+            <span class="blk-num">{String(k + 1).padStart(2, '0')}</span>
+            <div>
+              {item.title && <h3 data-field={field('items', k, 'title')} set:html={inlineRich(str(item.title))} />}
+              {item.text && <div class="muted" data-field={field('items', k, 'text')} set:html={richText(str(item.text))} />}
+            </div>
+          </li>
+        ))}
+      </ol>
+    )}
+
+    {type === 'timeline' && (
+      <ol class="blk-timeline">
+        {items.map((item, k) => {
+          const pic = img(item.image);
+          return (
+            <li class="blk-tl-item">
+              <p class="blk-tl-date" data-field={field('items', k, 'date')}>{str(item.date)}</p>
+              <div class="blk-tl-body">
+                {pic && (
+                  <div class="blk-tl-logo" data-field={field('items', k, 'image')}>
+                    <Image src={pic} alt={str(item.org)} widths={[160, 320]} sizes="80px" loading="lazy" data-no-lightbox />
+                  </div>
+                )}
+                {item.title && <h3 data-field={field('items', k, 'title')} set:html={inlineRich(str(item.title))} />}
+                {item.org && <p class="blk-tl-org" data-field={field('items', k, 'org')}>{str(item.org)}</p>}
+                {item.text && <div class="muted" data-field={field('items', k, 'text')} set:html={richText(str(item.text))} />}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    )}
+
+    {type === 'logos' && (
+      <ul class="blk-logos">
+        {items.map((item, k) => {
+          const pic = img(item.image);
+          const inner = pic ? (
+            <Image src={pic} alt={str(item.name)} widths={[200, 400]} sizes="160px" loading="lazy" data-no-lightbox />
+          ) : (
+            <span>{str(item.name)}</span>
+          );
+          return (
+            <li data-field={field('items', k, 'image')}>
+              {str(item.url) ? <a href={str(item.url)} target="_blank" rel="noopener">{inner}</a> : inner}
+            </li>
+          );
+        })}
+      </ul>
+    )}
+
+    {type === 'faq' && (
+      <div class="blk-faq">
+        {items.map((item, k) => (
+          <details open={style.open === true ? true : undefined}>
+            <summary data-field={field('items', k, 'q')}>{str(item.q)}</summary>
+            <div class="blk-prose muted" data-field={field('items', k, 'a')} set:html={richText(str(item.a))} />
+          </details>
+        ))}
+      </div>
+    )}
+
+    {type === 'gallery' && (
+      <div
+        class:list={['blk-gallery', `blk-gallery-${pick(variant, ['grid', 'masonry', 'strip'] as const, 'grid')}`, `blk-cols-${columns}`]}
+        data-lightbox-root
+      >
+        {items.map((item, k) => {
+          const pic = img(item.image);
+          const c = crop(item);
+          return pic ? (
+            <figure class="blk-gallery-item">
+              <div class="blk-gallery-media" data-field={field('items', k, 'image')} style={`--focal: ${c.focal}; --zoom: ${c.zoom};`}>
+                <Image src={pic} alt={str(item.caption) || str(item.alt)} widths={[400, 800, 1400]} sizes="(min-width: 900px) 33vw, 100vw" loading="lazy" />
+              </div>
+              {item.caption && <figcaption class="muted" data-field={field('items', k, 'caption')}>{str(item.caption)}</figcaption>}
+            </figure>
+          ) : DEV ? (
+            <div class="blk-empty">Photo {k + 1}: add one in the panel</div>
+          ) : null;
+        })}
+      </div>
+    )}
+
+    {type === 'video' && (
+      <figure class="blk-video">
+        {embed ? (
+          <div class="blk-embed" data-embed={embed}>
+            <button type="button" class="blk-embed-play" aria-label={`Play video${block.caption ? `: ${str(block.caption)}` : ''}`}>
+              <svg viewBox="0 0 68 48" aria-hidden="true"><path d="M66.5 7.7a8.5 8.5 0 0 0-6-6C55.3.3 34 .3 34 .3s-21.3 0-26.5 1.4a8.5 8.5 0 0 0-6 6C.1 13 .1 24 .1 24s0 11 1.4 16.3a8.5 8.5 0 0 0 6 6C12.7 47.7 34 47.7 34 47.7s21.3 0 26.5-1.4a8.5 8.5 0 0 0 6-6C67.9 35 67.9 24 67.9 24s0-11-1.4-16.3Z" fill="currentColor" /><path d="M45 24 27 14v20" fill="#fff" /></svg>
+            </button>
+          </div>
+        ) : localVideo(block.src) ? (
+          <video src={localVideo(block.src)} controls playsinline preload="metadata"></video>
+        ) : DEV ? (
+          <div class="blk-empty">Paste a YouTube or Vimeo link in the panel</div>
+        ) : null}
+        {block.caption && <figcaption class="muted" data-field={field('caption')}>{str(block.caption)}</figcaption>}
+      </figure>
+    )}
+
+    {type === 'tags' && (
+      <div class="blk-taggroups">
+        {items.map((item, k) => (
+          <div class="blk-taggroup">
+            {item.label && <h3 data-field={field('items', k, 'label')}>{str(item.label)}</h3>}
+            <ul class="blk-chips" data-field={field('items', k, 'tags')}>
+              {str(item.tags).split(/\s*,\s*/).filter(Boolean).map((t) => <li>{t}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {type === 'links' && (
+      <ul class="blk-links">
+        {items.map((item, k) => (
+          <li>
+            {str(item.url) ? (
+              <a href={str(item.url)} target={/^https?:/.test(str(item.url)) ? '_blank' : undefined} rel="noopener" data-field={field('items', k, 'title')}>{str(item.title)}</a>
+            ) : (
+              <span data-field={field('items', k, 'title')}>{str(item.title)}</span>
+            )}
+            {(item.source || item.year) && (
+              <span class="muted blk-links-meta">
+                {item.source && <span data-field={field('items', k, 'source')}>{str(item.source)}</span>}
+                {item.source && item.year && ' · '}
+                {item.year && <span data-field={field('items', k, 'year')}>{str(item.year)}</span>}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {type === 'cta' && (
+      <div class="blk-cta">
+        {eyebrow && <p class="eyebrow" data-field={field('eyebrow')}>{eyebrow}</p>}
+        {block.heading && <h2 data-field={field('heading')} set:html={inlineRich(str(block.heading))} />}
+        {block.body && <div class="blk-prose muted" data-field={field('body')} set:html={richText(str(block.body))} />}
+        {buttons.length > 0 && (
+          <div class="blk-buttons">
+            {buttons.map((b, k) => (
+              <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={str(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
+
+    {type === 'marquee' && (
+      <div class="blk-marquee" aria-label={marqueeWords.join(', ')} data-field={field('words')}>
+        <div class="blk-marquee-track" aria-hidden="true">
+          {[0, 1].map(() => (
+            <span class="blk-marquee-run">{marqueeWords.map((w) => <span class="blk-marquee-word">{w}</span>)}</span>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {type === 'spacer' && (
+      <div class:list={['blk-spacer', { 'blk-spacer-line': style.line === true }]} style={`--h: ${Math.min(400, Math.max(8, Number(block.size) || 64))}px`} aria-hidden="true"></div>
+    )}
+
+    {type !== 'split' && type !== 'cta' && buttons.length > 0 && (
+      <div class="blk-buttons">
+        {buttons.map((b, k) => (
+          <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={str(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
+        ))}
+      </div>
+    )}
+  </div>
+</Tag>
+)}
+
+<script>
+  // Video blocks load the YouTube / Vimeo player only when played, so the
+  // page never contacts them for a visitor who doesn't press play.
+  document.addEventListener('click', (event) => {
+    const button = (event.target as HTMLElement).closest?.('.blk-embed-play');
+    if (!button) return;
+    const box = button.closest<HTMLElement>('.blk-embed');
+    if (!box?.dataset.embed) return;
+    const frame = document.createElement('iframe');
+    frame.src = `${box.dataset.embed}${box.dataset.embed.includes('?') ? '&' : '?'}autoplay=1`;
+    frame.title = button.getAttribute('aria-label') ?? 'Video';
+    frame.allow = 'autoplay; fullscreen; picture-in-picture';
+    frame.allowFullscreen = true;
+    box.replaceChildren(frame);
+  });
+</script>
+
+<style>
+  /* Everything here is built from global.css tokens, so blocks pick up the
+     theme panel's colours, corners and fonts like the rest of the site. */
+  .blk { position: relative; }
+  .blk-inline { margin: 2.5rem 0; }
+  .blk-bg-subtle { background: var(--bg-elevated); border-block: 1px solid var(--border); }
+  .blk-bg-accent { background: var(--accent-soft); }
+  .blk-bg-dark { background: var(--text); color: var(--bg); }
+  .blk-bg-dark :global(.muted), .blk-bg-dark :global(.eyebrow) { color: color-mix(in srgb, var(--bg) 70%, transparent); }
+  .blk-inline.blk-bg-subtle, .blk-inline.blk-bg-accent, .blk-inline.blk-bg-dark { padding: 1.75rem; border-radius: var(--radius-lg); border: 0; }
+  .blk-w-wide > .container { max-width: calc(var(--container) + 240px); }
+  .blk-full { max-width: none; padding-inline: 0; }
+  .blk-a-center .blk-head, .blk-a-center .blk-cta, .blk-a-center .blk-prose { text-align: center; margin-inline: auto; }
+  .blk-a-center .blk-buttons { justify-content: center; }
+  .blk-head { margin-bottom: 2rem; max-width: 70ch; }
+  .blk-head h2 { margin: 0; }
+  .blk-intro { margin-top: 0.75rem; }
+  .blk-intro :global(p:last-child), .blk-prose :global(p:last-child) { margin-bottom: 0; }
+  .blk-prose { max-width: 70ch; }
+  .blk-prose :global(ul), .blk-prose :global(ol) { padding-left: 1.2rem; margin: 0 0 1em; }
+  .blk-prose :global(code) { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.9em; }
+  .blk :global(.redact) { letter-spacing: -0.05em; user-select: none; }
+  .blk-buttons { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+  .blk-empty {
+    display: grid; place-items: center; min-height: 180px; padding: 1rem; text-align: center;
+    border: 1.5px dashed var(--border-strong); border-radius: var(--radius-lg); color: var(--text-muted); font-size: 0.9rem;
+  }
+
+  /* draft */
+  .blk-draft { outline: 2px dashed color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: -6px; }
+  .blk-draft-badge {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 2; font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
+    padding: 5px 8px; border-radius: 999px; background: var(--accent); color: #fff; letter-spacing: 0.02em;
+  }
+
+  /* grids */
+  .blk-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+  @media (min-width: 720px) {
+    .blk-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .blk-cols-3, .blk-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1000px) {
+    .blk-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .blk-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .blk-inline .blk-cols-3, .blk-inline .blk-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* cards */
+  .blk-card { display: flex; flex-direction: column; color: inherit; text-decoration: none; min-width: 0; }
+  .blk-cards-cards .blk-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: transform var(--transition), box-shadow var(--transition); }
+  .blk-bg-subtle .blk-cards-cards .blk-card { background: var(--bg); }
+  a.blk-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .blk-card-media { aspect-ratio: 4 / 3; overflow: hidden; background: var(--bg-elevated); }
+  .blk-cards-plain .blk-card-media { border-radius: var(--radius-lg); }
+  .blk-card-media :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, center); transform: scale(var(--zoom, 1)); transform-origin: var(--focal, center); }
+  .blk-card-body { padding: 1.25rem; display: grid; gap: 0.4rem; align-content: start; }
+  .blk-cards-plain .blk-card-body { padding: 1rem 0 0; }
+  .blk-card-body h3 { margin: 0; font-size: 1.1rem; }
+  .blk-card-text { font-size: 0.95rem; }
+  .blk-card-text :global(p) { margin: 0; }
+  .blk-cards-numbered .blk-card { border-top: 1px solid var(--border-strong); }
+  .blk-cards-numbered .blk-card-body { padding: 1.25rem 0 0; }
+  .blk-cards-overlay .blk-card { position: relative; border-radius: var(--radius-lg); overflow: hidden; min-height: 260px; color: #fff; }
+  .blk-cards-overlay .blk-card-media { position: absolute; inset: 0; aspect-ratio: auto; }
+  .blk-cards-overlay .blk-card-media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(0 0 0 / 0.7), rgb(0 0 0 / 0.05) 60%); }
+  .blk-cards-overlay .blk-card-body { position: relative; margin-top: auto; }
+  .blk-cards-overlay .blk-card-text { color: rgb(255 255 255 / 0.85); }
+  .blk-num { font: 600 0.85rem/1 var(--font-mono, ui-monospace, monospace); color: var(--accent); }
+  .blk-tag { justify-self: start; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+
+  /* stats */
+  .blk-stat { border-left: 2px solid var(--accent); padding-left: 1rem; }
+  .blk-stat-value { margin: 0; font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; }
+  .blk-stat-label { margin: 0.35rem 0 0; font-size: 0.95rem; }
+
+  /* quotes */
+  .blk-quotes { display: grid; gap: 1.5rem; }
+  @media (min-width: 900px) { .blk-quotes-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); } }
+  .blk-quote { margin: 0; }
+  .blk-quote blockquote { margin: 0; font-size: clamp(1.15rem, 2.4vw, 1.5rem); line-height: 1.4; font-weight: 500; }
+  .blk-quotes-grid .blk-quote blockquote { font-size: 1.05rem; }
+  .blk-quote blockquote::before { content: '“'; display: block; font-size: 3rem; line-height: 0.6; color: var(--accent); margin-bottom: 0.5rem; }
+  .blk-quote figcaption { margin-top: 1rem; display: grid; gap: 0.15rem; font-size: 0.95rem; }
+
+  /* steps */
+  .blk-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.5rem; }
+  @media (min-width: 720px) { .blk-steps.blk-cols-2, .blk-steps.blk-cols-3, .blk-steps.blk-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1000px) { .blk-steps.blk-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .blk-steps.blk-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .blk-step { display: grid; grid-template-columns: auto 1fr; gap: 0.9rem; align-items: start; }
+  .blk-step .blk-num { font-size: 1.4rem; line-height: 1.2; }
+  .blk-step h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+
+  /* timeline */
+  .blk-timeline { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--border-strong); }
+  .blk-tl-item { position: relative; padding: 0 0 2rem 1.5rem; display: grid; gap: 0.25rem; }
+  .blk-tl-item::before { content: ''; position: absolute; left: -7px; top: 0.35rem; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--bg); }
+  .blk-bg-subtle .blk-tl-item::before { box-shadow: 0 0 0 4px var(--bg-elevated); }
+  @media (min-width: 720px) { .blk-tl-item { grid-template-columns: 11rem 1fr; gap: 1.5rem; } }
+  .blk-tl-date { margin: 0; font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
+  .blk-tl-body h3 { margin: 0; font-size: 1.1rem; }
+  .blk-tl-org { margin: 0.15rem 0 0.5rem; font-weight: 600; }
+  .blk-tl-logo { width: 72px; height: 40px; margin-bottom: 0.5rem; }
+  .blk-tl-logo :global(img) { width: 100%; height: 100%; object-fit: contain; object-position: left center; }
+
+  /* logos */
+  .blk-logos { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 1.5rem 2.5rem; align-items: center; }
+  .blk-a-center .blk-logos { justify-content: center; }
+  .blk-logos li { height: 48px; display: flex; align-items: center; }
+  .blk-logos :global(img) { height: 100%; width: auto; max-width: 160px; object-fit: contain; filter: grayscale(1); opacity: 0.75; transition: filter var(--transition), opacity var(--transition); }
+  .blk-logos li:hover :global(img) { filter: none; opacity: 1; }
+
+  /* faq */
+  .blk-faq { display: grid; border-top: 1px solid var(--border); max-width: 80ch; }
+  .blk-a-center .blk-faq { margin-inline: auto; }
+  .blk-faq details { border-bottom: 1px solid var(--border); padding: 1rem 0; }
+  .blk-faq summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
+  .blk-faq summary::-webkit-details-marker { display: none; }
+  .blk-faq summary::after { content: '+'; color: var(--accent); font-size: 1.25rem; line-height: 1; transition: transform var(--transition); }
+  .blk-faq details[open] summary::after { transform: rotate(45deg); }
+  .blk-faq .blk-prose { margin-top: 0.75rem; }
+
+  /* gallery */
+  .blk-gallery { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 900px) {
+    .blk-gallery.blk-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .blk-gallery.blk-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .blk-gallery-item { margin: 0; min-width: 0; }
+  .blk-gallery-media { overflow: hidden; border-radius: var(--radius-lg); aspect-ratio: 4 / 3; background: var(--bg-elevated); cursor: zoom-in; }
+  .blk-gallery-media :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, center); transform: scale(var(--zoom, 1)); transform-origin: var(--focal, center); transition: transform 0.4s ease; }
+  .blk-gallery-media:hover :global(img) { transform: scale(calc(var(--zoom, 1) * 1.03)); }
+  .blk-gallery figcaption { font-size: 0.85rem; margin-top: 0.4rem; }
+  .blk-gallery-masonry { display: block; columns: 2; column-gap: 1rem; }
+  @media (min-width: 900px) { .blk-gallery-masonry.blk-cols-3 { columns: 3; } .blk-gallery-masonry.blk-cols-4 { columns: 4; } }
+  .blk-gallery-masonry .blk-gallery-item { break-inside: avoid; margin-bottom: 1rem; }
+  .blk-gallery-masonry .blk-gallery-media { aspect-ratio: auto; }
+  .blk-gallery-masonry .blk-gallery-media :global(img) { height: auto; }
+  .blk-gallery-strip { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 1rem; padding-bottom: 0.5rem; }
+  .blk-gallery-strip .blk-gallery-item { flex: 0 0 min(70%, 420px); scroll-snap-align: start; }
+
+  /* video */
+  .blk-video { margin: 0; }
+  .blk-video video, .blk-embed { width: 100%; aspect-ratio: 16 / 9; border-radius: var(--radius-lg); background: #000; display: block; overflow: hidden; }
+  .blk-embed { position: relative; display: grid; place-items: center; }
+  .blk-embed :global(iframe) { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .blk-embed-play { width: 72px; height: 50px; border: 0; background: none; color: #e11d1d; cursor: pointer; padding: 0; }
+  .blk-embed-play:hover { color: #ff0000; transform: scale(1.06); }
+  .blk-video figcaption { margin-top: 0.6rem; font-size: 0.9rem; }
+
+  /* tags */
+  .blk-taggroups { display: grid; gap: 1.5rem; }
+  @media (min-width: 900px) { .blk-taggroups { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); } }
+  .blk-taggroup h3 { margin: 0 0 0.6rem; font-size: 0.95rem; }
+  .blk-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .blk-chips li { font-size: 0.85rem; padding: 0.3rem 0.65rem; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--bg); }
+
+  /* links */
+  .blk-links { list-style: none; padding: 0; margin: 0; display: grid; border-top: 1px solid var(--border); max-width: 80ch; }
+  .blk-links li { padding: 0.85rem 0; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; }
+  .blk-links a { font-weight: 600; color: var(--text); }
+  .blk-links a:hover { color: var(--accent); }
+  .blk-links-meta { font-size: 0.9rem; }
+
+  /* cta */
+  .blk-cta { max-width: 60ch; }
+  .blk-a-center .blk-cta { margin-inline: auto; }
+  .blk-cta h2 { margin: 0 0 0.75rem; }
+
+  /* split */
+  .blk-split { display: grid; gap: 2rem; align-items: center; }
+  @media (min-width: 900px) {
+    .blk-split { grid-template-columns: 1fr 1fr; gap: clamp(2rem, 5vw, 4rem); }
+    .blk-ratio-40.blk-split-left { grid-template-columns: 2fr 3fr; }
+    .blk-ratio-60.blk-split-left { grid-template-columns: 3fr 2fr; }
+    .blk-ratio-40.blk-split-right { grid-template-columns: 3fr 2fr; }
+    .blk-ratio-60.blk-split-right { grid-template-columns: 2fr 3fr; }
+    .blk-split-right .blk-split-media { order: 2; }
+  }
+  .blk-split-media { overflow: hidden; border-radius: var(--radius-lg); aspect-ratio: 4 / 3; background: var(--bg-elevated); }
+  .blk-split-media :global(img), .blk-split-media video { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, center); transform: scale(var(--zoom, 1)); transform-origin: var(--focal, center); display: block; }
+  .blk-split-media:has(.blk-empty) { background: none; }
+  .blk-split-text h2 { margin: 0 0 1rem; }
+
+  /* marquee */
+  .blk-marquee { overflow: hidden; padding-block: 1.25rem; border-block: 1px solid var(--border); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+  .blk-marquee-track { display: flex; width: max-content; animation: blk-marquee 40s linear infinite; }
+  .blk-marquee:hover .blk-marquee-track { animation-play-state: paused; }
+  .blk-marquee-run { display: flex; }
+  .blk-marquee-word { font-size: clamp(1.25rem, 3vw, 2rem); font-weight: 600; padding-inline: 1.25rem; white-space: nowrap; }
+  .blk-marquee-word::after { content: '·'; margin-left: 2.5rem; color: var(--accent); }
+  @keyframes blk-marquee { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .blk-marquee-track { animation: none; flex-wrap: wrap; width: auto; } .blk-marquee-run + .blk-marquee-run { display: none; } }
+
+  /* spacer */
+  .blk-spacer { height: calc(var(--h) * var(--space-scale, 1)); }
+  .blk-spacer-line { display: flex; align-items: center; }
+  .blk-spacer-line::before { content: ''; flex: 1; height: 1px; background: var(--border-strong); }
+</style>

@@ -8,6 +8,8 @@ import { inlineEmphasis } from '../lib/inline-emphasis';
 import { resolveSiteImage } from '../lib/site-images';
 import { focalCss, clampZoom } from '../lib/gallery';
 import StudioOverlay from '../components/StudioOverlay.astro';
+import SectionBlock from '../components/SectionBlock.astro';
+import Lightbox from '../components/Lightbox.astro';
 import { homeField as f } from '../lib/edit-fields';
 
 // Lookup tables for the new layout knobs. The focal keyword table lives in
@@ -42,6 +44,42 @@ const aboutZoom = crop(home.aboutSection, 'photoFocalPoint', 'photoZoom').zoom;
 // Untyped view of a home.json row, for optional fields only some rows have.
 // (A generic can't be written inside the template: it parses as a tag.)
 const loose = (x: unknown) => (x ?? {}) as Record<string, unknown>;
+// Layout studio writes (home.json "layout"). All optional: a value that is
+// missing keeps the stylesheet's default. Spacing is stored in desktop px and
+// scaled by --space-scale on phones, so the page still reflows.
+const layout = loose(loose(home).layout);
+const layoutSections = loose(layout.sections);
+// Added sections (studio's "Add section"), each keyed block:<id> in the order.
+const blocks = (Array.isArray(loose(home).blocks) ? (loose(home).blocks as Record<string, unknown>[]) : [])
+  .map((block, index) => ({ block, index, key: `block:${String(block.id ?? index)}` }))
+  .filter(({ block }) => import.meta.env.DEV || block.draft !== true);
+const BUILT_IN = ['hero', 'showcase', 'projects', 'experience', 'about', 'contact'];
+const SECTION_KEYS = [...BUILT_IN, ...blocks.map((b) => b.key)];
+const sectionOrder = Array.isArray(layout.order)
+  ? [...(layout.order as string[]).filter((k) => SECTION_KEYS.includes(k)), ...SECTION_KEYS.filter((k) => !(layout.order as string[]).includes(k))]
+  : SECTION_KEYS;
+const px = (v: unknown, max = 400) => (typeof v === 'number' && v >= 0 && v <= max ? v : undefined);
+const scaled = (n: number) => `calc(${n}px * var(--space-scale, 1))`;
+const sectionLayout = (key: string, extra = '') => {
+  const s = loose(layoutSections[key]);
+  const bits = [`order: ${sectionOrder.indexOf(key)}`];
+  const top = px(s.padTop);
+  const bottom = px(s.padBottom);
+  if (top !== undefined) bits.push(`padding-top: ${scaled(top)}`);
+  if (bottom !== undefined) bits.push(`padding-bottom: ${scaled(bottom)}`);
+  if (extra) bits.push(extra);
+  return bits.join('; ');
+};
+const gapStyle = (block: string) => {
+  const g = px(loose(layout[block]).gap, 200);
+  return g === undefined ? undefined : `gap: ${scaled(g)}`;
+};
+const expSplit = (() => {
+  const v = loose(layout.experience).split;
+  return typeof v === 'number' && v >= 25 && v <= 75 ? v : 50;
+})();
+const interestsTop = px(loose(layout.interests).top, 300);
+const layoutAttr = (key: string) => (import.meta.env.DEV ? key : undefined);
 const logoH = logoSizeHeight[home.experienceSection.logoSize ?? 'medium'];
 const heroHeadshot = resolveSiteImage(home.hero.headshot);
 const aboutPhoto = resolveSiteImage(home.aboutSection.photo);
@@ -83,7 +121,8 @@ const aboutBioParagraphs = home.aboutSection.bio
 ---
 
 <BaseLayout title="Ryan Strawbridge — Mechanical Engineer">
-  <section class="hero">
+  <div class="home-flow">
+  <section class="hero" data-layout={layoutAttr('hero')} style={sectionLayout('hero')}>
     <div class="container hero-grid">
       <div class="hero-text">
         <p class="eyebrow" data-field={f('hero', 'eyebrow')}>{home.hero.eyebrow}</p>
@@ -128,7 +167,7 @@ const aboutBioParagraphs = home.aboutSection.bio
   </section>
 
   {home.showcase?.show !== false && (
-    <section class="showcase">
+    <section class="showcase" data-layout={layoutAttr('showcase')} style={sectionLayout('showcase')}>
       <div class="container">
         <div class="collage" aria-label="Engineering work in action" style={`--collage-rows: ${collageRows};`}>
           {
@@ -189,13 +228,13 @@ const aboutBioParagraphs = home.aboutSection.bio
   )}
 
   {home.projectsSection.show !== false && (
-    <section class="section" id="projects">
+    <section class="section" id="projects" data-layout={layoutAttr('projects')} style={sectionLayout('projects')}>
       <div class="container">
         <div class="section-head">
           <p class="eyebrow" data-field={f('projectsSection', 'eyebrow')}>{home.projectsSection.eyebrow}</p>
           <h2 data-field={f('projectsSection', 'title')}>{home.projectsSection.title}</h2>
         </div>
-        <div class="project-grid">
+        <div class="project-grid" data-gap={layoutAttr('projects')} style={gapStyle('projects')}>
           {projects.map((project) => <ProjectCard project={project} />)}
         </div>
       </div>
@@ -203,13 +242,13 @@ const aboutBioParagraphs = home.aboutSection.bio
   )}
 
   {home.experienceSection.show !== false && (
-  <section class="section experience-section" style={`--logo-height: ${logoH};`}>
+  <section class="section experience-section" data-layout={layoutAttr('experience')} style={sectionLayout('experience', `--logo-height: ${logoH}; --exp-a: ${expSplit}fr; --exp-b: ${100 - expSplit}fr`)}>
     <div class="container">
       <div class="section-head">
         <p class="eyebrow" data-field={f('experienceSection', 'eyebrow')}>{home.experienceSection.eyebrow}</p>
         <h2 data-field={f('experienceSection', 'title')}>{home.experienceSection.title}</h2>
       </div>
-      <ul class="experience-list">
+      <ul class="experience-list" data-gap={layoutAttr('experience')} style={gapStyle('experience')}>
         {
           home.experienceSection.items.map((item, i) => {
             const logo = resolveSiteImage(item.logo);
@@ -267,7 +306,7 @@ const aboutBioParagraphs = home.aboutSection.bio
   )}
 
   {home.aboutSection.show !== false && (
-  <section class={`section about-section about-photo-${photoPosition}`} id="about" style={`--about-focal: ${aboutFocal}; --about-zoom: ${aboutZoom};`}>
+  <section class={`section about-section about-photo-${photoPosition}`} id="about" data-layout={layoutAttr('about')} style={sectionLayout('about', `--about-focal: ${aboutFocal}; --about-zoom: ${aboutZoom}`)}>
     <div class="container">
       <div class="about-grid">
         <div class="portrait-wrap" data-field={f('aboutSection', 'photo')}>
@@ -289,9 +328,9 @@ const aboutBioParagraphs = home.aboutSection.bio
       </div>
 
       {home.interestsSection.show !== false && (
-      <div class="interests">
+      <div class="interests" data-layout-top={layoutAttr('interests')} style={interestsTop === undefined ? undefined : `margin-top: ${scaled(interestsTop)}`}>
         <p class="eyebrow" data-field={f('interestsSection', 'eyebrow')}>{home.interestsSection.eyebrow}</p>
-        <div class="interests-grid">
+        <div class="interests-grid" data-gap={layoutAttr('interests')} style={gapStyle('interests')}>
           {
             home.interestsSection.items.map((item, i) => {
               const main = resolveSiteImage(item.image);
@@ -341,7 +380,7 @@ const aboutBioParagraphs = home.aboutSection.bio
   )}
 
   {home.contactSection.show !== false && (
-  <section class="section contact-section" id="contact">
+  <section class="section contact-section" id="contact" data-layout={layoutAttr('contact')} style={sectionLayout('contact')}>
     <div class="container-narrow contact-inner">
       <p class="eyebrow" data-field={f('contactSection', 'eyebrow')}>{home.contactSection.eyebrow}</p>
       <h2 data-field={f('contactSection', 'heading')}>{home.contactSection.heading}</h2>
@@ -355,6 +394,10 @@ const aboutBioParagraphs = home.aboutSection.bio
     </div>
   </section>
   )}
+  {blocks.map(({ block, index, key }) => (
+    <SectionBlock block={block} index={index} doc="home" number={sectionOrder.indexOf(key) + 1} sectionStyle={sectionLayout(key)} />
+  ))}
+  </div>
 
   <script>
     // The collage video carries data-src instead of src. An autoplaying <video>
@@ -431,6 +474,7 @@ const aboutBioParagraphs = home.aboutSection.bio
 
   {/* Dev only. Renders nothing in a production build. */}
 
+  <Lightbox />
   <StudioOverlay mode="home" />
 
   <script>
@@ -504,6 +548,25 @@ const aboutBioParagraphs = home.aboutSection.bio
   </script>
 
   <style>
+    /* Sections are flex items so studio's layout order can rearrange them
+       with CSS order, without reshuffling the template. */
+    .home-flow {
+      display: flex;
+      flex-direction: column;
+    }
+    .home-flow > section {
+      width: 100%;
+    }
+    /* Layout spacing is stored as desktop px; phones get two thirds. */
+    :global(:root) {
+      --space-scale: 0.67;
+    }
+    @media (min-width: 768px) {
+      :global(:root) {
+        --space-scale: 1;
+      }
+    }
+
     .hero {
       padding-block: 4rem 3rem;
       position: relative;
@@ -744,7 +807,7 @@ const aboutBioParagraphs = home.aboutSection.bio
     }
     @media (min-width: 900px) {
       .experience-card.has-banner {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(0, var(--exp-a, 1fr)) minmax(0, var(--exp-b, 1fr));
         gap: clamp(2rem, 4vw, 3.5rem);
       }
     }

@@ -50,6 +50,7 @@ const size = (n) =>
 // Stroke icons, 24-unit grid, drawn in currentColor. Inline so the overlay
 // has no asset requests and nothing here can reach the production build.
 const ICON = {
+  sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
   scissors: '<circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M8.1 7.6 20 18M8.1 16.4 20 6"/>',
   left: '<path d="m15 18-6-6 6-6"/>',
   right: '<path d="m9 18 6-6-6-6"/>',
