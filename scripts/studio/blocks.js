@@ -470,12 +470,12 @@ const mediaField = (path, label, value) => {
     } catch (error) { toast(error.message, true); }
   });
   row.append(upload, file);
-  if (scope === 'home' && hooks.openLibrary) {
+  if (hooks.openLibrary) {
     const lib = el('button', { type: 'button', className: 'studio-btn', textContent: 'From library' });
     lib.addEventListener('click', () => {
       keep({ select: current.id, tab: current.tab, scrollTop: panel.querySelector('.studio-ins-body')?.scrollTop ?? 0 });
-      state.homeTarget = `blocks.${current.index}.${path}`;
-      hooks.openLibrary();
+      state.homeTarget = null;
+      hooks.openLibrary({ block: { scope, path: `blocks.${current.index}.${path}` } });
     });
     row.append(lib);
   }
@@ -860,7 +860,8 @@ for (const spot of document.querySelectorAll('[data-block-id] [data-field]')) {
 
 // Shortcuts while a section is selected (and you're not typing).
 window.addEventListener('keydown', (e) => {
-  if (!current || e.target.closest?.('input, textarea, select, [contenteditable="true"], [contenteditable="plaintext-only"]')) return;
+  if (!current || e.target.closest?.('input, textarea, select, button, summary, a, [contenteditable="true"], [contenteditable="plaintext-only"]')) return;
+  if (!picker.hidden) return;
   const mod = e.metaKey || e.ctrlKey;
   if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); e.stopImmediatePropagation(); panel.querySelector('footer .studio-btn:not(.studio-tool-icon)')?.click(); }
   else if (mod && e.key.toLowerCase() === 'c' && !String(window.getSelection())) { e.preventDefault(); copyCurrent(); }

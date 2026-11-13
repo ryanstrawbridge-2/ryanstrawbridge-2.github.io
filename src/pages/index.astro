@@ -60,6 +60,15 @@ const sectionOrder = Array.isArray(layout.order)
   : SECTION_KEYS;
 const px = (v: unknown, max = 400) => (typeof v === 'number' && v >= 0 && v <= max ? v : undefined);
 const scaled = (n: number) => `calc(${n}px * var(--space-scale, 1))`;
+// Numbered eyebrows count what a visitor sees: no drafts, no hidden sections,
+// so "(003)" in studio is "(003)" on the live site.
+const HIDDEN_FLAG: Record<string, unknown> = {
+  showcase: home.showcase?.show, projects: home.projectsSection.show, experience: home.experienceSection.show,
+  about: home.aboutSection.show, contact: home.contactSection.show,
+};
+const visibleOrder = sectionOrder.filter((k) => (k.startsWith('block:')
+  ? blocks.find((b) => b.key === k)?.block.draft !== true
+  : HIDDEN_FLAG[k] !== false));
 const blockStyle = (key: string) => loose(blocks.find((b) => b.key === key)?.block.style);
 const sectionLayout = (key: string, extra = '') => {
   // Added sections carry their spacing in their own style.
@@ -400,7 +409,7 @@ const aboutBioParagraphs = home.aboutSection.bio
   </section>
   )}
   {blocks.map(({ block, index, key }) => (
-    <SectionBlock block={block} index={index} doc="home" number={sectionOrder.indexOf(key) + 1} sectionStyle={sectionLayout(key)} />
+    <SectionBlock block={block} index={index} doc="home" layoutKey={key} number={visibleOrder.indexOf(key) + 1} sectionStyle={sectionLayout(key)} />
   ))}
   </div>
 

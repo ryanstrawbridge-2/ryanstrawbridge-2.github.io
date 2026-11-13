@@ -349,7 +349,7 @@ if (MODE === 'home') {
   window.addEventListener('resize', () => { if (on) { rebuildSoon(); placeGrid(); } });
   new ResizeObserver(() => { if (on) rebuildSoon(); }).observe(document.body);
   window.addEventListener('keydown', (event) => {
-    if (event.target.closest?.('input, textarea, select, [contenteditable="true"], [contenteditable="plaintext-only"]')) return;
+    if (event.target.closest?.('input, textarea, select, [contenteditable="true"], [contenteditable="plaintext-only"], .studio-picker')) return;
     if (event.key.toLowerCase() === 'l' && !event.metaKey && !event.ctrlKey && !event.altKey) setOn(!on);
     if (event.key === 'Escape' && on) setOn(false);
   });

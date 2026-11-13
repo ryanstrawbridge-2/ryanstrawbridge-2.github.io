@@ -166,6 +166,12 @@ const placeMedia = async ({ slug, target = {}, filename, data, source, folder, f
   const home = kind === 'home';
   if (!['gallery', 'hero', 'figure', 'home', 'block'].includes(kind)) throw new Error(`unknown target "${kind}"`);
   if (kind === 'block') return placeBlockMedia({ slug, target, filename, data, source, folder, file });
+  // A section photo on the home page reached through home.js (Replace, drop,
+  // library) is still a section photo: route it so video goes to `video`
+  // and a missing `image` key is created.
+  if (kind === 'home' && /^blocks\.\d+\.(?:items\.\d+\.)?image$/.test(String(target.path ?? ''))) {
+    return placeBlockMedia({ slug, target: { kind: 'block', scope: 'home', path: target.path }, filename, data, source, folder, file });
+  }
   const name = filename ?? file;
   if (!name) throw new Error('nothing to place');
   const ext = extname(name).toLowerCase();
@@ -1273,6 +1279,8 @@ const blockValue = (key, value) => {
   }
   if (key === 'size') return Math.min(400, Math.max(8, Math.round(Number(value) || 64)));
   if (key === 'style.padTop' || key === 'style.padBottom') return Math.min(400, Math.max(0, Math.round(Number(value) || 0)));
+  if (/(^|\.)url$/.test(key) && /^\s*(javascript|data|vbscript):/i.test(String(value))) throw new Error('that link type is not allowed');
+  if (key === 'anchor' && !/^[a-z0-9][a-z0-9-]{0,40}$/i.test(String(value))) throw new Error('anchor: letters, numbers and dashes only');
   if (/^(eyebrow|heading|intro|body|alt|url|src|video|image|caption|words|anchor|section|focal|imageFocalPoint)$/.test(key)
     || /^items\.\d+\.(title|text|image|url|tag|value|label|name|role|q|a|date|org|caption|alt|tags|source|year|focal)$/.test(key)
     || /^buttons\.\d+\.(label|url|style)$/.test(key)) {
@@ -1295,10 +1303,21 @@ const setDotted = (obj, key, value) => {
 };
 
 /** Run `mutate(blocks, extras)` on the right file; blocks is a plain array. */
+/** Blocks made outside studio (Pages CMS) may lack an id, or share one. */
+const fixIds = (blocks) => {
+  const seen = new Set();
+  for (let i = 0; i < blocks.length; i += 1) {
+    if (!blocks[i] || typeof blocks[i] !== 'object') blocks[i] = { type: 'text', draft: true };
+    if (!blocks[i].id || seen.has(blocks[i].id)) blocks[i].id = newBlockId();
+    seen.add(blocks[i].id);
+  }
+};
+
 const withBlocks = async (scope, slug, mutate) => {
   if (scope === 'home') {
     return withHome((home) => {
       home.blocks = Array.isArray(home.blocks) ? home.blocks : [];
+      fixIds(home.blocks);
       home.layout = home.layout && typeof home.layout === 'object' ? home.layout : {};
       const result = mutate(home.blocks, { home });
       if (!home.blocks.length) delete home.blocks;
@@ -1309,6 +1328,7 @@ const withBlocks = async (scope, slug, mutate) => {
   if (scope !== 'project') throw new Error('scope must be home or project');
   return withProject(slug, (file) => {
     const blocks = file.doc.toJS().blocks ?? [];
+    fixIds(blocks);
     const result = mutate(blocks, {});
     if (blocks.length) file.doc.set('blocks', file.doc.createNode(blocks));
     else file.doc.delete('blocks');
@@ -1342,7 +1362,7 @@ const blocksRoute = async ({ scope = 'home', slug, op, id, type, after, patch, d
           else if (value && typeof value === 'object') for (const [k, v] of Object.entries(value)) walk(v, [...path, k]);
           else if (path.length) {
             const key = path.join('.');
-            if (['id', 'type', 'draft', 'section'].includes(key)) return;
+            if (['id', 'type', 'draft', 'section', 'anchor'].includes(key)) return;
             const clean = blockValue(key, value);
             if (clean !== null) {
               // Arrays: create the slot before setDotted descends into it.
@@ -1356,7 +1376,14 @@ const blocksRoute = async ({ scope = 'home', slug, op, id, type, after, patch, d
             }
           }
         };
-        walk(patch.paste, []);
+        const src = { ...patch.paste };
+        for (const k of ['items', 'buttons']) if (k in src && !Array.isArray(src[k])) delete src[k];
+        walk(src, []);
+        // An item whose fields were all empty leaves a hole; holes serialize
+        // as null and every renderer reads item.field. Keep them as {}.
+        for (const k of ['items', 'buttons']) {
+          if (Array.isArray(block[k])) block[k] = Array.from(block[k], (v) => (v && typeof v === 'object' ? v : {}));
+        }
       }
       if (scope === 'home') {
         blocks.push(block);
@@ -1383,6 +1410,7 @@ const blocksRoute = async ({ scope = 'home', slug, op, id, type, after, patch, d
     }
     if (op === 'duplicate') {
       const copy = { ...structuredClone(blocks[i]), id: newBlockId(), draft: true };
+      delete copy.anchor; // two sections can't share one #link
       blocks.splice(i + 1, 0, copy);
       if (scope === 'home') {
         const order = homeOrder(home).filter((k) => k !== `block:${copy.id}`);
@@ -1428,9 +1456,15 @@ const blocksRoute = async ({ scope = 'home', slug, op, id, type, after, patch, d
         list.splice(at, 0, structuredClone(op === 'item' && list[at - 1] ? Object.fromEntries(Object.keys(blank).map((k) => [k, k === 'image' || k === 'url' ? '' : blank[k]])) : blank));
         return { index: at };
       }
-      if (sub === 'remove') { list.splice(Number(index), 1); return { removed: Number(index) }; }
+      const inRange = (n) => Number.isInteger(n) && n >= 0 && n < list.length;
+      if (sub === 'remove') {
+        if (!inRange(Number(index))) throw new Error(`no item ${index}`);
+        list.splice(Number(index), 1);
+        return { removed: Number(index) };
+      }
       if (sub === 'move') {
         const a = Number(from);
+        if (!inRange(a)) throw new Error(`no item ${from}`);
         const b = Math.min(list.length - 1, Math.max(0, Number(to)));
         list.splice(b, 0, ...list.splice(a, 1));
         return { moved: true };

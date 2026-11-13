@@ -98,8 +98,9 @@ const projectBlocks = (rawBlocks ?? [])
   .map((block, index) => ({ block, index, sectionId: typeof block.section === 'string' ? slugify(block.section) : '' }))
   .filter(({ block }) => import.meta.env.DEV || block.draft !== true);
 const chunkIds = new Set(bodyChunks.map((c) => c.id));
-const blocksIn = (id: string) => projectBlocks.filter((b) => b.sectionId === id);
-const trailingBlocks = projectBlocks.filter((b) => !chunkIds.has(b.sectionId));
+// No section (or the intro chunk's empty id) means the end of the page.
+const blocksIn = (id: string) => (id ? projectBlocks.filter((b) => b.sectionId === id) : []);
+const trailingBlocks = projectBlocks.filter((b) => !b.sectionId || !chunkIds.has(b.sectionId));
 
 // Inline placement needs the body split to have worked AND something to place.
 // In dev it always splits, so studio can edit each section on its own.

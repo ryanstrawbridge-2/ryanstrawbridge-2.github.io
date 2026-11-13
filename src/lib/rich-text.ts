@@ -18,7 +18,7 @@ const escapeHtml = (value: string) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-const safeUrl = (url: string) => (/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(url) ? url : '#');
+export const safeUrl = (url: string) => (/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(url) ? url : '#');
 
 /** One line of text: emphasis, links, code, redaction. */
 export const inlineRich = (value: string | undefined | null): string => {

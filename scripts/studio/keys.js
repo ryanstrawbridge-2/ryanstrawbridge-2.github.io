@@ -26,6 +26,8 @@ window.addEventListener('keydown', (event) => {
     return;
   }
   if (mod || event.altKey) return;
+  // The Add-section picker is a dialog: single-letter shortcuts stay out of it.
+  if (document.querySelector('.studio-picker:not([hidden])')) return;
 
   if (key === 't') { root.querySelector('.studio-text')?.click(); return; }
   if (key === 'p') { setPreview(!document.body.classList.contains('studio-preview')); return; }

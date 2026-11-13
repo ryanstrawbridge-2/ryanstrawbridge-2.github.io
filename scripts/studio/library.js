@@ -90,7 +90,7 @@ const renderGrid = () => {
     tile.appendChild(meta);
 
     tile.addEventListener('click', async () => {
-      if (MODE === 'home' && !state.homeTarget) {
+      if (MODE === 'home' && !state.homeTarget && !state.blockTarget) {
         toast('Hover the photo you want to change and choose Replace', true);
         return;
       }
@@ -101,7 +101,9 @@ const renderGrid = () => {
           source: group.source,
           folder,
           file: file.name,
-          target: MODE === 'home'
+          target: state.blockTarget
+            ? { kind: 'block', scope: state.blockTarget.scope, path: state.blockTarget.path }
+            : MODE === 'home'
             ? { kind: 'home', path: state.homeTarget }
             : state.heroTarget
               ? { kind: 'hero' }
@@ -109,6 +111,12 @@ const renderGrid = () => {
                 ? { kind: 'figure', figure: state.figureTarget.figure, slot: state.figureTarget.slot }
                 : { kind: 'gallery', section: sectionId ? label(sectionId) : null, width: libWidth.value || null },
         });
+        if (state.blockTarget) {
+          libPanel.hidden = true;
+          toast(`section photo → ${file.name}`);
+          state.blockTarget = null;
+          return;
+        }
         if (state.figureTarget) {
           libPanel.hidden = true;
           toast(`Fig. ${state.figureTarget.figure + 1} → ${file.name}${displacedNote(result.displaced)}`);
@@ -145,12 +153,16 @@ const renderGrid = () => {
 };
 
 const libTarget = root.querySelector('.studio-lib-target');
-const openLibrary = async ({ hero = false, figure = null, figureSlot = 'image' } = {}) => {
+const openLibrary = async ({ hero = false, figure = null, figureSlot = 'image', block = null } = {}) => {
+  // A section photo (studio "Add section" blocks), on either kind of page.
+  state.blockTarget = block;
   state.heroTarget = MODE === 'project' && hero;
   state.figureTarget = MODE === 'project' && figure !== null ? { figure, slot: figureSlot } : null;
   libPanel.classList.toggle('is-hero', state.heroTarget);
-  for (const el of root.querySelectorAll('.studio-lib-opt')) el.hidden = MODE === 'home' || state.heroTarget || !!state.figureTarget;
-  libTarget.textContent = state.figureTarget
+  for (const el of root.querySelectorAll('.studio-lib-opt')) el.hidden = MODE === 'home' || state.heroTarget || !!state.figureTarget || !!state.blockTarget;
+  libTarget.textContent = state.blockTarget
+    ? 'Choosing a photo for this section'
+    : state.figureTarget
     ? `Choosing the ${state.figureTarget.slot === 'compare' ? 'after ' : state.figureTarget.slot === 'image' && document.querySelector(`figure[data-studio-figure="${figure}"] .pfig-compare`) ? 'before ' : ''}photo for Fig. ${figure + 1}`
     : state.heroTarget
     ? 'Choosing a new main photo for this project'
@@ -242,6 +254,7 @@ root.querySelector('.studio-library-open').addEventListener('click', () => {
   // From the bar there's no slot chosen; a stale one from an earlier
   // Replace would silently overwrite the wrong photo.
   state.homeTarget = null;
+  state.blockTarget = null;
   openLibrary();
 });
 root.querySelector('.studio-lib-close').addEventListener('click', () => { libPanel.hidden = true; });

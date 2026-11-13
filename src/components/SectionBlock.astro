@@ -16,7 +16,7 @@
  */
 import { Image } from 'astro:assets';
 import { resolveSiteImage } from '../lib/site-images';
-import { inlineRich, richText, embedUrl } from '../lib/rich-text';
+import { inlineRich, richText, embedUrl, safeUrl } from '../lib/rich-text';
 import { focalCss, clampZoom } from '../lib/gallery';
 
 type Item = Record<string, unknown>;
@@ -32,15 +32,18 @@ interface Props {
   inline?: boolean;
   /** Section number for numbered eyebrows, when the style asks for it. */
   number?: number;
+  /** Order key (block:<id>), shared with index.astro's section order. */
+  layoutKey?: string;
 }
 
-const { block, index, doc, sectionStyle, inline = false, number } = Astro.props;
+const { block, index, doc, sectionStyle, inline = false, number, layoutKey } = Astro.props;
 const DEV = import.meta.env.DEV;
 const field = (...path: (string | number)[]) => (DEV ? `${doc}:blocks.${index}.${path.join('.')}` : undefined);
 
 const type = String(block.type ?? 'text');
 const style = (block.style ?? {}) as Record<string, unknown>;
-const items = (Array.isArray(block.items) ? block.items : []) as Item[];
+const items = (Array.isArray(block.items) ? block.items : []).filter((i) => i && typeof i === 'object') as Item[];
+const href = (v: unknown) => { const u = str(v).trim(); return u ? safeUrl(u) : ''; };
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
 const pick = <T extends string>(v: unknown, allowed: readonly T[], fallback: T): T =>
   allowed.includes(v as T) ? (v as T) : fallback;
@@ -58,7 +61,7 @@ const crop = (o: Item, prefix = '') => ({
   focal: focalCss(str(o[`${prefix}focal`]) || undefined),
   zoom: clampZoom(typeof o[`${prefix}zoom`] === 'number' ? (o[`${prefix}zoom`] as number) : undefined),
 });
-const buttons = (Array.isArray(block.buttons) ? block.buttons : []) as Item[];
+const buttons = (Array.isArray(block.buttons) ? block.buttons : []).filter((b) => b && typeof b === 'object') as Item[];
 const isDraft = block.draft === true;
 
 const embed = type === 'video' ? embedUrl(str(block.url)) : null;
@@ -79,7 +82,7 @@ const Tag = inline ? 'div' : 'section';
   data-block-id={DEV ? block.id : undefined}
   data-block-type={DEV ? type : undefined}
   data-block-doc={DEV ? doc : undefined}
-  data-layout={DEV && !inline ? `block:${block.id}` : undefined}
+  data-layout={DEV && !inline ? (layoutKey ?? `block:${block.id}`) : undefined}
   data-layout-name={DEV && !inline ? (str(block.heading) || type) : undefined}
   style={sectionStyle}
 >
@@ -118,7 +121,7 @@ const Tag = inline ? 'div' : 'section';
             {buttons.length > 0 && (
               <div class="blk-buttons">
                 {buttons.map((b, k) => (
-                  <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={str(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
+                  <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={href(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
                 ))}
               </div>
             )}
@@ -156,7 +159,7 @@ const Tag = inline ? 'div' : 'section';
             {buttons.length > 0 && (
               <div class="blk-buttons">
                 {buttons.map((b, k) => (
-                  <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={str(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
+                  <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={href(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
                 ))}
               </div>
             )}
@@ -170,7 +173,7 @@ const Tag = inline ? 'div' : 'section';
         {items.map((item, k) => {
           const pic = img(item.image);
           const c = crop(item);
-          const url = str(item.url);
+          const url = href(item.url);
           const CardTag = url ? 'a' : 'article';
           return (
             <CardTag class="blk-card" href={url || undefined}>
@@ -266,7 +269,7 @@ const Tag = inline ? 'div' : 'section';
           );
           return (
             <li data-field={field('items', k, 'image')}>
-              {str(item.url) ? <a href={str(item.url)} target="_blank" rel="noopener">{inner}</a> : inner}
+              {href(item.url) ? <a href={href(item.url)} target="_blank" rel="noopener">{inner}</a> : inner}
             </li>
           );
         })}
@@ -340,8 +343,8 @@ const Tag = inline ? 'div' : 'section';
       <ul class="blk-links">
         {items.map((item, k) => (
           <li>
-            {str(item.url) ? (
-              <a href={str(item.url)} target={/^https?:/.test(str(item.url)) ? '_blank' : undefined} rel="noopener" data-field={field('items', k, 'title')}>{str(item.title)}</a>
+            {href(item.url) ? (
+              <a href={href(item.url)} target={/^https?:/.test(href(item.url)) ? '_blank' : undefined} rel="noopener" data-field={field('items', k, 'title')}>{str(item.title)}</a>
             ) : (
               <span data-field={field('items', k, 'title')}>{str(item.title)}</span>
             )}
@@ -365,7 +368,7 @@ const Tag = inline ? 'div' : 'section';
         {buttons.length > 0 && (
           <div class="blk-buttons">
             {buttons.map((b, k) => (
-              <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={str(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
+              <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={href(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
             ))}
           </div>
         )}
@@ -389,7 +392,7 @@ const Tag = inline ? 'div' : 'section';
     {type !== 'split' && type !== 'cta' && type !== 'banner' && buttons.length > 0 && (
       <div class="blk-buttons">
         {buttons.map((b, k) => (
-          <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={str(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
+          <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={href(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
         ))}
       </div>
     )}
