@@ -91,6 +91,7 @@ const Tag = inline ? 'div' : 'section';
 
     {(eyebrow || block.heading || block.intro) && type !== 'cta' && type !== 'split' && type !== 'banner' && type !== 'marquee' && type !== 'spacer' && (
       <header class="blk-head">
+        {block.badge && <p class="blk-badge" data-field={field('badge')}><span class="blk-badge-dot" aria-hidden="true"></span>{str(block.badge)}</p>}
         {eyebrow && <p class="eyebrow" data-field={field('eyebrow')}>{eyebrow}</p>}
         {block.heading && <h2 data-field={field('heading')} set:html={inlineRich(str(block.heading))} />}
         {block.intro && <div class="blk-intro muted" data-field={field('intro')} set:html={richText(str(block.intro))} />}
@@ -115,6 +116,7 @@ const Tag = inline ? 'div' : 'section';
             ) : null}
           </div>
           <div class="blk-banner-text container">
+            {block.badge && <p class="blk-badge" data-field={field('badge')}><span class="blk-badge-dot" aria-hidden="true"></span>{str(block.badge)}</p>}
             {eyebrow && <p class="eyebrow" data-field={field('eyebrow')}>{eyebrow}</p>}
             {block.heading && <h2 data-field={field('heading')} set:html={inlineRich(str(block.heading))} />}
             {block.body && <div class="blk-prose" data-field={field('body')} set:html={richText(str(block.body))} />}
@@ -153,6 +155,7 @@ const Tag = inline ? 'div' : 'section';
             ) : null}
           </div>
           <div class="blk-split-text">
+            {block.badge && <p class="blk-badge" data-field={field('badge')}><span class="blk-badge-dot" aria-hidden="true"></span>{str(block.badge)}</p>}
             {eyebrow && <p class="eyebrow" data-field={field('eyebrow')}>{eyebrow}</p>}
             {block.heading && <h2 data-field={field('heading')} set:html={inlineRich(str(block.heading))} />}
             {block.body && <div class="blk-prose" data-field={field('body')} set:html={richText(str(block.body))} />}
@@ -309,6 +312,33 @@ const Tag = inline ? 'div' : 'section';
       </div>
     )}
 
+    {type === 'compare' && (() => {
+      const before = img(block.image);
+      const after = img(block.compare);
+      return before && after ? (
+        <figure class="blk-compare-wrap">
+          <div class="blk-compare" style={`--pos: ${Math.min(95, Math.max(5, Number(block.split) || 50))}%`}>
+            <div class="blk-compare-img" data-field={field('image')}>
+              <Image src={before} alt={str(block.alt) || str(block.beforeLabel) || 'Before'} widths={[600, 1000, 1600]} sizes="(min-width: 900px) 900px, 100vw" loading="lazy" data-no-lightbox />
+            </div>
+            <div class="blk-compare-img blk-compare-after" data-field={field('compare')}>
+              <Image src={after} alt={str(block.afterLabel) || 'After'} widths={[600, 1000, 1600]} sizes="(min-width: 900px) 900px, 100vw" loading="lazy" data-no-lightbox />
+            </div>
+            <span class="blk-compare-label is-before" data-field={field('beforeLabel')}>{str(block.beforeLabel) || 'Before'}</span>
+            <span class="blk-compare-label is-after" data-field={field('afterLabel')}>{str(block.afterLabel) || 'After'}</span>
+            <span class="blk-compare-handle" aria-hidden="true"></span>
+            <input class="blk-compare-range" type="range" min="0" max="100" value={Math.min(95, Math.max(5, Number(block.split) || 50))} aria-label="Drag to compare before and after" />
+          </div>
+          {block.caption && <figcaption class="muted" data-field={field('caption')}>{str(block.caption)}</figcaption>}
+        </figure>
+      ) : DEV ? (
+        <div class="blk-compare-empty">
+          <div class="blk-empty" data-field={field('image')}>{before ? 'Before photo added' : 'Drop the BEFORE photo here'}</div>
+          <div class="blk-empty" data-field={field('compare')}>{after ? 'After photo added' : 'Drop the AFTER photo here'}</div>
+        </div>
+      ) : null;
+    })()}
+
     {type === 'video' && (
       <figure class="blk-video">
         {embed ? (
@@ -362,6 +392,7 @@ const Tag = inline ? 'div' : 'section';
 
     {type === 'cta' && (
       <div class="blk-cta">
+        {block.badge && <p class="blk-badge" data-field={field('badge')}><span class="blk-badge-dot" aria-hidden="true"></span>{str(block.badge)}</p>}
         {eyebrow && <p class="eyebrow" data-field={field('eyebrow')}>{eyebrow}</p>}
         {block.heading && <h2 data-field={field('heading')} set:html={inlineRich(str(block.heading))} />}
         {block.body && <div class="blk-prose muted" data-field={field('body')} set:html={richText(str(block.body))} />}
@@ -430,6 +461,14 @@ const Tag = inline ? 'div' : 'section';
     }, { threshold: 0.6 });
     countups.forEach((n) => io.observe(n));
   }
+
+  // Before / after: the range input sits over the frame, so it works with
+  // touch, mouse and keyboard; it only moves a CSS variable.
+  document.addEventListener('input', (event) => {
+    const range = event.target as HTMLInputElement;
+    if (!range.classList?.contains('blk-compare-range')) return;
+    range.closest<HTMLElement>('.blk-compare')?.style.setProperty('--pos', `${range.value}%`);
+  });
 
   // Video blocks load the YouTube / Vimeo player only when played, so the
   // page never contacts them for a visitor who doesn't press play.
@@ -662,6 +701,29 @@ const Tag = inline ? 'div' : 'section';
   .blk-banner .btn-secondary { color: #fff; border-color: rgb(255 255 255 / 0.6); }
   .blk-a-center .blk-banner { align-items: center; text-align: center; }
   .blk-a-center .blk-banner-text h2 { margin-inline: auto; }
+
+  /* status pill */
+  .blk-badge {
+    display: inline-flex; align-items: center; gap: 0.45rem; margin: 0 0 1rem; padding: 0.3rem 0.75rem 0.3rem 0.6rem;
+    border: 1px solid var(--border-strong); border-radius: 999px; font-size: 0.82rem; font-weight: 600; background: var(--bg);
+  }
+  .blk-banner .blk-badge { background: rgb(0 0 0 / 0.35); color: #fff; border-color: rgb(255 255 255 / 0.35); }
+  .blk-badge-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgb(34 197 94 / 0.25); }
+
+  /* before / after */
+  .blk-compare-wrap { margin: 0; }
+  .blk-compare { position: relative; overflow: hidden; border-radius: var(--radius-lg); aspect-ratio: 16 / 10; background: var(--bg-elevated); user-select: none; }
+  .blk-compare-img { position: absolute; inset: 0; }
+  .blk-compare-img :global(img) { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .blk-compare-after { clip-path: inset(0 0 0 var(--pos)); }
+  .blk-compare-handle { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25); pointer-events: none; }
+  .blk-compare-handle::after { content: '⟷'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 36px; height: 36px; border-radius: 50%; background: #fff; color: #111; display: grid; place-items: center; font-size: 16px; box-shadow: var(--shadow); }
+  .blk-compare-range { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+  .blk-compare-label { position: absolute; top: 12px; padding: 0.25rem 0.6rem; border-radius: 999px; background: rgb(0 0 0 / 0.55); color: #fff; font-size: 0.78rem; font-weight: 600; pointer-events: none; }
+  .blk-compare-label.is-before { left: 12px; }
+  .blk-compare-label.is-after { right: 12px; }
+  .blk-compare-wrap figcaption { margin-top: 0.6rem; font-size: 0.9rem; }
+  .blk-compare-empty { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
   /* spacer */
   .blk-spacer { height: calc(var(--h) * var(--space-scale, 1)); }

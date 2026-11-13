@@ -372,7 +372,7 @@ GitHub SSH push from background processes stalls on large payloads.
     (ordered via `layout.order` keys `block:<id>`) and project frontmatter
     `blocks[]` (placed under the heading named in `section`, like figures;
     schema is a loose `z.record` on purpose). Renderer:
-    `src/components/SectionBlock.astro` (17 types, theme tokens only, text via
+    `src/components/SectionBlock.astro` (18 types incl. banner + before/after, theme tokens only, text via
     `lib/rich-text.ts`). Writer: `/blocks` route (`BLOCK_TEMPLATES`,
     `blockValue` whitelist; add a field there or it's refused) and
     `/media` `kind: 'block'`. UI: `scripts/studio/blocks.js` (picker, panel,

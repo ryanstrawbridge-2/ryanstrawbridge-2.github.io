@@ -169,7 +169,7 @@ const placeMedia = async ({ slug, target = {}, filename, data, source, folder, f
   // A section photo on the home page reached through home.js (Replace, drop,
   // library) is still a section photo: route it so video goes to `video`
   // and a missing `image` key is created.
-  if (kind === 'home' && /^blocks\.\d+\.(?:items\.\d+\.)?image$/.test(String(target.path ?? ''))) {
+  if (kind === 'home' && /^blocks\.\d+\.((?:items\.\d+\.)?image|compare)$/.test(String(target.path ?? ''))) {
     return placeBlockMedia({ slug, target: { kind: 'block', scope: 'home', path: target.path }, filename, data, source, folder, file });
   }
   const name = filename ?? file;
@@ -1253,6 +1253,7 @@ const BLOCK_TEMPLATES = {
   faq: { heading: 'Questions', items: [{ q: 'A question people ask', a: 'The answer.' }, { q: 'Another question', a: 'The answer.' }] },
   gallery: { heading: 'Gallery', items: [{ image: '', caption: '' }, { image: '', caption: '' }, { image: '', caption: '' }], style: { columns: '3', variant: 'grid' } },
   video: { heading: '', url: '', caption: '' },
+  compare: { heading: 'Before and after', image: '', compare: '', beforeLabel: 'Before', afterLabel: 'After', caption: '' },
   tags: { heading: 'Skills', items: [{ label: 'Group', tags: 'Skill one, Skill two, Skill three' }, { label: 'Group', tags: 'Skill one, Skill two' }] },
   links: { heading: 'Publications', items: [{ title: 'Title of the paper, article or file', source: 'Publisher', year: 'Year', url: '' }] },
   cta: { heading: 'Call to action', body: 'One line that tells people what to do next.', buttons: [{ label: 'Button', url: '/', style: 'primary' }], style: { align: 'center', bg: 'subtle' } },
@@ -1281,7 +1282,8 @@ const blockValue = (key, value) => {
   if (key === 'style.padTop' || key === 'style.padBottom') return Math.min(400, Math.max(0, Math.round(Number(value) || 0)));
   if (/(^|\.)url$/.test(key) && /^\s*(javascript|data|vbscript):/i.test(String(value))) throw new Error('that link type is not allowed');
   if (key === 'anchor' && !/^[a-z0-9][a-z0-9-]{0,40}$/i.test(String(value))) throw new Error('anchor: letters, numbers and dashes only');
-  if (/^(eyebrow|heading|intro|body|alt|url|src|video|image|caption|words|anchor|section|focal|imageFocalPoint)$/.test(key)
+  if (key === 'split') return Math.min(95, Math.max(5, Math.round(Number(value) || 50)));
+  if (/^(eyebrow|heading|intro|body|alt|url|src|video|image|compare|beforeLabel|afterLabel|badge|caption|words|anchor|section|focal|imageFocalPoint)$/.test(key)
     || /^items\.\d+\.(title|text|image|url|tag|value|label|name|role|q|a|date|org|caption|alt|tags|source|year|focal)$/.test(key)
     || /^buttons\.\d+\.(label|url|style)$/.test(key)) {
     return String(value).slice(0, 4000);
@@ -1482,12 +1484,13 @@ const blocksRoute = async ({ scope = 'home', slug, op, id, type, after, patch, d
 const placeBlockMedia = async ({ slug, target, filename, data, source, folder, file }) => {
   const scope = target.scope === 'project' ? 'project' : 'home';
   const path = String(target.path ?? '');
-  const m = path.match(/^blocks\.(\d+)\.((?:items\.\d+\.)?(?:image|video))$/);
+  const m = path.match(/^blocks\.(\d+)\.((?:items\.\d+\.)?(?:image|video)|compare)$/);
   if (!m) throw new Error('not a section photo field');
   const name = filename ?? file;
   const ext = extname(name ?? '').toLowerCase();
   const isVideo = source === 'videos' || VIDEO_EXT.has(ext);
   if (isVideo && !m[2].endsWith('video') && !/^image$/.test(m[2])) throw new Error('that spot takes a photo');
+  if (isVideo && m[2] === 'compare') throw new Error('that spot takes a photo');
   if (!isVideo && !IMAGE_EXT.has(ext)) throw new Error(`${ext || 'that file'} isn't an image`);
   const title = await titleOf(name);
   let ref;

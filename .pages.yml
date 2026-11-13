@@ -294,7 +294,7 @@ content:
             label: Section type
             type: select
             options:
-              values: [banner, text, split, cards, stats, quote, steps, timeline, logos, faq, gallery, video, tags, links, cta, marquee, spacer]
+              values: [banner, text, split, cards, stats, quote, steps, timeline, logos, faq, gallery, video, compare, tags, links, cta, marquee, spacer]
           - { name: draft, label: "Draft (hidden on the live site)", type: boolean, default: true }
           - { name: section, label: "Project heading it sits under (projects only)", type: string }
           - { name: eyebrow, label: Eyebrow, type: string }
@@ -303,6 +303,11 @@ content:
           - { name: body, label: Text, type: text }
           - { name: image, label: Photo path, type: string }
           - { name: video, label: Video path, type: string }
+          - { name: compare, label: After photo path (before/after), type: string }
+          - { name: beforeLabel, label: Before label, type: string }
+          - { name: afterLabel, label: After label, type: string }
+          - { name: split, label: Slider start (%), type: number }
+          - { name: badge, label: Status pill, type: string }
           - { name: alt, label: Photo description, type: string }
           - { name: focal, label: Crop position, type: string }
           - { name: zoom, label: Zoom, type: number }

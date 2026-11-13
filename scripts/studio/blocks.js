@@ -36,6 +36,7 @@ const GROUPS = [
   ['Media', [
     ['gallery', 'Gallery', 'Photo grid, masonry or strip, opens full screen'],
     ['video', 'Video', 'YouTube or Vimeo, loads on play'],
+    ['compare', 'Before / after', 'Two photos with a drag slider between them'],
     ['logos', 'Logo strip', 'Companies, teams, sponsors'],
   ]],
   ['Layout', [
@@ -61,6 +62,7 @@ const TYPE_NAME = Object.fromEntries(GROUPS.flatMap(([, t]) => t.map(([k, n]) =>
 
 // Small wireframe for each tile in the picker.
 const WIRE = {
+  compare: '<rect x="6" y="6" width="52" height="28" rx="2" opacity=".35"/><rect x="32" y="6" width="26" height="28" rx="2" opacity=".6"/><rect x="31" y="4" width="2" height="32"/><circle cx="32" cy="20" r="4"/>',
   banner: '<rect x="0" y="4" width="64" height="32" rx="2" opacity=".35"/><rect x="8" y="20" width="30" height="5" rx="1"/><rect x="8" y="28" width="20" height="2.5" rx="1" opacity=".7"/>',
   text: '<rect x="8" y="10" width="28" height="4" rx="1"/><rect x="8" y="18" width="48" height="2.5" rx="1" opacity=".5"/><rect x="8" y="23" width="44" height="2.5" rx="1" opacity=".5"/><rect x="8" y="28" width="36" height="2.5" rx="1" opacity=".5"/>',
   split: '<rect x="6" y="8" width="24" height="24" rx="2" opacity=".35"/><rect x="34" y="12" width="22" height="4" rx="1"/><rect x="34" y="20" width="24" height="2.5" rx="1" opacity=".5"/><rect x="34" y="25" width="20" height="2.5" rx="1" opacity=".5"/>',
@@ -82,10 +84,10 @@ const WIRE = {
 
 // Fields per type, in the order the panel shows them.
 const FIELDS = {
-  banner: [['eyebrow', 'Eyebrow'], ['heading', 'Headline'], ['body', 'Text', 'area'], ['image', 'Background photo or video', 'media'], ['alt', 'Photo description']],
-  text: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['intro', 'Intro', 'area'], ['body', 'Text', 'area']],
-  split: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['body', 'Text', 'area'], ['image', 'Photo or video', 'media'], ['alt', 'Photo description']],
-  cta: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['body', 'Text', 'area']],
+  banner: [['badge', 'Status pill (e.g. Open to work)'], ['eyebrow', 'Eyebrow'], ['heading', 'Headline'], ['body', 'Text', 'area'], ['image', 'Background photo or video', 'media'], ['alt', 'Photo description']],
+  text: [['badge', 'Status pill (e.g. Open to work)'], ['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['intro', 'Intro', 'area'], ['body', 'Text', 'area']],
+  split: [['badge', 'Status pill (e.g. Open to work)'], ['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['body', 'Text', 'area'], ['image', 'Photo or video', 'media'], ['alt', 'Photo description']],
+  cta: [['badge', 'Status pill (e.g. Open to work)'], ['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['body', 'Text', 'area']],
   quote: [['eyebrow', 'Eyebrow'], ['heading', 'Heading']],
   cards: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['intro', 'Intro', 'area']],
   stats: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['intro', 'Intro', 'area']],
@@ -96,6 +98,7 @@ const FIELDS = {
   faq: [['eyebrow', 'Eyebrow'], ['heading', 'Heading']],
   gallery: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['intro', 'Intro', 'area']],
   video: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['url', 'YouTube or Vimeo link'], ['caption', 'Caption']],
+  compare: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['image', 'Before photo', 'media'], ['beforeLabel', 'Before label'], ['compare', 'After photo', 'media'], ['afterLabel', 'After label'], ['caption', 'Caption'], ['alt', 'Photo description']],
   logos: [['eyebrow', 'Eyebrow'], ['heading', 'Heading']],
   marquee: [['words', 'Words, separated by commas', 'area']],
   spacer: [['size', 'Height (px)', 'number']],
@@ -677,7 +680,7 @@ function render() {
   if (current.tab === 'content') {
     const g = el('div', { className: 'studio-ins-group' });
     for (const [key, label, kind] of FIELDS[type] ?? []) {
-      g.append(kind === 'media' ? mediaField(key, label, data.video || data.image) : textInput(key, label, data[key], kind));
+      g.append(kind === 'media' ? mediaField(key, label, key === 'image' ? (data.video || data.image) : data[key]) : textInput(key, label, data[key], kind));
     }
     body.append(g);
     const items = itemList(data);
@@ -882,7 +885,7 @@ if (scope === 'project') {
 // Drop a photo file straight onto a section's photo spot (filled or empty).
 // Home photos that home.js already manages keep its handler instead.
 for (const spot of document.querySelectorAll('[data-block-id] [data-field]')) {
-  const m = spot.dataset.field.match(/^(home|project):(blocks\.\d+\.(?:items\.\d+\.)?image)$/);
+  const m = spot.dataset.field.match(/^(home|project):(blocks\.\d+\.(?:(?:items\.\d+\.)?image|compare))$/);
   if (!m || spot.classList.contains('studio-slot')) continue;
   const path = m[2];
   const isFile = (e) => [...(e.dataTransfer?.types ?? [])].includes('Files');
