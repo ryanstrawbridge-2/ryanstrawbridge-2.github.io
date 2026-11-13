@@ -135,9 +135,25 @@ const el = (tag, props = {}, ...kids) => {
   return node;
 };
 const CLIP = 'studio:block-clipboard';
+const MINE = 'studio:my-starters';
+const readMine = () => { try { return JSON.parse(localStorage.getItem(MINE) || '[]'); } catch { return []; } };
+const writeMine = (list) => { try { localStorage.setItem(MINE, JSON.stringify(list.slice(0, 24))); return true; } catch { return false; } };
 const readClip = () => { try { return JSON.parse(localStorage.getItem(CLIP) || 'null'); } catch { return null; } };
 const blocksOnPage = () => [...document.querySelectorAll('[data-block-id]')];
-const send = (op, body) => post('/blocks', { scope, op, ...body });
+// Structural changes (add, remove, duplicate, move, list edits) renumber
+// blocks on disk; until the page reloads, its block indexes are stale. Photo
+// writes address blocks by index, so they wait for the reload.
+let structural = false;
+const STRUCTURAL = new Set(['add', 'remove', 'duplicate', 'move', 'item']);
+const send = (op, body) => {
+  if (STRUCTURAL.has(op)) structural = true;
+  return post('/blocks', { scope, op, ...body });
+};
+const stale = () => {
+  if (!structural) return false;
+  toast('One moment: the page is refreshing after the last change.', true);
+  return true;
+};
 const keep = (extra = {}) => {
   try { sessionStorage.setItem(KEEP, JSON.stringify({ path: location.pathname, at: Date.now(), ...extra })); } catch { /* ignore */ }
 };
@@ -194,6 +210,25 @@ const openPicker = (after, label) => {
     paste.addEventListener('click', () => addBlock(clip.type, clip.data));
     tiles.push(paste);
     body.append(el('section', { className: 'studio-picker-group' }, el('h4', { textContent: 'Clipboard' }), el('div', { className: 'studio-picker-grid' }, paste)));
+  }
+  const mine = readMine().filter((m) => TYPE_NAME[m.type]);
+  if (mine.length) {
+    const grid = el('div', { className: 'studio-picker-grid' });
+    mine.forEach((m, k) => {
+      const tile = el('div', { className: 'studio-picker-tile is-mine', tabIndex: 0, role: 'button' });
+      tile.innerHTML = `<svg viewBox="0 0 64 40" aria-hidden="true" fill="currentColor">${WIRE[m.type]}</svg>`;
+      tile.append(el('strong', { textContent: m.name }), el('span', { textContent: `${TYPE_NAME[m.type]} · saved ${new Date(m.at).toLocaleDateString()}` }));
+      const rm = el('button', { type: 'button', className: 'studio-mine-remove', title: 'Remove this starter', textContent: '×' });
+      rm.addEventListener('click', (e) => { e.stopPropagation(); const list = readMine(); list.splice(k, 1); writeMine(list); openPicker(pickTarget, label); });
+      tile.append(rm);
+      tile.dataset.search = `${m.name} ${TYPE_NAME[m.type]} mine`.toLowerCase();
+      const go = () => addBlock(m.type, m.data);
+      tile.addEventListener('click', go);
+      tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      grid.append(tile);
+      tiles.push(tile);
+    });
+    body.append(el('section', { className: 'studio-picker-group' }, el('h4', { textContent: 'My starters' }), grid));
   }
   {
     const grid = el('div', { className: 'studio-picker-grid' });
@@ -461,7 +496,7 @@ const mediaField = (path, label, value) => {
   upload.addEventListener('click', () => file.click());
   file.addEventListener('change', async () => {
     const f = file.files?.[0];
-    if (!f) return;
+    if (!f || stale()) return;
     toast(`uploading ${f.name}…`);
     keep({ select: current.id, tab: current.tab, scrollTop: panel.querySelector('.studio-ins-body')?.scrollTop ?? 0 });
     try {
@@ -473,6 +508,7 @@ const mediaField = (path, label, value) => {
   if (hooks.openLibrary) {
     const lib = el('button', { type: 'button', className: 'studio-btn', textContent: 'From library' });
     lib.addEventListener('click', () => {
+      if (stale()) return;
       keep({ select: current.id, tab: current.tab, scrollTop: panel.querySelector('.studio-ins-body')?.scrollTop ?? 0 });
       state.homeTarget = null;
       hooks.openLibrary({ block: { scope, path: `blocks.${current.index}.${path}` } });
@@ -706,6 +742,17 @@ function render() {
   const copy = el('button', { type: 'button', className: 'studio-btn', textContent: 'Copy', title: 'Copy this section to paste on any page (⌘C with the section selected)' });
   copy.addEventListener('click', copyCurrent);
   left.append(copy);
+  const star = el('button', { type: 'button', className: 'studio-btn', textContent: 'Save as starter', title: 'Keep this design in the picker under "My starters"' });
+  star.addEventListener('click', () => {
+    const { id, type: t, draft, section, anchor, ...data } = current.data;
+    const name = prompt('Name this starter', String(data.heading ?? TYPE_NAME[t] ?? 'My section').replace(/[*_|`]/g, '').slice(0, 40));
+    if (!name) return;
+    const list = readMine();
+    list.unshift({ type: t, name: name.slice(0, 40), data, at: Date.now() });
+    const ok = writeMine(list);
+    toast(ok ? `saved "${name}" to My starters` : 'could not save (browser storage is blocked)', !ok);
+  });
+  left.append(star);
   const del = el('button', { type: 'button', className: 'studio-btn studio-danger', textContent: 'Delete' });
   del.addEventListener('click', async () => {
     if (!confirm(`Delete this ${TYPE_NAME[type] ?? 'section'} section? Undo (⌘Z) brings it back.`)) return;
@@ -847,7 +894,7 @@ for (const spot of document.querySelectorAll('[data-block-id] [data-field]')) {
     e.stopPropagation();
     spot.classList.remove('studio-drop-over');
     const f = e.dataTransfer.files[0];
-    if (!f) return;
+    if (!f || stale()) return;
     toast(`adding ${f.name}…`);
     const blockEl = spot.closest('[data-block-id]');
     if (current?.el === blockEl) keep({ select: current.id, tab: current.tab, scrollTop: panel.querySelector('.studio-ins-body')?.scrollTop ?? 0 });
