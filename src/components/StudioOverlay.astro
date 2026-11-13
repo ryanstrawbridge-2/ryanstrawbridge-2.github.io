@@ -75,7 +75,7 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
             {mode === 'home'
               ? 'Hover between sections for + Add section · click a section to edit it in the side panel · drag a photo to crop, ⌥scroll to zoom · Layout (L) drags spacing, gaps and order'
               : 'Click a figure or section to edit it in the side panel · + Add section at the end of each heading · drag a photo to crop, ⌥scroll to zoom · drop files to add them'}
-            <span class="studio-keys"><kbd>T</kbd> text {mode === 'home' && <><kbd>L</kbd> layout </>}<kbd>P</kbd> preview <kbd>⌘S</kbd> save <kbd>⌘Z</kbd> undo <kbd>⌘⇧Z</kbd> redo <kbd>Esc</kbd> close / deselect <kbd>⌫</kbd> delete selected figure</span>
+            <span class="studio-keys"><kbd>T</kbd> text {mode === 'home' && <><kbd>L</kbd> layout </>}<kbd>P</kbd> preview <kbd>⌘S</kbd> save <kbd>⌘Z</kbd> undo <kbd>⌘⇧Z</kbd> redo <kbd>Esc</kbd> close / deselect <kbd>⌫</kbd> delete selected figure or section <kbd>⌘D</kbd> duplicate section <kbd>⌘C</kbd> copy section <kbd>⌥↑↓</kbd> move section</span>
           </span>
         </span>
         <button type="button" class="studio-btn studio-primary studio-save" title="Save a checkpoint on this Mac. Nothing goes live.">

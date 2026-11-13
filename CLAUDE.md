@@ -389,6 +389,10 @@ GitHub SSH push from background processes stalls on large payloads.
     blocks schema is one YAML anchor (`&blocks`) reused for projects. An added
     section's Layout-mode spacing lives in its own `style.padTop/padBottom`
     (patchLayout redirects `sections.block:<id>.*`), not in layout.sections.
+    Previews: body.studio-preview (P) and `.studio-off` (phone iframe) hide
+    drafts and switched-off sections. Optional `site.json projectFilter:
+    "organization"` adds filter chips to /projects/ (Theme panel; off by
+    default).
 
 ## macOS gotchas
 
