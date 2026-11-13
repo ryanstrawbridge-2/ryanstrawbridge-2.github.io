@@ -127,6 +127,12 @@ const studioPort = Number(import.meta.env.STUDIO_PORT ?? 4322);
               <option value="wide">Wide · 1280</option>
             </select>
           </label>
+          <label>Projects page filter
+            <select class="studio-project-filter">
+              <option value="none">Off</option>
+              <option value="organization">By organization</option>
+            </select>
+          </label>
         </div>
         <footer><span class="studio-theme-state">Changes preview instantly and save as you make them.</span></footer>
       </div>

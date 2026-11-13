@@ -17,6 +17,7 @@ const accentInput = root.querySelector('.studio-accent');
 const cornersSel = root.querySelector('.studio-corners');
 const headFontSel = root.querySelector('.studio-headfont');
 const widthSel = root.querySelector('.studio-width-setting');
+const filterSel = root.querySelector('.studio-project-filter');
 const swatches = root.querySelector('.studio-swatches');
 
 const CORNERS = { sharp: ['2px', '4px'], soft: ['6px', '12px'], round: ['12px', '22px'] };
@@ -84,6 +85,11 @@ widthSel?.addEventListener('change', () => {
   saveTheme({ containerWidth: widthSel.value }, 'width');
 });
 
+// Filter chips on /projects/. Off by default; it reloads to show.
+filterSel?.addEventListener('change', () => {
+  saveTheme({ projectFilter: filterSel.value === 'none' ? null : filterSel.value }, 'project filter');
+});
+
 root.querySelector('.studio-theme')?.addEventListener('click', async () => {
   themePanel.hidden = !themePanel.hidden;
   if (themePanel.hidden) return;
@@ -96,6 +102,7 @@ root.querySelector('.studio-theme')?.addEventListener('click', async () => {
     cornersSel.value = site.cornerStyle || 'soft';
     headFontSel.value = site.headingFont || 'sans';
     widthSel.value = site.containerWidth || 'standard';
+    if (filterSel) filterSel.value = site.projectFilter || 'none';
   } catch (error) { toast(error.message, true); }
 });
 root.querySelector('.studio-theme-close')?.addEventListener('click', () => { themePanel.hidden = true; });

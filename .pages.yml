@@ -65,6 +65,12 @@ content:
         description: How rounded cards, photos and buttons are.
         options:
           values: [sharp, soft, round]
+      - name: projectFilter
+        label: Projects page filter
+        type: select
+        description: Filter chips on the projects page. Leave empty for none.
+        options:
+          values: [organization]
       - name: headingFont
         label: Heading font
         type: select
