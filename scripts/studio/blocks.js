@@ -315,15 +315,29 @@ const select = async (blockEl, { tab = 'content', focus = null, scrollTop = 0 } 
 };
 
 /** Save one field and remember where we were so the reload lands in place. */
-const save = async (patch, focusKey) => {
+const save = async (patch, focusKey, { quiet = false } = {}) => {
   keep({
     select: current.id, tab: current.tab, focus: focusKey ?? null,
     scrollTop: panel.querySelector('.studio-ins-body')?.scrollTop ?? 0,
   });
   try {
-    await send('patch', { id: current.id, patch });
+    await post('/blocks', { scope, op: 'patch', id: current.id, patch }, { quiet });
+    if (quiet) {
+      // The page already shows it; keep the panel's copy in step.
+      for (const [k, v] of Object.entries(patch)) setLocal(current.data, k, v);
+      toast('saved');
+    }
   } catch (error) { toast(error.message, true); }
 };
+const setLocal = (obj, key, value) => {
+  const keys = key.split('.');
+  let node = obj;
+  for (const k of keys.slice(0, -1)) node = node[k] ??= {};
+  if (value === null) delete node[keys.at(-1)]; else node[keys.at(-1)] = value;
+};
+/** The element on the page that shows this field, if it's shown as plain text. */
+const liveTarget = (key) => document.querySelector(`[data-field="${scope}:blocks.${current.index}.${key}"]`);
+const MARKUP = /[*_`|[\]<>]/;
 const run = async (op, body, note) => {
   keep({ select: current?.id, tab: current?.tab, scrollTop: panel.querySelector('.studio-ins-body')?.scrollTop ?? 0 });
   try {
@@ -379,7 +393,21 @@ const textInput = (key, label, value, kind = 'text') => {
   if (multiline) input.rows = Math.min(8, Math.max(2, Math.ceil(String(value ?? '').length / 40) + (String(value ?? '').match(/\n/g)?.length ?? 0)));
   input.dataset.key = key;
   const start = input.value;
-  input.addEventListener('change', () => { if (input.value !== start) save({ [key]: input.value.trim() === '' ? null : (kind === 'number' ? Number(input.value) : input.value) }, key); });
+  // Live: one-line text shown as-is on the page updates while you type and
+  // saves without a reload. Anything with formatting, or not shown on the
+  // page, saves normally so the real render comes back.
+  const target = !multiline && kind !== 'number' ? liveTarget(key) : null;
+  const numberedEyebrow = key === 'eyebrow' && current.data.style?.numbered;
+  const canLive = () => target && !numberedEyebrow && !MARKUP.test(input.value) && !MARKUP.test(start) && input.value.trim() !== '';
+  const original = target?.textContent;
+  input.addEventListener('input', () => { if (canLive()) target.textContent = input.value; });
+  input.addEventListener('change', () => {
+    if (input.value === start) return;
+    const value = input.value.trim() === '' ? null : (kind === 'number' ? Number(input.value) : input.value);
+    if (canLive()) save({ [key]: value }, key, { quiet: true });
+    else save({ [key]: value }, key);
+  });
+  input.addEventListener('keydown', (e) => { if (e.key === 'Escape' && target && original != null) target.textContent = original; });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (!multiline || e.metaKey || e.ctrlKey)) { e.preventDefault(); input.blur(); }
     if (e.key === 'Escape') { input.value = start; input.blur(); }
