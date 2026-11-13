@@ -191,8 +191,25 @@ picker.setAttribute('aria-label', 'Add a section');
 root.appendChild(picker);
 let pickTarget = null;
 
-const closePicker = () => { picker.hidden = true; pickTarget = null; };
+let pickerReturn = null;
+const closePicker = () => {
+  picker.hidden = true;
+  pickTarget = null;
+  pickerReturn?.focus?.();
+  pickerReturn = null;
+};
+// Keep Tab inside the dialog while it's open.
+picker.addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab') return;
+  const items = [...picker.querySelectorAll('input, button, [tabindex="0"]')].filter((n) => !n.hidden && n.offsetParent !== null);
+  if (!items.length) return;
+  const first = items[0];
+  const last = items.at(-1);
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
 const openPicker = (after, label) => {
+  if (picker.hidden) pickerReturn = document.activeElement;
   pickTarget = after;
   picker.replaceChildren();
   const box = el('div', { className: 'studio-picker-box' });
@@ -745,7 +762,7 @@ function render() {
   const copy = el('button', { type: 'button', className: 'studio-btn', textContent: 'Copy', title: 'Copy this section to paste on any page (⌘C with the section selected)' });
   copy.addEventListener('click', copyCurrent);
   left.append(copy);
-  const star = el('button', { type: 'button', className: 'studio-btn', textContent: 'Save as starter', title: 'Keep this design in the picker under "My starters"' });
+  const star = el('button', { type: 'button', className: 'studio-btn', textContent: 'Save starter', title: 'Keep this design in the picker under "My starters"' });
   star.addEventListener('click', () => {
     const { id, type: t, draft, section, anchor, ...data } = current.data;
     const name = prompt('Name this starter', String(data.heading ?? TYPE_NAME[t] ?? 'My section').replace(/[*_|`]/g, '').slice(0, 40));
@@ -918,6 +935,19 @@ window.addEventListener('keydown', (e) => {
   else if ((e.key === 'Backspace' || e.key === 'Delete') && !mod) { e.preventDefault(); e.stopImmediatePropagation(); panel.querySelector('footer .studio-danger')?.click(); }
   else if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) { e.preventDefault(); run('move', { dir: e.key === 'ArrowUp' ? -1 : 1 }, 'moved'); }
 }, true);
+
+// Studio bar: "Section". After the selected section if there is one, else
+// at the end of the page.
+root.querySelector('.studio-add-section')?.addEventListener('click', () => {
+  if (scope === 'home') {
+    const sel = current?.el?.dataset.layout;
+    const last = [...document.querySelectorAll('.home-flow > [data-layout]')].sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top).at(-1)?.dataset.layout;
+    openPicker(sel ?? last ?? 'contact', sel ? 'Adds after the selected section' : 'Adds at the end of the page');
+  } else {
+    const sec = current?.data?.section ?? '';
+    openPicker(sec, sec ? `Adds under "${sec}"` : 'Adds at the end of the page');
+  }
+});
 
 placeInserters();
 window.addEventListener('keydown', (e) => {
