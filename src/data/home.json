@@ -66,19 +66,36 @@
         "role": "Manufacturing Engineering Co-op",
         "org": "Commonwealth Fusion Systems",
         "blurb": "Two terms supporting the poloidal field magnets for the SPARC tokamak. Designed a 2,100 lb lifting frame certified to ASME BTH-1, conformal fixturing for 11 cable configurations, and tooling that cut hours out of the insulation-wrapping process.",
-        "logo": "/src/assets/images/experience/cfs.png"
+        "logo": "/src/assets/images/experience/cfs.png",
+        "dates": "",
+        "videoSource": "cfs-merged.mp4",
+        "video": "/videos/experience-commonwealth-fusion-systems.mp4",
+        "videoStart": 0,
+        "videoEnd": 31.51
       },
       {
         "role": "Operations Engineering Co-op",
         "org": "Raytheon Missiles & Defense",
         "blurb": "Circuit card production for missile and radar systems. Designed a composite fixture shielding heat-sensitive filters from 93 °C reflow, and ran a nine-configuration solder stencil study that reduced rework across 15 programs.",
-        "logo": "/src/assets/images/experience/raytheon.png"
+        "logo": "/src/assets/images/experience/raytheon.png",
+        "dates": "",
+        "videoSource": "raytheon-merged.mp4",
+        "video": "/videos/experience-raytheon-missiles-defense.mp4",
+        "videoStart": 0,
+        "videoEnd": 24.97,
+        "focal": "44% 39%"
       },
       {
         "role": "Propulsion Sub-Team Lead",
         "org": "Northeastern Aerospace Club (AeroNU)",
         "blurb": "Liquid rocket engine team since 2023. Currently designing a servo-to-valve torque coupling and custom ball valve regulator for the feed system on our flight vehicle. ",
-        "logo": "/src/assets/images/experience/aeronu.png"
+        "logo": "/src/assets/images/experience/aeronu.png",
+        "dates": "",
+        "videoSource": "aeronu-merged.mp4",
+        "video": "/videos/experience-northeastern-aerospace-club-aeronu-2.mp4",
+        "videoStart": 0,
+        "videoEnd": 13.4,
+        "focal": "51% 53%"
       }
     ]
   },

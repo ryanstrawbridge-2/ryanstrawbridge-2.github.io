@@ -24,6 +24,8 @@ pnpm-debug.log*
 portfolio-photos/
 # intake queue for `npm run photos` (originals, plus _done/ after processing)
 photo-inbox/
+# full-length videos for the experience banners; only the trimmed clip in public/videos ships
+video-sources/
 
 # macOS-specific files
 .DS_Store

@@ -748,3 +748,41 @@ body.studio-preview .studio-slot:hover video { outline: none; }
   background: var(--st-surface); color: var(--st-text); box-shadow: var(--st-shadow);
   font: 500 13px/1 var(--st-font);
 }
+
+/* Experience banner trim panel. Docked at the bottom so the banner it
+   previews stays visible above it. */
+.studio-trim, .studio-trim-prompt {
+  position: fixed; z-index: 950;
+  font: 13px/1.4 var(--st-font);
+  background: var(--st-surface); color: var(--st-text);
+  border-radius: var(--st-r-lg); box-shadow: var(--st-shadow);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+}
+.studio-trim { left: 50%; bottom: 14px; transform: translateX(-50%); width: min(880px, calc(100vw - 96px)); padding: 12px 14px; }
+.studio-trim-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.studio-trim-head label { color: var(--st-muted); display: flex; gap: 6px; align-items: center; }
+.studio-trim select, .studio-trim button, .studio-trim-prompt button {
+  font: inherit; color: var(--st-text); background: var(--st-well);
+  border: 1px solid var(--st-line-strong); border-radius: var(--st-r-sm); padding: 4px 10px; cursor: pointer;
+}
+.studio-trim button:hover, .studio-trim-prompt button:hover { background: var(--st-hover); }
+.studio-trim button.is-primary, .studio-trim-prompt button:first-child { background: var(--st-accent-strong); border-color: var(--st-accent); }
+.studio-trim button:disabled { opacity: 0.45; cursor: not-allowed; }
+.studio-trim-meta { color: var(--st-faint); margin-left: auto; }
+.studio-trim-track { position: relative; height: 34px; border-radius: var(--st-r-sm); background: var(--st-well); border: 1px solid var(--st-line); cursor: pointer; touch-action: none; }
+.studio-trim-range { position: absolute; top: 0; bottom: 0; background: var(--st-accent-tint); border-inline: 2px solid var(--st-accent); }
+.studio-trim-head-line { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--st-text); pointer-events: none; }
+.studio-trim .studio-trim-handle { position: absolute; top: 50%; width: 14px; height: 40px; margin-left: -7px; transform: translateY(-50%); padding: 0; background: var(--st-accent); border: 2px solid var(--st-text); border-radius: 5px; cursor: ew-resize; touch-action: none; }
+.studio-trim-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.studio-trim-times { color: var(--st-muted); font-family: var(--st-mono); font-size: 12px; }
+.studio-trim-times b { color: var(--st-text); font-weight: 600; }
+.studio-trim-times b.is-bad { color: var(--st-danger); }
+.studio-trim-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.studio-trim-hint { margin: 8px 0 0; color: var(--st-faint); font-size: 12px; }
+.studio-trimming { outline: 3px solid var(--st-accent); outline-offset: 3px; }
+.studio-trim-prompt { left: 14px; bottom: 14px; width: min(340px, calc(100vw - 28px)); padding: 12px 14px; }
+.studio-trim-prompt p { margin: 4px 0 10px; color: var(--st-muted); }
+.studio-trim-prompt-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.studio-trim-prompt-list button { background: var(--st-accent-strong); border-color: var(--st-accent); }
+.studio-trim-prompt-list button.is-quiet { background: var(--st-well); border-color: var(--st-line-strong); }

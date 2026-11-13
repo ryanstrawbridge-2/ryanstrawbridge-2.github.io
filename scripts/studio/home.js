@@ -208,7 +208,10 @@ for (const slot of MODE === 'home' ? homeSlots() : []) {
   // than the client carrying a second copy of that table.
   // Logos are scaled to fit a light plate, never cropped, so a crop
   // gesture there would save a value nothing renders.
-  if (media.tagName !== 'IMG' || path.endsWith('.logo')) continue;
+  // Experience banners are videos, cropped the same way (object-position and
+  // a scale), so they take the same gesture. Other videos aren't cropped.
+  const banner = media.tagName === 'VIDEO' && /^experienceSection\.items\.\d+\.video$/.test(path);
+  if ((media.tagName !== 'IMG' && !banner) || path.endsWith('.logo')) continue;
 
   const dot = document.createElement('span');
   dot.className = 'studio-crosshair';

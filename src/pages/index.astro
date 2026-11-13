@@ -39,6 +39,9 @@ const crop = (obj: unknown, focalKey: string, zoomKey: string) => {
 };
 const headshotCrop = crop(home.hero, 'headshotFocalPoint', 'headshotZoom');
 const aboutZoom = crop(home.aboutSection, 'photoFocalPoint', 'photoZoom').zoom;
+// Untyped view of a home.json row, for optional fields only some rows have.
+// (A generic can't be written inside the template: it parses as a tag.)
+const loose = (x: unknown) => (x ?? {}) as Record<string, unknown>;
 const logoH = logoSizeHeight[home.experienceSection.logoSize ?? 'medium'];
 const heroHeadshot = resolveSiteImage(home.hero.headshot);
 const aboutPhoto = resolveSiteImage(home.aboutSection.photo);
@@ -210,18 +213,48 @@ const aboutBioParagraphs = home.aboutSection.bio
         {
           home.experienceSection.items.map((item, i) => {
             const logo = resolveSiteImage(item.logo);
+            // Banner fields are optional and only some rows have them, so
+            // read them loosely rather than fight the inferred JSON union.
+            const row = loose(item);
+            const video = typeof row.video === 'string' ? row.video : '';
+            const source = typeof row.videoSource === 'string' ? row.videoSource : '';
+            const dates = typeof row.dates === 'string' ? row.dates : '';
+            const bannerCrop = crop(row, 'focal', 'zoom');
+            // Dev only: an untrimmed source still gets a banner slot so studio
+            // can preview and cut it. The live site shows a banner once cut.
+            const showBanner = video || (import.meta.env.DEV && source);
             return (
               <li class="experience-card reveal">
-                {logo && (
-                  <div class="experience-logo" data-field={f('experienceSection', 'items', i, 'logo')}>
-                    <Image src={logo} alt={item.org} widths={[400, 800, 1200]} sizes="(min-width: 768px) 33vw, 90vw" loading="lazy" />
+                <header class="experience-head">
+                  {logo && (
+                    <div class="experience-logo" data-field={f('experienceSection', 'items', i, 'logo')}>
+                      <Image src={logo} alt={item.org} widths={[400, 800, 1200]} sizes="(min-width: 768px) 320px, 60vw" loading="lazy" />
+                    </div>
+                  )}
+                  <div class="experience-id">
+                    <h3 class="experience-org" data-field={f('experienceSection', 'items', i, 'org')}>{item.org}</h3>
+                    <p class="experience-role" data-field={f('experienceSection', 'items', i, 'role')}>{item.role}</p>
+                    {(dates || import.meta.env.DEV) && (
+                      <p class="experience-dates" data-field={f('experienceSection', 'items', i, 'dates')} data-empty={dates ? undefined : 'Add dates'}>{dates}</p>
+                    )}
+                  </div>
+                </header>
+                {showBanner && (
+                  <div
+                    class="experience-banner"
+                    data-field={f('experienceSection', 'items', i, 'video')}
+                    data-banner={i}
+                    data-org={item.org}
+                    data-source={import.meta.env.DEV ? source || undefined : undefined}
+                    data-start={import.meta.env.DEV ? String(row.videoStart ?? '') : undefined}
+                    data-end={import.meta.env.DEV ? String(row.videoEnd ?? '') : undefined}
+                    data-cut={video ? 'true' : 'false'}
+                    style={`--focal: ${bannerCrop.focal}; --zoom: ${bannerCrop.zoom};`}
+                  >
+                    <video data-src={video || undefined} muted loop playsinline preload="none" aria-label={`${item.org} video, muted`}></video>
                   </div>
                 )}
-                <div class="experience-body">
-                  <p class="experience-role" data-field={f('experienceSection', 'items', i, 'role')}>{item.role}</p>
-                  <p class="experience-org" data-field={f('experienceSection', 'items', i, 'org')}>{item.org}</p>
-                  <p class="muted" data-field={f('experienceSection', 'items', i, 'blurb')}>{item.blurb}</p>
-                </div>
+                <p class="experience-blurb muted" data-field={f('experienceSection', 'items', i, 'blurb')}>{item.blurb}</p>
               </li>
             );
           })
@@ -365,7 +398,28 @@ const aboutBioParagraphs = home.aboutSection.bio
         } else {
           for (const video of deferred) load(video);
         }
+      } else {
+        // Experience banners have no poster file, so show the clip's first
+        // frame, still, with controls, instead of a black box.
+        for (const video of document.querySelectorAll('.experience-banner video[data-src]')) {
+          video.preload = 'metadata';
+          video.src = `${video.dataset.src}#t=0.1`;
+          video.setAttribute('controls', '');
+        }
       }
+    }
+
+    // Banners loop only while on screen: four clips playing off-screen cost
+    // battery for nothing.
+    if ('IntersectionObserver' in window) {
+      const banners = new IntersectionObserver((entries) => {
+        for (const { target, isIntersecting } of entries) {
+          if (!target.dataset.loaded || target.dataset.studioTrim) continue;
+          if (isIntersecting) target.play().catch(() => {});
+          else target.pause();
+        }
+      }, { threshold: 0.15 });
+      for (const video of document.querySelectorAll('.experience-banner video')) banners.observe(video);
     }
   </script>
 
@@ -674,33 +728,33 @@ const aboutBioParagraphs = home.aboutSection.bio
       padding: 0;
       margin: 0;
       display: grid;
-      gap: 1.75rem;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 720px) {
-      .experience-list {
-        grid-template-columns: repeat(3, 1fr);
-      }
+      gap: clamp(2.5rem, 6vw, 4.5rem);
     }
     .experience-card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
+      display: grid;
+      gap: 1.25rem;
+    }
+    /* Logo and company name lead, above the video, so who it was is the
+       first thing read. */
+    .experience-head {
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      gap: clamp(1rem, 3vw, 2rem);
+      flex-wrap: wrap;
     }
     .experience-logo {
-      width: 100%;
-      height: calc(var(--logo-height, 150px) * 0.85);
+      flex: 0 0 auto;
+      width: clamp(150px, 26vw, 280px);
+      height: calc(var(--logo-height, 150px) * 0.7);
       /* Fixed light plate in both themes — the logo files assume a light
          backdrop. See --logo-plate in global.css. */
       background: var(--logo-plate);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0.75rem 1.25rem;
-      border-bottom: 1px solid var(--border);
     }
     @media (min-width: 768px) {
       .experience-logo {
@@ -715,19 +769,54 @@ const aboutBioParagraphs = home.aboutSection.bio
       height: auto;
       object-fit: contain;
     }
-    .experience-body {
-      padding: 1.5rem;
-    }
-    .experience-role {
-      margin: 0;
-      font-weight: 700;
-      font-size: 1.05rem;
+    .experience-id {
+      flex: 1 1 16rem;
+      min-width: 0;
     }
     .experience-org {
-      margin: 0 0 0.75rem;
+      margin: 0;
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+    .experience-role {
+      margin: 0.35rem 0 0;
       color: var(--accent);
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    .experience-dates {
+      margin: 0.2rem 0 0;
+      color: var(--text-muted, inherit);
       font-size: 0.95rem;
+    }
+    .experience-dates:empty::before {
+      content: attr(data-empty);
+      opacity: 0.45;
+      font-style: italic;
+    }
+    .experience-banner {
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      border-radius: var(--radius-lg);
+      background: #000;
+      box-shadow: var(--shadow);
+    }
+    @media (min-width: 768px) {
+      .experience-banner { aspect-ratio: 21 / 9; }
+    }
+    .experience-banner video {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: var(--focal, center);
+      transform: scale(var(--zoom, 1));
+      transform-origin: var(--focal, center);
+    }
+    .experience-blurb {
+      max-width: 70ch;
     }
     .muted {
       margin: 0;

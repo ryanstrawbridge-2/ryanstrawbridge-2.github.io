@@ -27,7 +27,8 @@ import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import YAML from 'yaml';
 import { tmpdir } from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import {
   encode,
   convertVideo,
@@ -63,6 +64,9 @@ const HOME_JSON = join(ROOT, 'src/data/home.json');
 const SITE_JSON = join(ROOT, 'src/data/site.json');
 const HOME_IMAGES = join(ROOT, 'src/assets/images/home');
 const THUMBS = join(ROOT, '.astro/studio-thumbs');
+// Full-length originals for the experience banners. Gitignored: only the cut
+// clip in public/videos ships. Kept so a banner can be re-trimmed later.
+const VIDEO_SOURCES = join(ROOT, 'video-sources');
 
 const PORT = Number(process.env.STUDIO_PORT || 4322);
 const DEV_ORIGINS = new Set([
@@ -168,6 +172,11 @@ const placeMedia = async ({ slug, target = {}, filename, data, source, folder, f
   if (!isVideo && !IMAGE_EXT.has(ext)) throw new Error(`${ext || 'that file'} isn't an image or a video`);
   if (isVideo && kind === 'hero') throw new Error('the main photo has to be an image');
   if (isVideo && kind === 'figure') throw new Error('figures take an image here');
+
+  if (home && isVideo && BANNER_PATH.test(target.path ?? '') && !(source && !COPY_SOURCES.has(source))) {
+    const srcPath = source ? sourcePath(source, folder, file) : null;
+    return storeBannerSource(target.path, { input: srcPath ? null : Buffer.from(data ?? '', 'base64'), srcPath, name });
+  }
 
   const title = await titleOf(name);
   const base = home ? title : `${slug}-${title}`;
@@ -853,6 +862,7 @@ const undoLabel = (pathname, payload = {}) => {
     case '/home/patch': return `home ${String(payload.path ?? '').split('.').pop()}`;
     case '/home/list': return payload.op === 'move' ? 'reorder tiles' : `${payload.op} tile`;
     case '/home/alt': return 'home description';
+    case '/home/video/cut': return 'trim banner';
     case '/home/crop': return payload.zoom !== undefined && payload.focal === undefined ? 'home zoom' : 'home crop';
     case '/site/theme': return 'theme';
     default: return pathname.replace(/^\//, '');
@@ -1015,6 +1025,114 @@ const saveLocal = async ({ message }) => {
 };
 
 // Reads that happen to be POSTs (they take a body); nothing to undo.
+
+// ---------------------------------------------------------------------------
+// Experience banners: trim a full-length source into a short loop.
+//
+// home.json experienceSection.items[i]:
+//   videoSource  file in video-sources/ (full length, never shipped)
+//   videoStart / videoEnd  seconds into the source
+//   video        the cut clip, /videos/experience-<org>.mp4
+// The trim panel previews the source on the page itself, looping between the
+// two marks, and only encodes when you press Cut.
+// ---------------------------------------------------------------------------
+
+const run = promisify(execFile);
+const BANNER_PATH = /^experienceSection\.items\.(\d+)\.video$/;
+const MAX_BANNER_SECONDS = 40;
+
+const sourceFile = (name) => {
+  const file = basename(String(name ?? ''));
+  if (!file || !VIDEO_EXT.has(extname(file).toLowerCase())) throw new Error('not a video source');
+  const full = join(VIDEO_SOURCES, file);
+  if (!existsSync(full)) throw new Error(`${file} isn't in video-sources/`);
+  return full;
+};
+
+const listSources = async () => {
+  if (!existsSync(VIDEO_SOURCES)) return [];
+  const names = (await readdir(VIDEO_SOURCES)).filter((f) => VIDEO_EXT.has(extname(f).toLowerCase()));
+  return Promise.all(names.sort().map(async (file) => ({ file, size: (await stat(join(VIDEO_SOURCES, file))).size })));
+};
+
+/** Stream a source with Range support, so the browser can seek in it. */
+const serveSource = async (req, res, name) => {
+  const full = sourceFile(name);
+  const { size } = await stat(full);
+  const type = extname(full).toLowerCase() === '.mov' ? 'video/quicktime' : 'video/mp4';
+  const { createReadStream } = await import('node:fs');
+  const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? '');
+  if (!range) {
+    res.writeHead(200, { 'content-type': type, 'content-length': size, 'accept-ranges': 'bytes' });
+    createReadStream(full).pipe(res);
+    return;
+  }
+  const start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
+  const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+  res.writeHead(206, {
+    'content-type': type,
+    'content-length': end - start + 1,
+    'content-range': `bytes ${start}-${end}/${size}`,
+    'accept-ranges': 'bytes',
+  });
+  createReadStream(full, { start, end }).pipe(res);
+};
+
+/** Cut [start, end] of the source into public/videos and point the banner at it. */
+const cutBanner = async ({ index, source, start, end }) => {
+  if (!hasVideoConverter()) throw new Error('cutting needs /usr/bin/avconvert, which is missing');
+  const i = Number(index);
+  const data = await readHome(HOME_JSON);
+  const item = data.experienceSection?.items?.[i];
+  if (!item) throw new Error(`no experience item ${index}`);
+  const file = basename(String(source ?? item.videoSource ?? ''));
+  const full = sourceFile(file);
+  const a = Math.max(0, Number(start));
+  const b = Number(end);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b - a < 1) throw new Error('pick at least one second');
+  if (b - a > MAX_BANNER_SECONDS) throw new Error(`keep the loop under ${MAX_BANNER_SECONDS} s`);
+
+  await mkdir(VIDEOS, { recursive: true });
+  const base = `experience-${slugify(item.org ?? `item-${i}`).slice(0, 40)}`;
+  const outName = await uniqueName(VIDEOS, base, '.mp4');
+  const target = join(VIDEOS, outName);
+  await run('/usr/bin/avconvert', [
+    '--source', full, '--output', target, '--preset', 'Preset1280x720',
+    '--start', a.toFixed(2), '--duration', (b - a).toFixed(2), '--replace',
+  ]);
+  const before = item.video;
+  await withHome((home) => {
+    const row = home.experienceSection.items[i];
+    row.videoSource = file;
+    row.videoStart = Number(a.toFixed(2));
+    row.videoEnd = Number(b.toFixed(2));
+    row.video = homeVideoRef(outName);
+  });
+  // The previous cut of this banner is now unreferenced. Only ever our own
+  // experience-* clips: anything else in public/videos was put there on purpose.
+  if (before && before !== homeVideoRef(outName) && /^\/videos\/experience-[\w-]+\.mp4$/.test(before)) {
+    await unlink(join(VIDEOS, basename(before))).catch(() => {});
+  }
+  const after = (await stat(target)).size;
+  return { file: `public/videos/${outName}`, after, seconds: Number((b - a).toFixed(2)) };
+};
+
+/** Store a dropped video as a banner source; the trim prompt takes it from there. */
+const storeBannerSource = async (path, { input, srcPath, name }) => {
+  const i = Number(BANNER_PATH.exec(path)[1]);
+  await mkdir(VIDEO_SOURCES, { recursive: true });
+  const ext = extname(name).toLowerCase();
+  const outName = await uniqueName(VIDEO_SOURCES, slugify(basename(name, ext)) || 'video', ext);
+  await writeFile(join(VIDEO_SOURCES, outName), input ?? (await readFile(srcPath)));
+  await withHome((home) => {
+    const row = home.experienceSection.items[i];
+    row.videoSource = outName;
+    delete row.videoStart;
+    delete row.videoEnd;
+  });
+  return { kind: 'video', file: `video-sources/${outName}`, banner: i, needsTrim: true };
+};
+
 const NOT_JOURNALLED = new Set(['/publish', '/save', '/project/section/read', '/home/value', '/project/value', '/site/read']);
 
 const ROUTES = {
@@ -1036,6 +1154,7 @@ const ROUTES = {
   '/home/list': homeListOp,
   '/home/crop': homeCrop,
   '/home/alt': homeAlt,
+  '/home/video/cut': cutBanner,
   '/site/theme': siteTheme,
   // Reads (never journalled).
   '/project/value': projectValue,
@@ -1143,6 +1262,15 @@ const server = createServer(async (req, res) => {
     } catch (error) {
       json(res, 400, { error: error.message });
     }
+    return;
+  }
+
+  if (url.pathname === '/video-source') {
+    try { await serveSource(req, res, url.searchParams.get('file')); } catch (error) { json(res, 404, { error: error.message }); }
+    return;
+  }
+  if (url.pathname === '/video-sources') {
+    try { json(res, 200, { ok: true, sources: await listSources(), max: MAX_BANNER_SECONDS }); } catch (error) { json(res, 400, { error: error.message }); }
     return;
   }
 
