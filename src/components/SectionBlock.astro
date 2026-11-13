@@ -72,7 +72,7 @@ const Tag = inline ? 'div' : 'section';
 <Tag
   class:list={[
     'blk', `blk-${type}`, `blk-bg-${bg}`, `blk-w-${width}`, `blk-a-${align}`,
-    { 'section': !inline && type !== 'spacer' && type !== 'marquee', 'blk-inline': inline, 'blk-draft': isDraft },
+    { 'section': !inline && type !== 'spacer' && type !== 'marquee' && type !== 'banner', 'blk-inline': inline, 'blk-draft': isDraft },
   ]}
   id={block.anchor ? str(block.anchor) : undefined}
   data-block={DEV ? index : undefined}
@@ -86,13 +86,46 @@ const Tag = inline ? 'div' : 'section';
   {isDraft && <span class="blk-draft-badge">Draft · hidden on the live site</span>}
   <div class:list={[inline ? 'blk-inner' : containerClass, { 'blk-full': width === 'full' }]}>
 
-    {(eyebrow || block.heading || block.intro) && type !== 'cta' && type !== 'split' && type !== 'marquee' && type !== 'spacer' && (
+    {(eyebrow || block.heading || block.intro) && type !== 'cta' && type !== 'split' && type !== 'banner' && type !== 'marquee' && type !== 'spacer' && (
       <header class="blk-head">
         {eyebrow && <p class="eyebrow" data-field={field('eyebrow')}>{eyebrow}</p>}
         {block.heading && <h2 data-field={field('heading')} set:html={inlineRich(str(block.heading))} />}
         {block.intro && <div class="blk-intro muted" data-field={field('intro')} set:html={richText(str(block.intro))} />}
       </header>
     )}
+
+    {type === 'banner' && (() => {
+      const pic = img(block.image);
+      const vid = localVideo(block.video);
+      const c = crop(block as Item, '');
+      const height = pick(style.height, ['short', 'medium', 'tall', 'screen'] as const, 'medium');
+      const shade = pick(String(style.shade ?? ''), ['0', '20', '40', '60', '80'] as const, '40');
+      return (
+        <div class:list={['blk-banner', `blk-banner-${height}`]} style={`--focal: ${c.focal}; --zoom: ${c.zoom}; --shade: ${Number(shade) / 100};`}>
+          <div class="blk-banner-media" data-field={field('image')}>
+            {vid ? (
+              <video src={vid} muted loop playsinline autoplay preload="metadata" aria-hidden="true"></video>
+            ) : pic ? (
+              <Image src={pic} alt={str(block.alt)} widths={[800, 1400, 2000]} sizes="100vw" loading="lazy" data-no-lightbox />
+            ) : DEV ? (
+              <div class="blk-empty">Add a background photo or video in the panel</div>
+            ) : null}
+          </div>
+          <div class="blk-banner-text container">
+            {eyebrow && <p class="eyebrow" data-field={field('eyebrow')}>{eyebrow}</p>}
+            {block.heading && <h2 data-field={field('heading')} set:html={inlineRich(str(block.heading))} />}
+            {block.body && <div class="blk-prose" data-field={field('body')} set:html={richText(str(block.body))} />}
+            {buttons.length > 0 && (
+              <div class="blk-buttons">
+                {buttons.map((b, k) => (
+                  <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={str(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    })()}
 
     {type === 'text' && (
       <>
@@ -353,7 +386,7 @@ const Tag = inline ? 'div' : 'section';
       <div class:list={['blk-spacer', { 'blk-spacer-line': style.line === true }]} style={`--h: ${Math.min(400, Math.max(8, Number(block.size) || 64))}px`} aria-hidden="true"></div>
     )}
 
-    {type !== 'split' && type !== 'cta' && buttons.length > 0 && (
+    {type !== 'split' && type !== 'cta' && type !== 'banner' && buttons.length > 0 && (
       <div class="blk-buttons">
         {buttons.map((b, k) => (
           <a class:list={['btn', { 'btn-secondary': b.style === 'secondary' }]} href={str(b.url) || '#'} data-field={field('buttons', k, 'label')}>{str(b.label)}</a>
@@ -412,7 +445,7 @@ const Tag = inline ? 'div' : 'section';
   /* draft */
   .blk-draft { outline: 2px dashed color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: -6px; }
   .blk-draft-badge {
-    position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 2; font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%); z-index: 2; font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
     padding: 5px 8px; border-radius: 999px; background: var(--accent); color: #fff; letter-spacing: 0.02em;
   }
 
@@ -573,6 +606,27 @@ const Tag = inline ? 'div' : 'section';
   .blk-marquee-word::after { content: '·'; margin-left: 2.5rem; color: var(--accent); }
   @keyframes blk-marquee { to { transform: translateX(-50%); } }
   @media (prefers-reduced-motion: reduce) { .blk-marquee-track { animation: none; flex-wrap: wrap; width: auto; } .blk-marquee-run + .blk-marquee-run { display: none; } }
+
+  /* banner: full-bleed photo or video with text over it */
+  .blk-banner { position: relative; display: grid; align-items: end; overflow: hidden; color: #fff; isolation: isolate; }
+  .blk-inline .blk-banner { border-radius: var(--radius-lg); }
+  .blk-banner-short { min-height: 320px; }
+  .blk-banner-medium { min-height: clamp(380px, 55vh, 560px); }
+  .blk-banner-tall { min-height: clamp(460px, 75vh, 780px); }
+  .blk-banner-screen { min-height: 100vh; }
+  .blk-inline .blk-banner-screen, .blk-inline .blk-banner-tall { min-height: 480px; }
+  .blk-banner-media { position: absolute; inset: 0; z-index: -1; background: #111; }
+  .blk-banner-media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(0 0 0 / calc(var(--shade) + 0.15)), rgb(0 0 0 / var(--shade)) 55%, rgb(0 0 0 / calc(var(--shade) * 0.6))); pointer-events: none; }
+  .blk-banner-media :global(img), .blk-banner-media video { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal, center); transform: scale(var(--zoom, 1)); transform-origin: var(--focal, center); display: block; }
+  .blk-banner-media .blk-empty { position: absolute; inset: 1rem; color: rgb(255 255 255 / 0.7); border-color: rgb(255 255 255 / 0.3); }
+  .blk-banner-text { position: relative; padding-block: clamp(2.5rem, 7vw, 5rem); }
+  .blk-inline .blk-banner-text { padding-inline: 1.75rem; }
+  .blk-banner-text h2 { color: #fff; margin: 0; font-size: clamp(2rem, 5.5vw, 3.75rem); line-height: 1.05; max-width: 18ch; }
+  .blk-banner-text .eyebrow { color: rgb(255 255 255 / 0.8); }
+  .blk-banner-text .blk-prose { margin-top: 1rem; color: rgb(255 255 255 / 0.88); font-size: 1.1rem; }
+  .blk-banner .btn-secondary { color: #fff; border-color: rgb(255 255 255 / 0.6); }
+  .blk-a-center .blk-banner { align-items: center; text-align: center; }
+  .blk-a-center .blk-banner-text h2 { margin-inline: auto; }
 
   /* spacer */
   .blk-spacer { height: calc(var(--h) * var(--space-scale, 1)); }

@@ -1220,6 +1220,7 @@ const patchLayout = async ({ patch }) => {
 // switched on, so starter copy can never be published by accident.
 // ---------------------------------------------------------------------------
 const BLOCK_TEMPLATES = {
+  banner: { eyebrow: 'Eyebrow', heading: 'A headline over a full-width photo', body: 'One line under the headline.', image: '', alt: '', buttons: [], style: { height: 'medium', shade: '40', width: 'full' } },
   text: { eyebrow: 'Eyebrow', heading: 'Section heading', body: 'Write a paragraph here. Use **bold**, *italic*, [links](https://example.com), and lines starting with "- " for bullets.' },
   split: { eyebrow: '', heading: 'Heading beside a photo', body: 'A paragraph next to a photo or video. Pick the photo in the panel.', image: '', alt: '', style: { side: 'left', ratio: '50' } },
   cards: { heading: 'Cards', items: [1, 2, 3].map((n) => ({ title: `Card ${n}`, text: 'One or two sentences.', image: '', url: '', tag: '' })), style: { columns: '3', variant: 'cards' } },
@@ -1241,7 +1242,7 @@ const BLOCK_ITEM = Object.fromEntries(Object.entries(BLOCK_TEMPLATES).filter(([,
 const BLOCK_STYLE = {
   bg: ['none', 'subtle', 'accent', 'dark'], width: ['contained', 'narrow', 'wide', 'full'], align: ['left', 'center'],
   columns: ['1', '2', '3', '4'], variant: ['cards', 'plain', 'numbered', 'overlay', 'grid', 'masonry', 'strip'],
-  side: ['left', 'right'], ratio: ['40', '50', '60'],
+  side: ['left', 'right'], ratio: ['40', '50', '60'], height: ['short', 'medium', 'tall', 'screen'], shade: ['0', '20', '40', '60', '80'],
 };
 const BLOCK_BOOL = new Set(['draft', 'style.numbered', 'style.open', 'style.line']);
 const newBlockId = () => Math.random().toString(36).slice(2, 8);

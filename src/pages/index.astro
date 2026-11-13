@@ -79,6 +79,9 @@ const expSplit = (() => {
   return typeof v === 'number' && v >= 25 && v <= 75 ? v : 50;
 })();
 const interestsTop = px(loose(layout.interests).top, 300);
+// Dev only: a section switched off still renders in studio, dimmed, carrying
+// the home.json path of its show flag so it can be switched back on.
+const hiddenAttr = (show: unknown, path: string) => (import.meta.env.DEV ? (show === false ? `off:${path}` : `on:${path}`) : undefined);
 const layoutAttr = (key: string) => (import.meta.env.DEV ? key : undefined);
 const logoH = logoSizeHeight[home.experienceSection.logoSize ?? 'medium'];
 const heroHeadshot = resolveSiteImage(home.hero.headshot);
@@ -166,8 +169,8 @@ const aboutBioParagraphs = home.aboutSection.bio
     </div>
   </section>
 
-  {home.showcase?.show !== false && (
-    <section class="showcase" data-layout={layoutAttr('showcase')} style={sectionLayout('showcase')}>
+  {(home.showcase?.show !== false || import.meta.env.DEV) && (
+    <section class="showcase" data-layout={layoutAttr('showcase')} data-hidden-section={hiddenAttr(home.showcase?.show, 'showcase.show')} style={sectionLayout('showcase')}>
       <div class="container">
         <div class="collage" aria-label="Engineering work in action" style={`--collage-rows: ${collageRows};`}>
           {
@@ -227,8 +230,8 @@ const aboutBioParagraphs = home.aboutSection.bio
     </section>
   )}
 
-  {home.projectsSection.show !== false && (
-    <section class="section" id="projects" data-layout={layoutAttr('projects')} style={sectionLayout('projects')}>
+  {(home.projectsSection.show !== false || import.meta.env.DEV) && (
+    <section class="section" id="projects" data-layout={layoutAttr('projects')} data-hidden-section={hiddenAttr(home.projectsSection.show, 'projectsSection.show')} style={sectionLayout('projects')}>
       <div class="container">
         <div class="section-head">
           <p class="eyebrow" data-field={f('projectsSection', 'eyebrow')}>{home.projectsSection.eyebrow}</p>
@@ -241,8 +244,8 @@ const aboutBioParagraphs = home.aboutSection.bio
     </section>
   )}
 
-  {home.experienceSection.show !== false && (
-  <section class="section experience-section" data-layout={layoutAttr('experience')} style={sectionLayout('experience', `--logo-height: ${logoH}; --exp-a: ${expSplit}fr; --exp-b: ${100 - expSplit}fr`)}>
+  {(home.experienceSection.show !== false || import.meta.env.DEV) && (
+  <section class="section experience-section" data-layout={layoutAttr('experience')} data-hidden-section={hiddenAttr(home.experienceSection.show, 'experienceSection.show')} style={sectionLayout('experience', `--logo-height: ${logoH}; --exp-a: ${expSplit}fr; --exp-b: ${100 - expSplit}fr`)}>
     <div class="container">
       <div class="section-head">
         <p class="eyebrow" data-field={f('experienceSection', 'eyebrow')}>{home.experienceSection.eyebrow}</p>
@@ -305,8 +308,8 @@ const aboutBioParagraphs = home.aboutSection.bio
   </section>
   )}
 
-  {home.aboutSection.show !== false && (
-  <section class={`section about-section about-photo-${photoPosition}`} id="about" data-layout={layoutAttr('about')} style={sectionLayout('about', `--about-focal: ${aboutFocal}; --about-zoom: ${aboutZoom}`)}>
+  {(home.aboutSection.show !== false || import.meta.env.DEV) && (
+  <section class={`section about-section about-photo-${photoPosition}`} id="about" data-layout={layoutAttr('about')} data-hidden-section={hiddenAttr(home.aboutSection.show, 'aboutSection.show')} style={sectionLayout('about', `--about-focal: ${aboutFocal}; --about-zoom: ${aboutZoom}`)}>
     <div class="container">
       <div class="about-grid">
         <div class="portrait-wrap" data-field={f('aboutSection', 'photo')}>
@@ -327,8 +330,8 @@ const aboutBioParagraphs = home.aboutSection.bio
         </div>
       </div>
 
-      {home.interestsSection.show !== false && (
-      <div class="interests" data-layout-top={layoutAttr('interests')} style={interestsTop === undefined ? undefined : `margin-top: ${scaled(interestsTop)}`}>
+      {(home.interestsSection.show !== false || import.meta.env.DEV) && (
+      <div class="interests" data-hidden-section={hiddenAttr(home.interestsSection.show, 'interestsSection.show')} data-layout-top={layoutAttr('interests')} style={interestsTop === undefined ? undefined : `margin-top: ${scaled(interestsTop)}`}>
         <p class="eyebrow" data-field={f('interestsSection', 'eyebrow')}>{home.interestsSection.eyebrow}</p>
         <div class="interests-grid" data-gap={layoutAttr('interests')} style={gapStyle('interests')}>
           {
@@ -379,8 +382,8 @@ const aboutBioParagraphs = home.aboutSection.bio
   </section>
   )}
 
-  {home.contactSection.show !== false && (
-  <section class="section contact-section" id="contact" data-layout={layoutAttr('contact')} style={sectionLayout('contact')}>
+  {(home.contactSection.show !== false || import.meta.env.DEV) && (
+  <section class="section contact-section" id="contact" data-layout={layoutAttr('contact')} data-hidden-section={hiddenAttr(home.contactSection.show, 'contactSection.show')} style={sectionLayout('contact')}>
     <div class="container-narrow contact-inner">
       <p class="eyebrow" data-field={f('contactSection', 'eyebrow')}>{home.contactSection.eyebrow}</p>
       <h2 data-field={f('contactSection', 'heading')}>{home.contactSection.heading}</h2>

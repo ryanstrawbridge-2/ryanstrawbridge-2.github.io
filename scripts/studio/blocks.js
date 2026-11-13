@@ -18,6 +18,7 @@ const KEEP = 'studio:block-ui';
 
 const GROUPS = [
   ['Text', [
+    ['banner', 'Banner', 'Full-width photo or video with text over it'],
     ['text', 'Text', 'Heading, paragraph and buttons'],
     ['split', 'Photo + text', 'A photo or video beside a paragraph'],
     ['cta', 'Call to action', 'A short prompt with buttons'],
@@ -46,6 +47,7 @@ const TYPE_NAME = Object.fromEntries(GROUPS.flatMap(([, t]) => t.map(([k, n]) =>
 
 // Small wireframe for each tile in the picker.
 const WIRE = {
+  banner: '<rect x="0" y="4" width="64" height="32" rx="2" opacity=".35"/><rect x="8" y="20" width="30" height="5" rx="1"/><rect x="8" y="28" width="20" height="2.5" rx="1" opacity=".7"/>',
   text: '<rect x="8" y="10" width="28" height="4" rx="1"/><rect x="8" y="18" width="48" height="2.5" rx="1" opacity=".5"/><rect x="8" y="23" width="44" height="2.5" rx="1" opacity=".5"/><rect x="8" y="28" width="36" height="2.5" rx="1" opacity=".5"/>',
   split: '<rect x="6" y="8" width="24" height="24" rx="2" opacity=".35"/><rect x="34" y="12" width="22" height="4" rx="1"/><rect x="34" y="20" width="24" height="2.5" rx="1" opacity=".5"/><rect x="34" y="25" width="20" height="2.5" rx="1" opacity=".5"/>',
   cta: '<rect x="18" y="10" width="28" height="4" rx="1"/><rect x="14" y="18" width="36" height="2.5" rx="1" opacity=".5"/><rect x="22" y="25" width="20" height="7" rx="2"/>',
@@ -66,6 +68,7 @@ const WIRE = {
 
 // Fields per type, in the order the panel shows them.
 const FIELDS = {
+  banner: [['eyebrow', 'Eyebrow'], ['heading', 'Headline'], ['body', 'Text', 'area'], ['image', 'Background photo or video', 'media'], ['alt', 'Photo description']],
   text: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['intro', 'Intro', 'area'], ['body', 'Text', 'area']],
   split: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['body', 'Text', 'area'], ['image', 'Photo or video', 'media'], ['alt', 'Photo description']],
   cta: [['eyebrow', 'Eyebrow'], ['heading', 'Heading'], ['body', 'Text', 'area']],
@@ -96,7 +99,7 @@ const ITEM_FIELDS = {
   logos: [['name', 'Name'], ['image', 'Logo', 'media'], ['url', 'Link (optional)']],
 };
 const ITEM_NOUN = { cards: 'card', stats: 'stat', quote: 'quote', steps: 'step', timeline: 'entry', tags: 'group', links: 'link', faq: 'question', gallery: 'photo', logos: 'logo' };
-const HAS_BUTTONS = new Set(['text', 'split', 'cta', 'cards']);
+const HAS_BUTTONS = new Set(['banner', 'text', 'split', 'cta', 'cards']);
 
 const STYLE = {
   bg: ['Background', [['none', 'None'], ['subtle', 'Subtle'], ['accent', 'Tint'], ['dark', 'Dark']]],
@@ -329,7 +332,7 @@ const mediaField = (path, label, value) => {
     wrap.append(el('small', { textContent: String(value).split('/').pop() }));
   }
   const row = el('div', { className: 'studio-ins-btnrow' });
-  const file = el('input', { type: 'file', accept: path === 'image' && current.type === 'split' ? 'image/*,video/mp4,video/quicktime' : 'image/*', hidden: true });
+  const file = el('input', { type: 'file', accept: path === 'image' && (current.type === 'split' || current.type === 'banner') ? 'image/*,video/mp4,video/quicktime' : 'image/*', hidden: true });
   const upload = el('button', { type: 'button', className: 'studio-btn', textContent: value ? 'Replace…' : 'Upload…' });
   upload.addEventListener('click', () => file.click());
   file.addEventListener('change', async () => {
@@ -497,6 +500,10 @@ function render() {
       g.append(segmented('style.side', 'Photo side', [['left', 'Left'], ['right', 'Right']], style.side, 'left'));
       g.append(segmented('style.ratio', 'Photo width', [['40', 'Narrow'], ['50', 'Half'], ['60', 'Wide']], style.ratio, '50'));
     }
+    if (type === 'banner') {
+      g.append(segmented('style.height', 'Height', [['short', 'Short'], ['medium', 'Medium'], ['tall', 'Tall'], ['screen', 'Full screen']], style.height, 'medium'));
+      g.append(segmented('style.shade', 'Darken photo', [['0', 'None'], ['20', '20%'], ['40', '40%'], ['60', '60%'], ['80', '80%']], style.shade, '40'));
+    }
     if (type === 'faq') g.append(toggle('style.open', 'Start expanded', style.open));
     if (type === 'spacer') g.append(toggle('style.line', 'Show a divider line', style.line));
     if (scope === 'home' && type !== 'spacer' && type !== 'marquee') g.append(toggle('style.numbered', 'Numbered eyebrow', style.numbered, 'Shows (001), (002)… by page position.'));
@@ -548,6 +555,26 @@ for (const blockEl of blocksOnPage()) {
     if (current?.el === blockEl) return;
     select(blockEl);
   });
+}
+
+// Built-in home sections: a show / hide switch. A hidden section still
+// renders here, dimmed, so it can be switched back on.
+for (const sec of document.querySelectorAll('[data-hidden-section]')) {
+  const [state0, path] = sec.dataset.hiddenSection.split(':');
+  const off = state0 === 'off';
+  const NAMES2 = { 'showcase.show': 'Collage', 'projectsSection.show': 'Projects', 'experienceSection.show': 'Experience', 'aboutSection.show': 'About', 'contactSection.show': 'Contact', 'interestsSection.show': "What I'm into" };
+  sec.classList.toggle('studio-section-off', off);
+  const chip = el('button', { type: 'button', className: 'studio-block-chip studio-vis-chip', title: off ? 'Show this section on the site' : 'Hide this section from the site' });
+  chip.innerHTML = `${svg('eye')}<span>${NAMES2[path] ?? 'Section'} · ${off ? 'Hidden' : 'Visible'}</span>`;
+  chip.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    try {
+      await post('/home/patch', { path, value: off });
+      toast(`${NAMES2[path] ?? 'Section'} ${off ? 'shown' : 'hidden'}`);
+    } catch (error) { toast(error.message, true); }
+  });
+  if (getComputedStyle(sec).position === 'static') sec.style.position = 'relative';
+  sec.append(chip);
 }
 
 placeInserters();

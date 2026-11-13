@@ -948,3 +948,9 @@ body.studio-layout-mode .studio-insert, body.studio-layout-mode .studio-block-ch
 .studio-btn-row-end select { flex: 1; }
 .studio-block-panel footer .studio-tool-icon { width: 30px; padding: 0; justify-content: center; }
 .studio-block-panel footer svg { width: 15px; height: 15px; }
+/* built-in sections: show / hide */
+[data-hidden-section]:hover > .studio-vis-chip { opacity: 1; }
+.studio-vis-chip { left: auto; right: 104px; }
+.studio-section-off > :not(.studio-vis-chip):not(.studio-insert) { opacity: 0.32; filter: grayscale(0.6); }
+.studio-section-off > .studio-vis-chip { opacity: 1; background: var(--st-danger-tint); border-color: rgb(239 68 68 / 0.5); }
+body.studio-preview .studio-section-off { display: none !important; }
