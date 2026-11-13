@@ -988,3 +988,8 @@ body.studio-preview .studio-add-item, body.studio-layout-mode .studio-add-item {
 .studio-picker-tile.is-mine:hover .studio-mine-remove, .studio-mine-remove:focus-visible { opacity: 1; }
 .studio-mine-remove:hover { color: #fff; background: var(--st-danger); }
 .studio-block-panel footer { flex-wrap: wrap; row-gap: 6px; }
+
+/* Visitor preview (P) and the phone preview: what the live site shows. */
+body.studio-preview .blk-draft,
+.studio-off .blk-draft,
+.studio-off [data-hidden-section^="off:"] { display: none !important; }
