@@ -206,43 +206,6 @@
         "align": "left",
         "width": "contained"
       }
-    },
-    {
-      "id": "ls85bl",
-      "type": "logos",
-      "draft": true,
-      "eyebrow": "Worked with",
-      "items": [
-        {
-          "name": "CFS",
-          "image": "/src/assets/images/home/commonwealth-fusion-systems.png",
-          "url": "https://cfs.energy/"
-        },
-        {
-          "name": "Raytheon",
-          "image": "/src/assets/images/home/raytheon-logo.png",
-          "url": "https://www.rtx.com/raytheon"
-        },
-        {
-          "name": "Aero",
-          "image": "/src/assets/images/home/aeronu-logo.png",
-          "url": "https://www.aerospacenu.com/"
-        },
-        {
-          "name": "J&J",
-          "image": "/src/assets/images/home/j-jlogo.jpg",
-          "url": "https://www.depuysynthes.com/"
-        },
-        {
-          "name": "SRPEDD",
-          "image": "/src/assets/images/home/srpeddlogo.png",
-          "url": "https://srpedd.org/"
-        }
-      ],
-      "style": {
-        "align": "center",
-        "bg": "subtle"
-      }
     }
   ],
   "layout": {
@@ -254,8 +217,7 @@
       "experience",
       "block:4emfzj",
       "about",
-      "contact",
-      "block:ls85bl"
+      "contact"
     ]
   }
 }
