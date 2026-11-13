@@ -45,7 +45,7 @@ heroAspect: standard
 
 ## Problem
 
-The previous end-prep operation was performed by hand. This operation took an entire shift and required a skilled technician to monitor the process constantly.
+The previous end-prep operation was performed by hand using a mag press. This operation took an entire shift and required a skilled technician to monitor the process constantly.
 
 ## What I did
 

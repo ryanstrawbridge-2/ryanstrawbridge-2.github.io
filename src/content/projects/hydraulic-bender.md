@@ -8,9 +8,9 @@ hero: ../../assets/images/projects/hydraulic-bender/hero.jpg
 heroAlt: Hydraulic bender tool on the manufacturing floor
 gallery:
   - image: ../../assets/images/projects/hydraulic-bender/bender-01.jpeg
-    alt: Hydraulic bender on the floor
+    alt: Bending cable
   - image: ../../assets/images/projects/hydraulic-bender/bender-02.jpeg
-    alt: Hydraulic bender
+    alt: Close up
 tools:
   - Mechanical design
   - Hydraulic systems

@@ -6,7 +6,7 @@ date: 2025-03-01T00:00:00.000Z
 summary: 'A small printed ring that catches runoff at the base of an apartment faucet. Took inspiration from wine bottle drip rings. Measured, designed, and printed in an afternoon.'
 hero: ../../assets/images/projects/faucet-leak-ring/on-faucet.jpeg
 heroAlt: 3D printed faucet leak ring
-gallery: []
+gallery: [ { video: faucet-leak-ring-47-img-2237.mp4, alt: 47 img 2237, width: full } ]
 tools:
   - CAD
   - FDM 3D printing
@@ -14,11 +14,12 @@ tools:
 order: 8
 heroFocalPoint: 43% 41%
 figures:
-  - section: Outcome
+  - section: What I did
     kind: photo
-    title: New figure
-    takeaway: "New figure: one line on what it shows"
+    title: CAD
+    takeaway: "CAD"
     image: ../../assets/images/projects/faucet-leak-ring/hero.jpeg
+    focal: 41% 47%
 ---
 
 ## Problem

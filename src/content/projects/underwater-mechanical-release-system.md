@@ -29,12 +29,12 @@ figures:
     points: []
     image: ../../assets/images/projects/underwater-mechanical-release-system/cross-section.png
     alt: "Section view of the release: electronics and battery inside the housing, motor driving the release shaft through the sealed end cap."
-    focal: 23% 98%
+    focal: 9% 100%
     callouts:
-      - { x: 76.9, y: 55.3, label: Endcap, place: right }
-      - { x: 57.1, y: 73, label: Release Arm, place: right }
-      - { x: 36, y: 62.8, label: Sheath, place: right }
-    zoom: 1.5
+      - { x: 73.9, y: 59.4, label: Endcap, place: right }
+      - { x: 61.2, y: 76.3, label: Release Arm, place: right }
+      - { x: 32.3, y: 56, label: Sheath, place: right }
+    zoom: 1.26
     aspect: 3/4
   - section: What I did
     kind: photo
@@ -92,7 +92,7 @@ figures:
 
 ## Outcome
 
-* Version 1 vessel pressure-tested to 470 psi with no leaks.
+* Version 1 pressure-tested to 470 psi with no leaks.
 * Released a 20 lb weight at 60 ft depth after 5 days in the ocean, proving adequate sealing and initial release reliability.
 * Achieved 2.25 FS on the release arm with an 80 lb weight.
 * Additional testing to be carried out to prove maximum weight release at depth and duration underwater.

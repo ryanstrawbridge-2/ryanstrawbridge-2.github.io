@@ -37,7 +37,9 @@ for (const slot of MODE === 'home' ? homeSlots() : []) {
 
   // Experience logos have no alt field — index.astro uses the org name as
   // the description — so offering the button there would only ever error.
-  const hasAlt = !path.endsWith('.logo');
+  // Extra interest photos are described from the card title, so no alt either.
+  const extraPhoto = /\.extraImages\.\d+$/.test(path);
+  const hasAlt = !path.endsWith('.logo') && !extraPhoto;
 
   const altBtn = toolButton({ icon: 'alt', text: 'Alt', title: 'Edit the description screen readers announce' });
   const openAlt = async (seed) => {
@@ -57,7 +59,9 @@ for (const slot of MODE === 'home' ? homeSlots() : []) {
    * ("showcase.items.2.image"). Fixed slots like hero.headshot aren't in a
    * list, so reordering and removing them would be meaningless.
    */
-  const row = path.match(/^(.*\.items)\.(\d+)\./);
+  // Not on an extra photo: its row is the whole interest card, and moving
+  // or deleting the card from a thumbnail would be a surprise.
+  const row = extraPhoto ? null : path.match(/^(.*\.items)\.(\d+)\./);
   if (row) {
     const [, listPath, rawIndex] = row;
     const index = Number(rawIndex);

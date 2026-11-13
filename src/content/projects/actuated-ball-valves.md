@@ -27,7 +27,7 @@ figures:
     image: ../../assets/images/projects/actuated-ball-valves/actuated-ball-valves-diagram-3.png
   - section: Outcome
     kind: data
-    title: Commanded position vs current, across pressures
+    title: Commanded position across different pressure differentials
     takeaway: Breakaway Torque Testing
     plan: >-
       The plot you already made. Current on Y, commanded position on X, one series per test pressure up to 2300 psi. Mark the actuation threshold.

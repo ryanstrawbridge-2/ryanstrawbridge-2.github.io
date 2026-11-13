@@ -705,6 +705,10 @@ const homeCropPaths = (data, imagePath) => {
   // the suffix, so the about photo's crop landed in aboutSection.focal, a
   // field the page never read, and the crop vanished on reload.
   const parent = imagePath.split('.').slice(0, -1).join('.');
+  // Extra photos (interestsSection.items.0.extraImages.1) are plain strings in
+  // a list, so their crops live in a parallel list on the row: extraCrops.1.
+  const extra = imagePath.match(/^(.*)\.extraImages\.(\d+)$/);
+  if (extra) return { focal: `${extra[1]}.extraCrops.${extra[2]}.focal`, zoom: `${extra[1]}.extraCrops.${extra[2]}.zoom` };
   if (/\.items\.\d+\.[^.]+$/.test(imagePath)) return { focal: `${parent}.focal`, zoom: `${parent}.zoom` };
   return { focal: `${imagePath}FocalPoint`, zoom: `${imagePath}Zoom` };
 };
@@ -718,6 +722,13 @@ const homeCrop = async ({ imagePath, focal, zoom }) => {
   if (getPath(data, imagePath) === undefined) throw new Error(`no such slot: ${imagePath}`);
   const paths = homeCropPaths(data, imagePath);
   await withHome((home) => {
+    const extra = imagePath.match(/^(.*)\.extraImages\.(\d+)$/);
+    if (extra) {
+      // Make room for this photo's crop; setPath only creates the leaf.
+      const row = getPath(home, extra[1]);
+      row.extraCrops = Array.isArray(row.extraCrops) ? row.extraCrops : [];
+      for (let k = 0; k <= Number(extra[2]); k += 1) row.extraCrops[k] = row.extraCrops[k] ?? {};
+    }
     if (focal !== undefined) setPath(home, paths.focal, focal, { create: true });
     if (zoom !== undefined) {
       const n = Math.min(4, Math.max(1, Number(zoom) || 1));

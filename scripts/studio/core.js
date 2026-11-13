@@ -320,7 +320,7 @@ const figures = () => [...document.querySelectorAll('figure[data-studio-index]')
 //
 // Every editable image on the home page carries data-field="home:<json path>"
 // (src/lib/edit-fields.ts, dev only), e.g. "home:aboutSection.photo".
-const HOME_IMAGE_FIELD = /\.(image|photo|logo|headshot|video)$/;
+const HOME_IMAGE_FIELD = /\.(image|photo|logo|headshot|video|extraImages\.\d+)$/;
 const homeSlots = () =>
   [...document.querySelectorAll('[data-field^="home:"]')]
     .map((el) => ({ el, path: el.getAttribute('data-field').slice('home:'.length) }))
