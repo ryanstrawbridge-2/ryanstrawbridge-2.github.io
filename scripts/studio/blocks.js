@@ -505,6 +505,12 @@ function render() {
       g.append(segmented('style.shade', 'Darken photo', [['0', 'None'], ['20', '20%'], ['40', '40%'], ['60', '60%'], ['80', '80%']], style.shade, '40'));
     }
     if (type === 'faq') g.append(toggle('style.open', 'Start expanded', style.open));
+    if (type === 'stats') g.append(toggle('style.countup', 'Count up on scroll', style.countup, 'Numbers run up from 0 the first time they come into view.'));
+    if (type !== 'spacer' && type !== 'marquee') {
+      const rv = toggle('style.reveal', 'Fade in on scroll', style.reveal !== false, 'Same entrance as the rest of the site.');
+      rv.querySelector('input').addEventListener('change', (e) => { e.stopImmediatePropagation(); save({ 'style.reveal': e.target.checked ? null : false }); }, true);
+      g.append(rv);
+    }
     if (type === 'spacer') g.append(toggle('style.line', 'Show a divider line', style.line));
     if (scope === 'home' && type !== 'spacer' && type !== 'marquee') g.append(toggle('style.numbered', 'Numbered eyebrow', style.numbered, 'Shows (001), (002)… by page position.'));
     body.append(g);
@@ -653,5 +659,15 @@ if (kept?.select) {
     select(target, { tab: kept.tab ?? 'content', focus: kept.focus, scrollTop: kept.scrollTop ?? 0 });
   }
 }
+
+// First visit after this feature landed: point at it once.
+try {
+  if (!localStorage.getItem('studio:blocks-intro')) {
+    localStorage.setItem('studio:blocks-intro', '1');
+    setTimeout(() => toast(scope === 'home'
+      ? 'New: hover between sections for "+ Add section", click any added section to edit it. Layout (L) for spacing.'
+      : 'New: "+ Add section" at the end of each heading adds cards, stats, galleries, video and more.'), 1200);
+  }
+} catch { /* storage blocked: skip the tip */ }
 
 export const openSectionPicker = openPicker;

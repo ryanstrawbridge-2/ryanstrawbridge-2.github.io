@@ -84,7 +84,7 @@ const Tag = inline ? 'div' : 'section';
   style={sectionStyle}
 >
   {isDraft && <span class="blk-draft-badge">Draft · hidden on the live site</span>}
-  <div class:list={[inline ? 'blk-inner' : containerClass, { 'blk-full': width === 'full' }]}>
+  <div class:list={[inline ? 'blk-inner' : containerClass, { 'blk-full': width === 'full', reveal: style.reveal !== false && type !== 'marquee' && type !== 'spacer' }]}>
 
     {(eyebrow || block.heading || block.intro) && type !== 'cta' && type !== 'split' && type !== 'banner' && type !== 'marquee' && type !== 'spacer' && (
       <header class="blk-head">
@@ -192,7 +192,7 @@ const Tag = inline ? 'div' : 'section';
     )}
 
     {type === 'stats' && (
-      <div class:list={['blk-grid', 'blk-stats', `blk-cols-${columns}`]}>
+      <div class:list={['blk-grid', 'blk-stats', `blk-cols-${columns}`]} data-countup={style.countup === true ? '' : undefined}>
         {items.map((item, k) => (
           <div class="blk-stat">
             <p class="blk-stat-value" data-field={field('items', k, 'value')}>{str(item.value)}</p>
@@ -398,6 +398,36 @@ const Tag = inline ? 'div' : 'section';
 )}
 
 <script>
+  // Stats with "count up" on: numbers run from 0 to their value the first
+  // time they scroll into view. Only the leading number in a value animates
+  // ("2,100 lb" counts 0 → 2,100 and keeps " lb"); anything else is left alone.
+  const countups = document.querySelectorAll<HTMLElement>('[data-countup] .blk-stat-value');
+  if (countups.length && 'IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const run = (node: HTMLElement) => {
+      const text = node.dataset.final ?? node.textContent ?? '';
+      node.dataset.final = text;
+      const m = text.match(/^(\D*)([\d,]*\.?\d+)(.*)$/s);
+      if (!m) return;
+      const [, pre, num, post] = m;
+      const target = parseFloat(num.replace(/,/g, ''));
+      const decimals = (num.split('.')[1] ?? '').length;
+      const comma = num.includes(',');
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / 1400);
+        const v = target * (1 - Math.pow(1 - t, 3));
+        const shown = comma ? v.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : v.toFixed(decimals);
+        node.textContent = `${pre}${shown}${post}`;
+        if (t < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { run(e.target as HTMLElement); io.unobserve(e.target); }
+    }, { threshold: 0.6 });
+    countups.forEach((n) => io.observe(n));
+  }
+
   // Video blocks load the YouTube / Vimeo player only when played, so the
   // page never contacts them for a visitor who doesn't press play.
   document.addEventListener('click', (event) => {

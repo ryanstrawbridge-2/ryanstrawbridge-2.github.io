@@ -1247,7 +1247,7 @@ const BLOCK_STYLE = {
   columns: ['1', '2', '3', '4'], variant: ['cards', 'plain', 'numbered', 'overlay', 'grid', 'masonry', 'strip'],
   side: ['left', 'right'], ratio: ['40', '50', '60'], height: ['short', 'medium', 'tall', 'screen'], shade: ['0', '20', '40', '60', '80'],
 };
-const BLOCK_BOOL = new Set(['draft', 'style.numbered', 'style.open', 'style.line']);
+const BLOCK_BOOL = new Set(['draft', 'style.numbered', 'style.open', 'style.line', 'style.countup', 'style.reveal']);
 const newBlockId = () => Math.random().toString(36).slice(2, 8);
 
 /** Check one dotted field write against what blocks can hold. */
